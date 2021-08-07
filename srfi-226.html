@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>SRFI XXX: Control Operators</title>
+    <title>SRFI 226: Control Operators</title>
     <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png">
     <link rel="stylesheet" href="https://srfi.schemers.org/srfi.css" type="text/css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -96,7 +96,7 @@
       </style>
   </head>
   <body>
-    <h1><a href="https://srfi.schemers.org/"><img class="srfi-logo" src="https://srfi.schemers.org/srfi-logo.svg" alt="SRFI surfboard logo" /></a>XXX: Control Operators</h1>
+    <h1><a href="https://srfi.schemers.org/"><img class="srfi-logo" src="https://srfi.schemers.org/srfi-logo.svg" alt="SRFI surfboard logo" /></a>226: Control Operators</h1>
 
     <p>by Marc Nieper-Wißkirchen</p>
 
@@ -335,17 +335,17 @@
     <h3>Libraries</h3>
 
     <p>The syntax and procedures defined below are provided by
-      sublibraries within <code>(srfi :XXX control)</code>
+      sublibraries within <code>(srfi :226 control)</code>
       (see <a href="#van-horn"><cite>SRFI 97</cite></a>).</p>
 
-    <p>The <code>(srfi :XXX)</code> and <code>(srfi :XXX
+    <p>The <code>(srfi :226)</code> and <code>(srfi :226
       control)</code> library is a composite of the sublibraries
       described in this specification.</p>
 
     <p>In an implementation of <cite>R<sup>7</sup>RS</cite>, the
-      composite library is named <code>(srfi XXX)</code> instead, and
-      the sublibraries are sublibraries within <code>(srfi XXX)</code>
-      instead of <code>(srfi XXX :control)</code>.  Moreover, the
+      composite library is named <code>(srfi 226)</code> instead, and
+      the sublibraries are sublibraries within <code>(srfi 226)</code>
+      instead of <code>(srfi 226 :control)</code>.  Moreover, the
       library name parts are singularized.</p>
 
     <h3>Entry format</h3>
@@ -388,7 +388,7 @@
 
     <h3>Continuation Prompts</h3>
 
-    <p>This section describes the <code>(srfi :XXX control prompts)</code> library.</p>
+    <p>This section describes the <code>(srfi :226 control prompts)</code> library.</p>
 
     <h4>Conditions</h4>
 
@@ -556,7 +556,7 @@
 
     <h3>Continuations</h3>
 
-    <p>This section describes the <code>(srfi :XXX control
+    <p>This section describes the <code>(srfi :226 control
 	continuations)</code> library.  This library, in addition to the
       procedures described here, also exports the condition types
       described in the previous section on continuation prompts.</p>
@@ -919,7 +919,7 @@
 
     <h3>Continuation Marks</h3>
 
-    <p>This section describes the <code>(srfi :XXX control
+    <p>This section describes the <code>(srfi :226 control
 	continuation-marks)</code> library.  This library, in addition
 	to the procedures described here, also exports the condition
 	types described in the section on continuation prompts.</p>
@@ -1152,7 +1152,7 @@
 
     <h3>Parameter Objects</h3>
 
-    <p>This section describes the <code>(srfi :XXX control
+    <p>This section describes the <code>(srfi :226 control
 	parameters)</code> library.</p>
 
     <p>Each <dfn>parameter object</dfn> is a procedure.</p>
@@ -1268,7 +1268,7 @@
 
     <h3>Initial Continuations</h3>
 
-    <p>This section describes the <code>(srfi :XXX control
+    <p>This section describes the <code>(srfi :226 control
 	call-in-initial-continuation)</code> library.</p>
 
     <p>An <dfn>initial continuation</dfn> continuation is continuation
@@ -1316,7 +1316,7 @@
 
     <h3>Promises</h3>
 
-    <p>This section describes the <code>(srfi :XXX control
+    <p>This section describes the <code>(srfi :226 control
 	promises)</code> library.</p>
 
     <p><dfn>Promises</dfn> are objects that can be <dfn>forced</dfn>
@@ -1419,7 +1419,7 @@
 
     <h3>Exceptions</h3>
 
-    <p>This section describes the <code>(srfi :XXX control
+    <p>This section describes the <code>(srfi :226 control
 	exceptions)</code> library.</p>
 
     <p>Conceptionally, each continuation contains at least one
@@ -1574,7 +1574,7 @@
 
     <h3>Threads</h3>
 
-    <p>This section describes the <code>(srfi :XXX control
+    <p>This section describes the <code>(srfi :226 control
 	threads)</code> library.  The library, in addition to the
       continuation types and syntax described here, also exports the
       following procedures from <cite>SRFI 18</cite>:
@@ -1882,7 +1882,7 @@
       </li>
       <li id="nieper3">
 	<p>Marc Nieper-Wißkirchen:
-	  <a href="https://srfi.schemers.org/srfi-154/srfi-154.html"><cite>SRFI
+	  <a href="https://srfi.schemers.org/srfi-157/srfi-157.html"><cite>SRFI
 	      157: Continuation marks</cite></a>.</p>
       </li>
       <li id="r7rs">
