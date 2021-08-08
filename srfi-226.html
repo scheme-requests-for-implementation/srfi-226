@@ -1013,6 +1013,20 @@
 	  otherwise.</p>
       </dd>
 
+      <pre class="example">(define tag (make-continuation-prompt-tag))
+(call-with-continuation-prompt-tag
+  (lambda ()
+    (continuation-prompt-tag-available? tag
+      (call-with-current-continuation values))))<span class="result">#t</span>
+(call-with-continuation-prompt-tag
+  (lambda ()
+    (continuation-prompt-tag-available? tag
+      (call-with-current-continuation values tag))))<span class="result">#t</span>
+(call-with-continuation-prompt-tag
+  (lambda ()
+    (continuation-prompt-tag-available? tag
+      (call-with-composable-continuation values tag))))<span class="result">#f</span></pre>
+
       <dt class="procedure"><code>(dynamic-wind <var>pre-thunk</var> <var>thunk</var> <var>post-thunk</var>)</code></dt>
       <dd>
 	<p>The <code>dynamic-wind</code> procedure

@@ -585,7 +585,7 @@
                   tag)))
             tag))))
 
-(test 990
+(test 6930
       (let ([tag (make-continuation-prompt-tag)])
         (* 2
            (call-with-continuation-prompt
@@ -663,6 +663,16 @@
 	 (call-with-continuation-barrier
 	  (lambda ()
 	    (k 'ok))))))
+
+(test '(#t #t #f)
+      (let ([tag (make-continuation-prompt-tag)])
+	(call-with-continuation-prompt
+	 (lambda ()
+	   (list
+	    (continuation-prompt-available? tag (call-with-current-continuation values))
+	    (continuation-prompt-available? tag (call-with-current-continuation values tag))
+	    (continuation-prompt-available? tag (call-with-composable-continuation values tag))))
+	 tag)))
 
 ;;; Test End
 
