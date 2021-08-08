@@ -1165,7 +1165,22 @@
 	  in a tail context, the call to <code><var>proc</var></code>
 	  is also in a tail context.</p>
       </dd>
+    </dl>
+    <pre class="example">(with-continuation-mark 'key 'mark
+  (call-with-immediate-continuation-mark 'key values))<span class="result">mark</span>
 
+(with-continuation-mark 'key 'mark
+  (call-with-continuation-prompt
+    (lambda ()
+      (call-with-immediate-continuation-mark 'key values 'default))))<span class="result">default</span></pre>
+
+    <p>In the second example, we installed a continuation prompt to
+      make sure that the call
+      to <code>call-with-immediate-continuation-mark</code> is not in
+      tail context with respect to
+      the <code>with-continuation-mark</code> expression.</p>
+
+    <dl class="entries">
       <dt class="procedure"><code>(continuation-marks <var>cont</var>)</code></dt>
       <dt class="procedure"><code>(continuation-marks <var>cont</var> <var>prompt-tag</var>)</code></dt>
       <dd>
@@ -1198,7 +1213,11 @@
 	<p>Returns <code>#t</code> if <code><var>obj</var></code> is a
 	continuation mark set, and <code>#f</code> otherwise.</p>
       </dd>
+    </dl>
 
+    <pre class="example">(continuation-mark-set? (current-continuation-marks))<span class="result">#t</span></pre>
+
+    <dl class="entries">
       <dt class="procedure"><code>(continuation-mark-set-&gt;list <var>mark-set</var> <var>key</var>)</code></dt>
       <dt class="procedure"><code>(continuation-mark-set-&gt;list <var>mark-set</var> <var>key</var> <var>prompt-tag</var>)</code></dt>
       <dd>

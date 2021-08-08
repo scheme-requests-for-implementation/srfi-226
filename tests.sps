@@ -693,6 +693,17 @@
 		 (set! n (+ n 4))))))
 	n))
 
+(test 'mark
+      (with-continuation-mark 'key 'mark
+	(call-with-immediate-continuation-mark 'key values)))
+(test 'default
+      (with-continuation-mark 'key 'mark
+	(call-with-continuation-prompt
+	 (lambda ()
+	   (call-with-immediate-continuation-mark 'key values 'default)))))
+
+(test #t (continuation-mark-set? (current-continuation-marks)))
+
 ;;; Test End
 
 (test-end)

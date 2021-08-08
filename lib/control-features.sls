@@ -30,6 +30,7 @@
 	  call-with-continuation-barrier dynamic-wind
 	  with-continuation-mark with-continuation-marks
 	  call-with-immediate-continuation-mark
+	  current-continuation-marks continuation-marks continuation-mark-set?
 	  continuation-mark-set->list continuation-mark-set->list*
 	  continuation-mark-set->iterator continuation-mark-set-first
           make-continuation-prompt-tag continuation-prompt-tag?
