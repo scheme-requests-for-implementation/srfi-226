@@ -22,7 +22,7 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(library (control-operators with-implicit)
+(library (control-features with-implicit)
   (export with-implicit)
   (import (rnrs (6)))
 

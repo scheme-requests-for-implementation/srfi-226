@@ -22,7 +22,7 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(library (control-operators primitives)
+(library (control-features primitives)
   (export %call-with-current-continuation
 	  %call-in-continuation
 	  (rename [eq? %continuation=?])

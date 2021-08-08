@@ -22,7 +22,7 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(library (control-operators)
+(library (control-features)
   (export call-with-continuation-prompt abort-current-continuation
 	  call-with-current-continuation call-with-composable-continuation
 	  continuation?
@@ -83,9 +83,9 @@
 		  (display rnrs:display)
 		  (write rnrs:write))
 	  (rnrs mutable-pairs (6))
-	  (control-operators define-who)
-	  (control-operators primitives)
-	  (control-operators threading))
+	  (control-features define-who)
+	  (control-features primitives)
+	  (control-features threading))
 
   ;; Conditions
 

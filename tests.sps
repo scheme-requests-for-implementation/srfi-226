@@ -42,8 +42,8 @@
                 display
                 write)
         (prefix (rnrs (6)) rnrs:)
-        (control-operators)
-        (control-operators testing))
+        (control-features)
+        (control-features testing))
 
 ;;; Helpers
 

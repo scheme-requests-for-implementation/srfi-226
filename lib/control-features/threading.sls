@@ -22,7 +22,7 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(library (control-operators threading)
+(library (control-features threading)
   (export %current-dynamic-environment
 	  %current-thread %thread? %thread-start! %thread-yield! %thread-terminate!
 	  %thread-join!
@@ -30,8 +30,8 @@
 	  make-%condition-variable %condition-variable-broadcast!
 	  %run)
   (import (rnrs (6))
-	  (control-operators primitives)
-	  (control-operators timer))
+	  (control-features primitives)
+	  (control-features timer))
 
   (define *exit-continuation*)
   (define *current-thread*)

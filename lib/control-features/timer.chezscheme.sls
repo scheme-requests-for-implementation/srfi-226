@@ -22,7 +22,7 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(library (control-operators timer)
+(library (control-features timer)
   (export %call-with-interrupt-handler %set-timer!)
   (import (rnrs (6))
 	  (only (chezscheme) parameterize timer-interrupt-handler set-timer))

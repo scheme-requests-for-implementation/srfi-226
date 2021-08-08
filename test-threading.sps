@@ -23,7 +23,7 @@
 ;; SOFTWARE.
 
 (import (rnrs (6))
-	(control-operators threading))
+	(control-features threading))
 
 (assert (%run
 	 (lambda ()

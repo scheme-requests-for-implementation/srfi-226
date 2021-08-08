@@ -22,11 +22,11 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(library (control-operators define-who)
+(library (control-features define-who)
   (export define/who
 	  define-syntax/who)
   (import (rnrs (6))
-	  (control-operators with-implicit))
+	  (control-features with-implicit))
 
   (define-syntax define/who
     (lambda (x)

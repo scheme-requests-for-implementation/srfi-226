@@ -22,11 +22,11 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(library (control-operators testing)
+(library (control-features testing)
   (export test-begin test-end test)
   (import (rnrs (6))
-	  (control-operators define-who)
-	  (only (control-operators) run))
+	  (control-features define-who)
+	  (only (control-features) run))
 
   (define *count* 0)
   (define *fail* #f)

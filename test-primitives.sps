@@ -23,7 +23,7 @@
 ;; SOFTWARE.
 
 (import (rnrs (6))
-	(control-operators primitives))
+	(control-features primitives))
 
 (assert (eqv? 1 (%call-with-current-continuation
 		 (lambda (k)
