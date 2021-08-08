@@ -585,6 +585,21 @@
                   tag)))
             tag))))
 
+(test 990
+      (let ([tag (make-continuation-prompt-tag)])
+        (* 2
+           (call-with-continuation-prompt
+            (lambda ()
+              (* 3
+                 (call-with-composable-continuation
+                  (lambda (k)
+                    (* 5
+                       (call-with-continuation-prompt
+                        (lambda ()
+                          (* 7 (k 11)))
+                        tag)))
+                  tag)))
+            tag))))
 (test '(4 5 9 17 25)
       (let* ()
         (define-syntax reset

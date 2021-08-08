@@ -130,7 +130,7 @@
 
     <h2 id="issues">Issues</h2>
 
-    <><> examples
+    <></> examples
 
     <p>None at present.</p>
 
@@ -297,6 +297,19 @@
       forcing of a promise.</p>
 
     <h3>Relation to Other Standards</h3>
+
+    <p>This specification is meant to be applicable to both
+      standards <cite>R<sup>6</sup>RS</cite>
+      and <cite>R<sup>7</sup>RS</cite>.  The former standard allows
+      the use of square brackets synonymous with parentheses in the
+      syntax.  In its non-normative appendix C, advice is given in
+      which places in the syntactic forms specified in the report they
+      should be used.  In order to document in which places square
+      brackets should be used in the syntactic forms described in this
+      specification, this document uses them in the appropriate
+      places.  When this specification is applied
+      to <cite>R<sup>7</sup>RS</cite>, the square brackets should be
+      read as parentheses.</p>
 
     <p>Some of the procedures and syntax defined in this specification
       have the same names as procedures and syntax
@@ -548,7 +561,7 @@
     tag
     list))<span class="result">(foo bar)</span></pre>
 
-    <p>The following example demonstrates that the prompt is
+   <p>The following example demonstrates that the prompt is
       reinstalled by the default handler.</p>
 
     <pre class="example">(let ([tag (make-continuation-prompt-tag)])
@@ -629,7 +642,7 @@
    (call-with-continuation-prompt
     (lambda ()
       (* 3
-         (call/cc
+         (call-with-current-continuation
           (lambda (k)
             (* 5
                (call-with-continuation-prompt
@@ -638,6 +651,19 @@
                 tag)))
          tag)))
     tag)))<span class="result">990</span></pre>
+
+    <p>When the continuation is captured in this example, all active
+      procedure calls up to nearest (dynamically) enclosing prompt
+      (tagged with the value of <code>tag</code>) are captured.
+      Effectively, multiplication by <code>3</code> is captured.  When
+      the continuation is invoked in this example, its active
+      procedure calls are reinstated after the current continuation
+      has been cut back to the nearest enclosing prompt at the point
+      of invoking the captured continuation.  Effectively, the
+      multiplication by <code>7</code> is removed and replaced by the
+      captured multiplication by <code>3</code>.  In effect, this
+      yields the value of <code>(* 2 (* 3 (* 5 (* 3 11))))</code>,
+      which is <code>990</code>.</p>
 
     <dl class="entries">
       <dt class="procedure"><code>(call-with-composable-continuation <var>proc</var>)</code></dt>
@@ -661,7 +687,7 @@
 	</p>
 	<p>We say that the continuation procedure
 	is <dfn>delimited</dfn> by <code><var>prompt-tag</var></code>.</p>
-	<p>If a call to <code>call-with-current-continuation</code>
+	<p>If a call to <code>call-with-composable-continuation</code>
 	occurs in a tail context, the call
 	to <code><var>proc</var></code> is also in a tail context.</p>
 	<p>If a continuation prompt tagged
@@ -681,6 +707,29 @@
 	  called, while the former never do.</p>
       </dd>
     </dl>
+
+    <p>The following example is similar to the previous one except
+    that the call to <code>call-with-current-continuation</code> is
+    replaced with a call
+    to <code>call-with-composable-continuation</code>.  Accordingly,
+    invoking the captured continuation does not remove any active
+    procedure calls and so the result of the second example
+    is <code>7</code>-times the value of the first.</p>
+
+    <pre class="example">(let ([tag (make-continuation-prompt-tag)])
+  (* 2
+   (call-with-continuation-prompt
+    (lambda ()
+      (* 3
+         (call/cc
+          (lambda (k)
+            (* 5
+               (call-with-continuation-prompt
+                (lambda ()
+                  (* 7 (k 11)))
+                tag)))
+         tag)))
+    tag)))<span class="result">6930</span></pre>
 
     <p>This concept of composable continuations together with the
       facility to install and abort to continuation prompts is rich
