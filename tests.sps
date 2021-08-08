@@ -674,6 +674,25 @@
 	    (continuation-prompt-available? tag (call-with-composable-continuation values tag))))
 	 tag)))
 
+(test 7
+      (let ([n 0])
+	(call/cc
+	 (lambda (k)
+	   (dynamic-wind
+	       values
+	       (lambda ()
+		 (dynamic-wind
+		     values
+		     (lambda ()
+		       (set! n (+ n 1))
+		       (k))
+		     (lambda ()
+		       (set! n (+ n 2))
+		       (k))))
+	       (lambda ()
+		 (set! n (+ n 4))))))
+	n))
+
 ;;; Test End
 
 (test-end)

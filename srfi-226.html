@@ -1067,6 +1067,27 @@
       </dd>
     </dl>
 
+    <p>The following example comes form <cite>R<sup>6</sup>RS</cite>
+      and demonstrates jumping out of the post-thunk.</p>
+
+    <pre class="example">(let ([n 0])
+  (call/cc
+    (lambda (k)
+      (dynamic-wind
+          values
+          (lambda ()
+            (dynamic-wind
+                values
+                (lambda ()
+                  (set! n (+ n 1))
+                  (k))
+                (lambda ()
+                  (set! n (+ n 2))
+                  (k))))
+         (lambda ()
+           (set! n (+ n 4))))))
+  n)<span class="result">7</span></pre>
+
     <h3>Continuation Marks</h3>
 
     <p>This section describes the <code>(srfi :226 control
