@@ -109,10 +109,11 @@
     <h2 id="abstract">Abstract</h2>
 
     <p>This SRFI defines a rich set of control operators for the
-      Scheme programming language, including the
-      venerable <code>call/cc</code>.  The set of operators was highly
-      influenced by the control operators provided
-      by <a href="#racket"><cite>Racket</cite></a>.
+      Scheme programming language, including the venerable
+      <code>call/cc</code>
+      (<code>call-with-current-continuation</code>). The set of
+      operators was highly influenced by the control
+      operators provided by <a href="#racket"><cite>Racket</cite></a>.
 
     <p>Continuations can be delimited by continuation prompts, and all
       continuations become delimited continuations, at the latest by
@@ -128,6 +129,8 @@
       with the other concepts defined here.</p>
 
     <h2 id="issues">Issues</h2>
+
+    <><> examples
 
     <p>None at present.</p>
 
@@ -147,9 +150,9 @@
       SRFI.</p>
 
     <p>The theoretical concepts behind the operators described in this
-      specification are well-understood and not new.  The author of this SRFI
+      specification are well understood and not new.  The author of this SRFI
       does not claim any originality for any idea presented here, but is lucky
-      to be able to stand on the shoulder of giants.  (See the various
+      to be able to stand on the shoulders of giants.  (See the various
       references in <a href="#dybvig"><cite>A Monadic Framework for Delimited
       Continuations</cite></a>, for example.)</p>
 
@@ -171,7 +174,7 @@
     <p>Certain control operations can change the current continuation
       more radically.  The Scheme procedure <code>call/cc</code>
       allows capturing the current continuation and reifies it into a
-      procedure that, when later called, abandons the then current
+      procedure that, when later called, abandons the then-current
       continuation and replaces it with the captured one.</p>
 
     <p>Conceptually, only an end segment of the current continuation is ever
@@ -179,15 +182,15 @@
       or evaluating an expression at the REPL prompt, the old and the new
       current continuation always share an initial segment at least up to the
       point when the program was started, the thread was started, or the
-      expression sent to the REPL.</p>
+      expression was sent to the REPL.</p>
 
-    <p>Therefore, <code>call/cc</code> never has to, nor actually does
+    <p>Therefore, <code>call/cc</code> never has to, nor actually does,
       capture the whole current continuation, but only an end segment.
       Reinstating the captured continuation means to replace the end
-      segment of the then current continuation.</p>
+      segment of the then-current continuation.</p>
 
     <p>With <code>call/cc</code> alone, the programmer has no control over the
-      size of this end segment.  This SRFI offers operators to exactly do this.
+      size of this end segment.  This SRFI offers operators to do exactly this.
       With these operators, the programmer can install <dfn>continuation
       prompts</dfn> identified by <dfn>prompt tags</dfn> in the current
       continuation.  When a continuation is later captured, it is delimited by
@@ -200,8 +203,8 @@
     <p>When a continuation captured
       with <code>call-with-current-continuation</code> is later invoked, the
       invocation never returns to the continuation of the call to captured
-      incontinuation.  In this sense, such a continuation procedure is far from
-      being a function in the mathematical sense as it doesn't deliver any
+      continuation.  In this sense, such a continuation procedure is far from
+      being a function in the mathematical sense, as it doesn't deliver any
       values.  In particular, it cannot be composed.  For that reason,
       continuations captured by <code>call-with-current-continuation</code> are
       also called <dfn>non-composable continuations</dfn>.</p>
@@ -211,8 +214,8 @@
       the current continuation, but reifies it into a different type of
       continuation, a <dfn>composable continuation</dfn>.  Contrary to
       non-composable continuations, a composable continuation, when invoked,
-      does not abort any active procedure call, but just extends the then
-      current continuation.  In particular, it delivers values to the
+      does not abort any active procedure call, but just extends the then-current
+      continuation.  In particular, it delivers values to the
       continuation of the call to it.  A composable continuation therefore
       behaves like an ordinary procedure.</p>
 
@@ -220,8 +223,8 @@
 
     <p><dfn>Continuation marks</dfn> are a feature that allows attaching
       information in the form of key-value pairs to individual continuation
-      frames (which a maximal segments of continuations of a number of active
-      tail calls followed by at most one non-active tail call).  The set of
+      frames, which are maximal segments of continuations of a number of active
+      tail calls followed by at most one non-active tail call.  The set of
       continuation marks of the continuation frames of a continuation belongs
       to this continuation and is thus also captured
       by <code>call-with-current-continuation</code>
@@ -232,9 +235,9 @@
       and <code>force</code> of <a href="#kelsey1"><cite>R<sup>5</sup>RS</cite></a>
       that supports iterative lazy algorithms.</p>
 
-    <p>A crucial feature of continuation marks is that they allow to attach
+    <p>A crucial feature of continuation marks is that they allow one to attach
       marks to the most recent continuation frame without creating active
-      non-tail calls.  This allows to implement a <code>parameterize</code>
+      non-tail calls.  This allows one to implement a <code>parameterize</code>
       form where the last expression in its body is in tail context when
       the <code>parameterize</code> form is in tail position.  Similarly, it
       becomes possible to implement <code>with-exception-handler</code> in a
@@ -258,7 +261,7 @@
 
     <p>Parameter objects are a tool to provide dynamically-scoped variables to
       the Scheme language in a clean way.  As a definition of parameter objects
-      in terms of continuation marks is possible and as an implementation in
+      in terms of continuation marks is possible, and as an implementation in
       terms of these allows rich operations like capturing the current
       parameterization to later reinstall it, this SRFI provides both.</p>
 
@@ -277,7 +280,7 @@
       and <cite>R<sup>7</sup>RS</cite> solve the problem by providing another
       primitive, <code>delay-force</code> (called <code>lazy</code>
       in <cite>SRFI 45</cite>).  When continuation marks are available,
-      however, such an irksome primitive is not needed,
+      however, such an irksome primitive is not needed;
       see <a href="nieper2">SRFI 155</a>.  Consequently, this specification
       defines <dfn>promises</dfn> in a way that makes <code>delay-force</code>
       superfluous.</p>
@@ -286,10 +289,10 @@
       way that defines the continuation in which the values of promises are
       forced in such a way that it has the same semantics as executing a
       thread.  This makes the overall system pleasantly coherent.  The sample
-      implementation shows, how everything can be implemented efficiently.</p>
+      implementation shows how everything can be implemented efficiently.</p>
 
     <p>Finally, promises as defined in this specification can deliver multiple
-      values when forced, an extension too naturally to ignore it, and it is
+      values when forced, an extension too natural to ignore, and it is
       clearly specified what happens when an exception is raised during the
       forcing of a promise.</p>
 
@@ -318,7 +321,7 @@
     <h3>Implementation</h3>
 
     <p>The accompanying sample implementation does not implement the libraries
-      defined in this specification but it demonstrates how they can be as soon
+      defined in this specification, but it demonstrates how they can be as soon
       as a small set of easily implementable primitives are provided by the
       Scheme implementation.</p>
 
@@ -387,7 +390,7 @@
       specification is a zero-argument procedure that returns two
       values on each invocation.  An iterator for the empty list
       returns <code>#f</code> and an iterator for the empty list.  An
-      iterator for a non empty list returns the head of the list and
+      iterator for a non-empty list returns the head of the list and
       an iterator for its tail.</p>
 
     <h3>Continuation Prompts</h3>
@@ -467,10 +470,10 @@
       active tail calls followed by at most one active non-tail call.</p>
 
     <p>A <dfn>continuation prompt</dfn> is a type of continuation
-      frame so that when values are delivered to a continuation
+      frame such that when values are delivered to a continuation
       extended by such a continuation frame, the values are
       effectively delivered to the non-extended continuation.
-      Moreover, each continuation prompt is that is tagged with a
+      Moreover, each continuation prompt is tagged with a
       prompt tag and records a <dfn>prompt handler</dfn>, which
       is a procedure.</p>
 
@@ -530,7 +533,7 @@
 	  current continuation
 	  when <code>abort-current-continuation</code> is called, due
 	  to the presence of <code>dynamic-wind</code> winders (see
-	  below) is can still happen during the aborting process that
+	  below) it can still happen during the aborting process that
 	  it becomes no longer available.
 	</p>
       </dd>
@@ -542,8 +545,8 @@
       (+ 1
          (abort-current-continuation tag 'foo 'bar)
          2))
-     tag
-     list))<span class="result">(foo bar)</span></pre>
+    tag
+    list))<span class="result">(foo bar)</span></pre>
 
     <p>The following example demonstrates that the prompt is
       reinstalled by the default handler.</p>
@@ -556,7 +559,8 @@
          (abort-current-continuation tag
            (lambda ()
              27)))))
-   tag #f))<span class="result">27</span></pre>
+   tag
+   #f))<span class="result">27</span></pre>
 
     <h3>Continuations</h3>
 
@@ -582,8 +586,8 @@
 	  tagged with <code><var>prompt-tag</var></code> as a
 	  continuation (“escape”) procedure and passes it as an
 	  argument to <code><var>proc</var></code>.  The continuation
-	  procedure is a Scheme procedure that, if it is later called,
-	  aborts all active procedure calls in the then current
+	  procedure is a Scheme procedure such that, if it is later called,
+	  aborts all active procedure calls in the then-current
 	  continuation up to but not including a continuation prompt
 	  with <code><var>prompt-tag</var></code> or up to but not
 	  including an active procedure call shared by the current and
@@ -632,7 +636,7 @@
                 (lambda ()
                   (* 7 (k 11)))
                 tag)))
-          tag)))
+         tag)))
     tag)))<span class="result">990</span></pre>
 
     <dl class="entries">
@@ -649,7 +653,7 @@
 	  tagged with <code><var>prompt-tag</var></code> as a
 	  continuation (“escape”) procedure and passes it as an
 	  argument to <code><var>proc</var></code>.  The continuation
-	  procedure is a Scheme procedure that, if it is later called,
+	  procedure is a Scheme procedure such that, if it is later called,
 	  the active procedure calls in the captured continuation are
 	  reinstated and the arguments supplied to the call to the
 	  continuation procedure become the result values for the new
@@ -668,7 +672,7 @@
 	  procedure returned
 	  by <code>call-with-current-continuation</code>
 	  and <code>call-with-composable-continuation</code> is that
-	  the former removes portions of the then current
+	  the former removes portions of the then-current
 	  continuation, while the latter does not.  The former
 	  continuation procedures are called <dfn>non-composable
 	  continuations</dfn>, while the latter are
@@ -758,13 +762,13 @@
 	<p>
 	  Aborts and reinstates active procedure calls as if the
 	  continuation procedure <code><var>cont</var></code> were
-	  applied, but instead of delivering values to then current
+	  applied, but instead of delivering values to then-current
 	  continuation, the procedure <code><var>thunk</var></code> is
 	  called with no arguments in this continuation.</p>
       </dd>
     </dl>
 
-    <p><code>Call-in-continuation</code> can be used to implement
+    <p>The <code>call-in-continuation</code> procedure can be used to implement
       the <code>guard</code> syntax concisely:</p>
 
     <pre class="example">(define-syntax/who guard
@@ -828,9 +832,9 @@
     <dl class="entries">
       <dt class="procedure"><code>(call-with-continuation-barrier <var>thunk</var>)</code></dt>
       <dd>
-	<p>The <code>call-with-continuation-prompt</code> procedure
+	<p>The <code>call-with-continuation-barrier</code> procedure
 	  instates an otherwise inaccessible continuation prompt in
-	  the current continuation and that is marked as
+	  the current continuation and marks it as
 	  a <dfn>continuation barrier</dfn>.
 	  Finally, <code><var>thunk</var></code> is called with no
 	  arguments in the resulting continuation.</p>
@@ -1045,7 +1049,7 @@
 	  tagged <code><var>prompt-tag</var></code>, if at all.  The
 	  list elements correspond to the continuation frames that
 	  contained a continuation mark
-	  for <code><var>key</var></code> with the most recent
+	  for <code><var>key</var></code>, with the most recent
 	  continuation frame coming first.</p>
 	<p>If <code><var>mark-set</var></code> is <code>#f</code>, the
 	  mark set that would be returned
@@ -1097,7 +1101,7 @@
 	  when applied to the same arguments.</p>
 	<p><i>Note:</i> Some recent SRFIs that have been included into
 	  early editions
-	  of <a href="#r7rs"><cite>R<sup>7</sup>RS-large</cite></a> or
+	  of <a href="#r7rs"><cite>R<sup>7</sup>RS Large</cite></a> or
 	  are to be included its forthcoming editions feature the use
 	  of generators (see <a href="">SRFI 158</a>) to process lists
 	  (or objects of other sequence types).  As generators are
@@ -1177,7 +1181,6 @@
 
     <dl class="entries">
       <dt class="procedure"><code>(make-parameter <var>obj</var>)</code></dt>
-      <dt class="procedure"><code>(make-parameter <var>obj</var> <var>proc</var>)</code></dt>
       <dt class="procedure"><code>(make-parameter <var>obj</var> <var>proc</var>)</code></dt>
       <dd>
 	<p>Invokes <code><var>proc</var></code>
@@ -1262,12 +1265,12 @@
       this specification differs from <cite>Racket</cite> in that the cells
       associated with parameter objects are not “thread-local” in this
       specification.  As has already been observed by Marc Feeley during the
-      discussion period of <cite>SRFI 39</cite> this is the cleaner, faster,
+      discussion period of <cite>SRFI 39</cite>, this is the cleaner, faster,
       and more expressive semantics.  Finally, the parameter objects defined
       here are not fully compatible with the parameters of <cite>Chez
       Scheme</cite>.  While these offer some features over the parameter
       objects in <cite>SRFI 39</cite> and <cite>R<sup>7</sup>RS</cite>, they
-      would be incompatible with the tail context guarantee of
+      would be incompatible with the tail-context guarantee of
       the <code>parameterize</code> form.</p>
 
     <h3>Initial Continuations</h3>
@@ -1275,14 +1278,14 @@
     <p>This section describes the <code>(srfi :226 control
 	call-in-initial-continuation)</code> library.</p>
 
-    <p>An <dfn>initial continuation</dfn> continuation is continuation
+    <p>An <dfn>initial continuation</dfn> continuation is a continuation
       that consists of a single continuation prompt tagged with the
       default prompt and with the default handler.  Moreover, a single
       initial exception handler is installed in an initial
       continuation that, when invoked on a <code>&amp;serious</code>
-      condition or on a non-condition object aborts to the most recent
+      condition or on a non-condition object, aborts to the most recent
       continuation prompt tagged with the default prompt tag and calls
-      its handler with a thunk that, when evaluated raises an
+      its handler with a thunk that, when evaluated, raises an
       exception whose condition is the object.  When invoked on a
       non-<code>&amp;serious</code> condition object, the initial
       handler returns with unspecified values instead.</p>
@@ -1357,7 +1360,7 @@
 
 	<p>If a call to <code>force</code> occurs in tail context
 	  during the evaluation
-	  of <code><span class="token">body</span></code> it is
+	  of <code><span class="token">body</span></code>, it is
 	  effectively a tail call.</p>
 
 	<p>All operations involved in forcing except for the
@@ -1430,7 +1433,7 @@
       otherwise inaccessible exception handler stack continuation
       mark, whose value is a list of exception handlers,
       which are one-argument procedures.  The <dfn>exception handler
-      stack</dfn> of a continuation is the vale of the most recent
+      stack</dfn> of a continuation is the value of the most recent
       exception handler stack continuation mark in the continuation.
       The exception handler stack of the current continuation is
       the <dfn>current exception handler stack</dfn>.
@@ -1440,13 +1443,13 @@
       recording the exception handler stack of the continuation,
       constructing a new exception handler stack by prepending the
       exception handler to be installed to the recorded exception
-      handler stack and annotating the continuation with an exception
+      handler stack, and annotating the continuation with an exception
       handler stack continuation mark whose value is the new exception
       handler stack.  The most recent exception handler
       is <dfn>removed</dfn> in a continuation by recording the
       exception handler stack of the continuation, constructing a new
       exception handler stack by removing the first element of the
-      recorded exception handler stack and annotating the continuation
+      recorded exception handler stack, and annotating the continuation
       with an exception handler stack continuation mark whose value is
       the new exception handler stack.</p>
 
@@ -1454,7 +1457,7 @@
       <dt class="procedure"><code>(with-exception-handler <var>handler</var> <var>thunk</var>)</code></dt>
       <dd>
 	<p><code>It is an assertion violation
-	if <var>handler</var></code> is not a procedure and does not
+	if <var>handler</var></code> is not a procedure or does not
 	accept one argument.</p>
 	<p>Installs <code><var>handler</var></code> in the
 	  continuation to the call
@@ -1465,16 +1468,16 @@
 	</p>
 	<p>If a call
 	  to <code>with-exception-handler</code> occurs in a tail
-	  context. the call to <code><var>thunk</var></code> is also in a tail
+	  context, the call to <code><var>thunk</var></code> is also in a tail
 	  context.</p>
 	<p><i>Note:</i> The tail context requirement is neither
-	  in <cite>R<sup>6</sup>RS</cite>, nor
+	  in <cite>R<sup>6</sup>RS</cite> nor
 	  in <cite>R<sup>7</sup>RS</cite>.</p>
       </dd>
       <dt class="procedure"><code>(current-exception-handlers)</code></dt>
       <dd>
 	<p>Returns a newly allocated list containing the handlers of
-	  the current exception handler stack with the most recently
+	  the current exception handler stack, with the most recently
 	  installed handlers coming first.</p></dd>
       <dt class="procedure"><code>(current-exception-handler)</code></dt>
       <dd><p>Returns the current exception handler.</p>
@@ -1483,7 +1486,7 @@
       <dd>
 	<p>Raises a <dfn>non-continuable exception</dfn> as follows:
 	  The current exception handler is recorded and then the most
-	  recent exceptin handler is removed in the continuation
+	  recent exception handler is removed in the continuation
 	  to the call to <code>raise</code>.  The recorded exception
 	  handler is then invoked on <code><var>obj</var></code>.  If
 	  this invocation returns, a non-continuable exception with
@@ -1494,12 +1497,12 @@
 	  current exception handler stack is empty, the current
 	  continuation is instead aborted to the most recent
 	  continuation prompt tagged with the default continuation
-	  prompt and its handler invoked on a thunk that, when called,
+	  prompt, and its handler invoked on a thunk that, when called,
 	  raises <code><var>obj</var></code>.</p>
 	<p><i>Note:</i> The current exception handler stack becomes
 	  empty if the initial exception handler returns after having
 	  been invoked on a non-<code>&amp;serious</code> condition,
-	  and causing a <code>&amp;non-continuable</code> condition to
+	  which causes a <code>&amp;non-continuable</code> condition to
 	  be raised.</p>
       </dd>
       <dt class="procedure"><code>(raise-continuable <var>obj</var>)</code></dt>
@@ -1510,12 +1513,12 @@
 	  exception handler stack continuation mark whose value is the
 	  current handler stack with the first element removed.  The
 	  previously first element is then invoked
-	  on <code><var>obj</var></code> and its values are returned.</p>
+	  on <code><var>obj</var></code>, and its values are returned.</p>
 	<p>If there is no current exception handler because the
 	  current exception handler stack is empty, the current
 	  continuation is instead aborted to the most recent
 	  continuation prompt tagged with the default continuation
-	  prompt and its handler invoked on a thunk that, when called,
+	  prompt, and its handler invoked on a thunk that, when called,
 	  raises <code><var>obj</var></code>.</p>
 	<p>If a call to <code>raise-continuable</code> occurs in a
 	  tail context, the call to the current exception handler is
@@ -1543,7 +1546,7 @@
 	  and <code><span class="token">body</span></code> a body.</p>
 	<p><i>Semantics:</i> Installs an exception handler as
 	  described below in the continuation of
-	  the <code>guard</code> expression and
+	  the <code>guard</code> expression, and
 	  evaluates <code><span class="token">body</span></code>.  The
 	  installed exception handler captures and records the current
 	  continuation delimited by the default prompt tag.  It then
@@ -1551,8 +1554,8 @@
 	  expression or to the most recent continuation prompt tagged
 	  with the default prompt tag, whatever comes first.  It then
 	  binds the raised object
-	  to <code><span class="token">variable</span></code> and
-	  within the scope of that binding evaluates the clauses as if
+	  to <code><span class="token">variable</span></code> and,
+	  within the scope of that binding, evaluates the clauses as if
 	  they were the clauses of a <code>cond</code> expression.  If
 	  every <code><span class="token">cond clause</span></code>
 	  evaluates to <code>#f</code> and there is
@@ -1627,7 +1630,7 @@
 	<p>This condition type could be defined by</p>
 	<pre>(define-condition-type &amp;thread &amp;error
   make-thread-error thread-error?)</pre>
-	<p>This is a super type for a set of more specific thread errors.</p>
+	<p>This is a supertype for a set of more specific thread errors.</p>
       </dd>
       <dt class="entry"><code>&amp;uncaught-exception</code><span class="type">condition-type</span></dt>
       <dt class="procedure"><code>(make-uncaught-exception-error <var>obj</var></code>)</dt>
@@ -1638,7 +1641,7 @@
 	<pre>(define-condition-type &amp;uncaught-exception &amp;thread
   make-uncaught-exception-error uncaught-exception-error?
   (reason uncaught-exception-reason))</pre>
-	<p><code>Uncaught-exception-error?</code>
+	<p>Both <code>uncaught-exception-error?</code>
 	  and <code>uncaught-exception-error-reason</code> are the
 	  same as <code>uncaught-exception</code>
 	  and <code>uncaught-exception-reason</code>
@@ -1654,7 +1657,7 @@
 	<p>This condition type could be defined by</p>
 	<pre>(define-condition-type &amp;thread-already-terminated &amp;thread
   make-thread-already-terminated-error thread-already-terminated-error?)</pre>
-	<p><code>Thread-already-terminated-error?</code>  is the same
+	<p>Procedure <code>thread-already-terminated-error?</code>  is the same
 	  as <code>terminated-thread-exception?</code>
 	  in <a href="#feeley1"><cite>SRFI 18</cite></a>.</p>
       </dd>
@@ -1665,7 +1668,7 @@
 	<p>This condition type could be defined by</p>
 	<pre>(define-condition-type &amp;thread-timeout &amp;thread
   make-thread-timeout-error thread-timeout-error?)</pre>
-	<p><code>Thread-timeout-error?</code>  is the same
+	<p>Procedure <code>thread-timeout-error?</code>  is the same
 	  as <code>join-timeout-exception?</code>
 	  in <a href="#feeley1"><cite>SRFI 18</cite></a>.</p>
       </dd>
@@ -1676,7 +1679,7 @@
 	<p>This condition type could be defined by</p>
 	<pre>(define-condition-type &amp;thread-abandoned-mutex &amp;thread
   make-thread-abandoned-mutex-error thread-abandoned-mutex-error?)</pre>
-	<p><code>Thread-abandoned-mutex-error?</code>  is the same
+	<p>Procedure <code>thread-abandoned-mutex-error?</code>  is the same
 	  as <code>abandoned-mutex-exception?</code>
 	  in <a href="#feeley1"><cite>SRFI 18</cite></a>.</p>
       </dd>
@@ -1749,8 +1752,8 @@
 	  continuation that is represented by it.</p>
 
 	<p><i>Note:</i> The
-	  primitive <code>%call-with-current-continuation</code> does
-	  neither support <code>dynamic-wind</code>, nor continuation
+	  primitive <code>%call-with-current-continuation</code>
+	  neither supports <code>dynamic-wind</code> nor continuation
 	  barriers.</p>
       </dd>
       <dt class="procedure"><code>(%call-in-continuation <var>k</var> <var>thunk</var>)</code></dt>
