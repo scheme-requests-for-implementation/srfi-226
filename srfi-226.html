@@ -130,7 +130,8 @@
 
     <h2 id="issues">Issues</h2>
 
-    <></> examples
+    <ul>
+      <li>There should be more examples.</li></ul>
 
     <p>None at present.</p>
 
@@ -338,15 +339,15 @@
       <li><p>In many if not most cases, <code>call/cc</code> (as
 	  defined in previous standards and without continuation
 	  prompts) is the wrong abstraction, a fact that has been
-	  well-known for a long time (see <a href="#kiselyov"><cite>An
+	  well known for a long time (see <a href="#kiselyov"><cite>An
 	  argument against call/cc</cite></a>).  <code>call/cc</code>
 	  is usually advertised as the hammer that can be used to
 	  implement all other control operations.  In fact, this is
-	  not true for the undelimited continuations that (the
-	  standard) <code>call/cc</code> captures but for delimited
+	  not true for the undelimited continuations that the
+	  standard <code>call/cc</code> captures but for delimited
 	  continuations (see <a href="#filinski"><cite>Representing
 	  Monads</cite></a>).  So it is actually delimited
-	  continuations that are needed in practise.  Now everything
+	  continuations that are needed in practice.  Now everything
 	  would be fine if delimited control operators could be
 	  expressed in terms of <code>call/cc</code>.  This, however,
 	  is not faithfully possible, especially not without space
@@ -356,7 +357,7 @@
 	  Direct implementation of Shift and Reset</cite></a>).  Thus,
 	  in hindsight Scheme should have always offered delimited
 	  control operators in favor of
-	  <code>call/cc</code>.  Implementing this SRFI remedies it.</p></li>
+	  <code>call/cc</code>.  Implementing this SRFI remedies that.</p></li>
       <li><p>By implementing this SRFI, even <code>call/cc</code>
 	  becomes a delimited control operator thanks to the concept
 	  of continuation prompts and the fact that one is available
@@ -364,8 +365,8 @@
       <li><p>In the literature, many sets of delimited control
 	  operators can be found, with varying expressiveness.
 	  Instead of primarly providing some or all of these, it makes
-	  more sense to provide abstractions on top of which all these
-	  like <code>reset</code>/<code>shift</code> can be built.
+	  more sense to provide abstractions on top of which all these,
+	  like <code>reset</code>/<code>shift</code>, can be built.
 	  This SRFI offers these abstractions to Scheme
 	  implementations.</p></li>
       <li><p>The continuation marks as defined in this SRFI can be
@@ -389,7 +390,7 @@
 	  implicit lexical parameters and so the usual tail-call
 	  guarantees should apply as well.</p></li>
       <li><p>Using continuation marks, this SRFI makes
-	  the <code>delay-force</code> form superfluous and writing
+	  the <code>delay-force</code> form superfluous, and writing
 	  iterative lazy algorithms becomes natural.  Moreover,
 	  forcing promises is defined in a way to make it fully
 	  similar to running threads.</p></li>
@@ -793,7 +794,7 @@
     to <code>call-with-composable-continuation</code>.  Accordingly,
     invoking the captured continuation does not remove any active
     procedure calls and so the result of the second example
-    is <code>7</code>-times the value of the first.</p>
+    is <code>7</code> times the value of the first.</p>
 
     <pre class="example">(let ([tag (make-continuation-prompt-tag)])
   (* 2
