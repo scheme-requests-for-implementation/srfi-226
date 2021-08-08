@@ -331,6 +331,85 @@
 
     <p><cite>SRFI 18</cite> is extended.</p>
 
+    <h3>Why this Proposal should be Incorporated as a Standard Feature
+      in Scheme Implementations</h3>
+
+    <ul>
+      <li><p>In many if not most cases, <code>call/cc</code> (as
+	  defined in previous standards and without continuation
+	  prompts) is the wrong abstraction, a fact that has been
+	  well-known for a long time (see <a href="#kiselyov"><cite>An
+	  argument against call/cc</cite></a>).  <code>call/cc</code>
+	  is usually advertised as the hammer that can be used to
+	  implement all other control operations.  In fact, this is
+	  not true for the undelimited continuations that (the
+	  standard) <code>call/cc</code> captures but for delimited
+	  continuations (see <a href="#filinski"><cite>Representing
+	  Monads</cite></a>).  So it is actually delimited
+	  continuations that are needed in practise.  Now everything
+	  would be fine if delimited control operators could be
+	  expressed in terms of <code>call/cc</code>.  This, however,
+	  is not faithfully possible, especially not without space
+	  leaks as <code>call/cc</code> will capture parts of the
+	  continuation that will never be reached after reinstating
+	  (see <a href="#gasbichler"><cite>Final Shift for Call/cc:
+	  Direct implementation of Shift and Reset</cite></a>).  Thus,
+	  in hindsight Scheme should have always offered delimited
+	  control operators in favor of
+	  <code>call/cc</code>.  Implementing this SRFI remedies it.</p></li>
+      <li><p>By implementing this SRFI, even <code>call/cc</code>
+	  becomes a delimited control operator thanks to the concept
+	  of continuation prompts and the fact that one is available
+	  at the start of each thread.</p></li>
+      <li><p>In the literature, many sets of delimited control
+	  operators can be found, with varying expressiveness.
+	  Instead of primarly providing some or all of these, it makes
+	  more sense to provide abstractions on top of which all these
+	  like <code>reset</code>/<code>shift</code> can be built.
+	  This SRFI offers these abstractions to Scheme
+	  implementations.</p></li>
+      <li><p>The continuation marks as defined in this SRFI can be
+	  used, just to give an example, to write high-level debugging
+	  tools and can more generally be used to inspect and attach
+	  data to continuations.  Moreover, they make the concept of
+	  tail calls operationally visible to Scheme.  Finally, they
+	  enable some higher-order procedures to tail-call their
+	  argument; a good example for this
+	  is <code>with-exception-handler</code>, which should
+	  tail-call its thunk.  Continuation marks enable one to write
+	  such a version.</p></li>
+      <li><p>Consequently, this SRFI provides versions of exception
+	  handlers with improved tail-call guarantees.  The issue
+	  is not academic as the right tail-call guarantees are
+	  crucial for writing iterative algorithms in Scheme.</p></li>
+      <li><p>Similarly, the <code>parameterize</code> form is defined
+	  in this SRFI so that its body's last expression is in tail
+	  context (if the whole form is).  This is semantically the
+	  correct thing because parameters are substitutes for
+	  implicit lexical parameters and so the usual tail-call
+	  guarantees should apply as well.</p></li>
+      <li><p>Using continuation marks, this SRFI makes
+	  the <code>delay-force</code> form superfluous and writing
+	  iterative lazy algorithms becomes natural.  Moreover,
+	  forcing promises is defined in a way to make it fully
+	  similar to running threads.</p></li>
+      <li><p>Finally, the initial continuation of threads is carefully
+	  defined so that this SRFI offers clear semantics of
+	  continuations and continuation prompts with respect to
+	  multi-threaded programs.</p></li>
+      <li><p>The interactions between the various features in this
+	  proposal (continuation prompts, continuations, exceptions,
+	  parameter objects, threads) have been carefully considered
+	  and their semantics have been designed accordingly.
+	  Incorporating these features as defined (or a suitable
+	  subset of these) in a Scheme implemention guarantees
+	  consistency and coherence.</p></li>
+      <li><p>As the sample implementation shows, the features defined
+	  in this SRFI are not hard to implement in a Scheme
+	  implementation, which must already
+	  implement <code>call/cc</code> anyway.</p></li>
+    </ul>
+
     <h3>Implementation</h3>
 
     <p>The accompanying sample implementation does not implement the libraries
@@ -1903,12 +1982,21 @@
 	Feeley: <a href="https://srfi.schemers.org/srfi-39/srfi-39.html"><cite>SRFI
 	39: Parameter objects</cite></a>.</p>
       </li>
+      <li id="filinski">Andrzej Filinski: <cite>Representing
+      monads</cite>, POPL '94: Proceedings of the 21st ACM
+      SIGPLAN-SIGACT symposium on Principles of programming
+      languages, February 1994, pp. 446-457. DOI: <a href="https://doi.org/10.1145/174675.178047">10.1145/174675.178047</a>.</p></li>
       <li id="flatt">
 	<p>Matthew Flatt, R. Kent Dybvig: <cite>Compiler and runtime
 	  support for continuation marks</cite>, PLDI 2020:
 	  Proceedings of the 41st ACM SIGPLAN Conference on
 	  Programming Language Design and Implementation, June 2020, pp. 45-58. DOI: <a href="https://doi.org/10.1145/3385412.3385981">
 	    10.1145/3385412.3385981</a>.</p></li>
+      <li id="gasbichler">
+	<p>Martin Gasbichler, Michael Sperber: <cite>Final shift for
+	  call/cc:: direct implementation of shift and reset</cite>,
+	  ACM SIGPLAN Notices, Volume 37, Issue 9, September 2002,
+	  pp. 271–282. DOI: <a href="https://doi.org/10.1145/583852.581504">10.1145/583852.581504</a>.</p></li>
       <li id="kawai">
 	<p>Shiro Kawai, John Cowan, Thomas
 	Gilray: <a href="https://srfi.schemers.org/srfi-158/srfi-158.html"><cite>SRFI
@@ -1925,6 +2013,11 @@
 	<p>Richard Kelsey, Michael Sperber:
 	  <a href="https://srfi.schemers.org/srfi-34/srfi-34.html"><cite>SRFI
 	      34: Exception Handling for Programs</cite></a>.</p>
+      </li>
+      <li id="kiselyov">
+	<p>Oleg
+	Kiselyov: <a href="http://okmij.org/ftp/continuations/against-callcc.html"><cite>A
+	argument against call/cc</cite></a>.</p>
       </li>
       <li id="nieper1">
 	<p>Marc Nieper-Wißkirchen:
