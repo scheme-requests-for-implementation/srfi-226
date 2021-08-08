@@ -983,7 +983,7 @@
 	  aborts active procedure calls, a continuation barrier would
 	  be reinstated if and only if the captured continuation
 	  included a continuation barrier.</p>
-      </dd>
+      </dd></dl>
 
       <p>A continuation barrier prevents jumps into more deeply nested
       active procedure calls:</p>
@@ -1000,6 +1000,7 @@
       (lambda ()
         (k 'ok)))))<span class="result">ok</span></pre>
 
+      <dl>
       <dt class="procedure"><code>(continuation-prompt-available? <var>prompt-tag</var>)</code></dt>
       <dt class="procedure"><code>(continuation-prompt-available? <var>prompt-tag</var> <var>cont</var>)</code></dt>
       <dd>
@@ -1047,7 +1048,7 @@
 	  continuation procedure
 	  invocation), <code><var>pre-thunk</var></code> is called
 	    with no arguments.</p>
-	<p>Each call to <code><var>pre-thunk<var></code>
+	<p>Each call to <code><var>pre-thunk</var></code>
 	  and <code><var>post-thunk</var></code> belongs to the dynamic
 	  extent of the original call to <code>dynamic-wind</code>.</p>
 	<p><i>Note:</i> When a call
@@ -2037,7 +2038,7 @@
 	Feeley: <a href="https://srfi.schemers.org/srfi-39/srfi-39.html"><cite>SRFI
 	39: Parameter objects</cite></a>.</p>
       </li>
-      <li id="filinski">Andrzej Filinski: <cite>Representing
+      <li id="filinski"><p>Andrzej Filinski: <cite>Representing
       monads</cite>, POPL '94: Proceedings of the 21st ACM
       SIGPLAN-SIGACT symposium on Principles of programming
       languages, February 1994, pp. 446-457. DOI: <a href="https://doi.org/10.1145/174675.178047">10.1145/174675.178047</a>.</p></li>
