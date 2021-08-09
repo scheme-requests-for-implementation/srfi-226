@@ -1171,13 +1171,15 @@
     <pre class="example">(with-continuation-mark 'key 'mark
   (call-with-immediate-continuation-mark 'key values))<span class="result">mark</span>
 
-(with-continuation-mark 'key 'mark
-  (call-with-continuation-prompt
-    (lambda ()
-      (call-with-immediate-continuation-mark 'key values 'default))))<span class="result">default</span></pre>
+(let ([tag (make-continuation-prompt-tag)])
+  (with-continuation-mark 'key 'mark
+    (call-with-continuation-prompt
+      (lambda ()
+        (call-with-immediate-continuation-mark 'key values 'default))
+      tag)))<span class="result">default</span></pre>
 
-    <p>In the second example, we installed a continuation prompt to
-      make sure that the call
+    <p>In the second example, we installed a continuation prompt with
+      some unrelated tag to make sure that the call
       to <code>call-with-immediate-continuation-mark</code> is not in
       tail context with respect to
       the <code>with-continuation-mark</code> expression.</p>
@@ -1271,10 +1273,32 @@
 	  by <code>(current-continuation-marks <var>prompt-tag</var>)</code>
 	  is used instead.</p>
       </dd>
+    </dl>
 
+    <pre class="example">(define tag (make-continuation-prompt-tag))
+(define key (make-contiuation-mark-key))
+(define key1 (make-continuation-mark-key))
+(define key2 (make-continuation-mark-key))
+
+(with-continuation-mark key 'mark1
+  (with-continuation-mark key 'mark2
+    (call-with-continuation-prompt
+      (lambda ()
+        (with-continuation-mark key 'mark3
+          (continuation-mark-set->list #f key))))))<span class="result">(mark3 mark2)</span>
+
+(with-continuation-mark key1 'mark1
+  (with-continuation-mark key2 'mark2
+    (call-with-continuation-prompt
+     (lambda ()
+       (with-continuation-mark key1 'mark3
+         (continuation-mark-set->list* #f (list key1 key2) 'default)))
+     tag))<span class="result">(#(mark3 default) #(mark1 mark2))</span></pre>
+
+    <dl class="entries">
       <dt class="procedure"><code>(continuation-mark-set-&gt;iterator <var>mark-set</var> <var>list</var>)</code></dt>
       <dt class="procedure"><code>(continuation-mark-set-&gt;iterator <var>mark-set</var> <var>list</var> <var>obj</var>)</code></dt>
-      <dt class="procedure"><code>(continuation-mark-set-&gt;iterator <var>mark-set</var> <var>list</var> <var>obj</var> <var>prompt-tag</var></code></dt>
+      <dt class="procedure"><code>(continuation-mark-set-&gt;iterator <var>mark-set</var> <var>list</var> <var>obj</var> <var>prompt-tag)</var></code></dt>
       <dd>
 	<p>If not supplied, <code><var>obj</var></code> defaults
 	to <code>#f</code>.</p>
@@ -1286,7 +1310,7 @@
 	<p><i>Note:</i> Some recent SRFIs that have been included into
 	  early editions
 	  of <a href="#r7rs"><cite>R<sup>7</sup>RS Large</cite></a> or
-	  are to be included its forthcoming editions feature the use
+	  are to be included in its forthcoming editions feature the use
 	  of generators (see <a href="">SRFI 158</a>) to process lists
 	  (or objects of other sequence types).  As generators are
 	  fundamentally non-pure, we believe that their use should be
@@ -1297,7 +1321,21 @@
 	  by <code>(current-continuation-marks <var>prompt-tag</var>)</code>
 	  is used instead.</p>
       </dd>
+    </dl>
 
+    <p>A correct but possibly inefficient implementation
+    of <code>continuation-mark-set-&gt;iterator</code> is given as
+    follows:</p>
+
+    <pre class="example">(define continuation-mark-set-&gt;iterator
+  (lambda arg*
+    (let f ([ls (apply continuation-mark-set-&gt;list arg*)])
+      (lambda ()
+        (if (null? ls)
+          (values #f (f '()))
+          (values (car ls) (f (cdr ls))))))))</pre>
+
+    <dl class="entries">
       <dt class="procedure"><code>(continuation-mark-set-first <var>mark-set</var> <var>key</var>)</code></dt>
       <dt class="procedure"><code>(continuation-mark-set-first <var>mark-set</var> <var>key</var> <var>obj</var>)</code></dt>
       <dt class="procedure"><code>(continuation-mark-set-first <var>mark-set</var> <var>key</var> <var>obj</var> <var>prompt-tag</var>)</code></dt>
@@ -1316,6 +1354,15 @@
 	  is used instead.</p>
       </dd>
     </dl>
+
+    <pre class="example">(let ([tag (make-continuation-prompt-tag)]
+      [key (make-continuation-mark-key)])
+  (with-continuation-mark key 'mark1
+    (call-with-continuation-prompt
+     (lambda ()
+       (with-continuation-mark key 'mark2
+         (continuation-mark-set-first #f key)))
+     tag)))<span class="result">mark2</span></pre>
 
     <h4>Mark Keys</h4>
 
@@ -1341,6 +1388,9 @@
 	mark key, and <code>#f</code> otherwise.</p>
       </dd>
     </dl>
+
+    <pre class="example">(continuation-mark-key? (make-continuation-mark-key))<span class="result">#t</span>
+(equal? (make-continuation-mark-key) (make-continuation-mark-key))<span class="result">#f</span></pre>
 
     <h3>Parameter Objects</h3>
 

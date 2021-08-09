@@ -697,12 +697,49 @@
       (with-continuation-mark 'key 'mark
 	(call-with-immediate-continuation-mark 'key values)))
 (test 'default
-      (with-continuation-mark 'key 'mark
-	(call-with-continuation-prompt
-	 (lambda ()
-	   (call-with-immediate-continuation-mark 'key values 'default)))))
+      (let ([tag (make-continuation-prompt-tag)])
+	(with-continuation-mark 'key 'mark
+	  (call-with-continuation-prompt
+	   (lambda ()
+	     (call-with-immediate-continuation-mark 'key values 'default))
+	   tag))))
 
 (test #t (continuation-mark-set? (current-continuation-marks)))
+
+(test '(mark3 mark2)
+      (let ([tag (make-continuation-prompt-tag)]
+	    [key (make-continuation-mark-key)])
+	(with-continuation-mark key 'mark1
+	  (with-continuation-mark key 'mark2
+	    (call-with-continuation-prompt
+	     (lambda ()
+	       (with-continuation-mark key 'mark3
+		 (continuation-mark-set->list #f key)))
+	     tag)))))
+(test '(#(mark3 default) #(mark1 mark2))
+      (let ([tag (make-continuation-prompt-tag)]
+	    [key1 (make-continuation-mark-key)]
+	    [key2 (make-continuation-mark-key)])
+	(with-continuation-mark key1 'mark1
+	  (with-continuation-mark key2 'mark2
+	    (call-with-continuation-prompt
+	     (lambda ()
+	       (with-continuation-mark key1 'mark3
+		 (continuation-mark-set->list* #f (list key1 key2) 'default)))
+	     tag)))))
+
+(test 'mark2
+      (let ([tag (make-continuation-prompt-tag)]
+	    [key (make-continuation-mark-key)])
+	(with-continuation-mark key 'mark1
+	  (call-with-continuation-prompt
+	   (lambda ()
+	     (with-continuation-mark key 'mark2
+	       (continuation-mark-set-first #f key)))
+	   tag))))
+
+(test #t (continuation-mark-key? (make-continuation-mark-key)))
+(test #f (equal? (make-continuation-mark-key) (make-continuation-mark-key)))
 
 ;;; Test End
 
