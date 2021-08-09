@@ -741,6 +741,43 @@
 (test #t (continuation-mark-key? (make-continuation-mark-key)))
 (test #f (equal? (make-continuation-mark-key) (make-continuation-mark-key)))
 
+(test '(100 144 20736 144 #t (20736 0) 144)
+      (let* ()
+	(define p (make-parameter 10 (lambda (x) (* x x))))
+	(define ps #f)
+	(list (p)
+	      (begin (p 12) (p))
+	      (parameterize ([p (p)])
+		(set! ps (current-parameterization))
+		(p))
+	      (p)
+	      (parameterization? ps)
+	      (call-with-parameterization ps
+		(lambda ()
+		  (let ([x (p)])
+		    (p 0)
+		    (list x (p)))))
+	      (p))))
+(test #t
+      (with-continuation-mark 'in-tail-context? #t
+	(parameterize ([(make-parameter 0) 1])
+	  (call-with-immediate-continuation-mark 'in-tail-context? values))))
+
+(test '(#f 1)
+      (let ([tag (make-continuation-prompt-tag)]
+	    [p (make-parameter 0)])
+	(parameterize ([p 1])
+	  (call-in-initial-continuation
+	   (lambda ()
+	     (list (continuation-prompt-available? (call/cc values))
+		   (p)))))))
+(test 42
+      (guard (c
+	      [(uncaught-exception-error? c) (uncaught-exception-error-reason c)])
+	(call-in-initial-continuation
+	 (lambda ()
+	   (raise 42)))))
+
 ;;; Test End
 
 (test-end)

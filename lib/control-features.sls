@@ -477,7 +477,7 @@
 	      (trampoline
 	       (make-thread-thunk thread (make-parameterization) thunk))))
 	   (if (thread-end-exception thread)
-	       (raise (thread-end-exception thread))
+	       (raise (uncaught-exception-error-reason (thread-end-exception thread)))
 	       (apply values (thread-end-result thread))))))))
 
   (define trampoline

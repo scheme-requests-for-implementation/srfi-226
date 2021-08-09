@@ -1418,20 +1418,25 @@
       <dt class="procedure"><code>(make-parameter <var>obj</var> <var>proc</var>)</code></dt>
       <dd>
 	<p>Invokes <code><var>proc</var></code>
-	  on <code><var>obj</var></code> to obtain a value and returns
-	  a newly allocated parameter object, which is a procedure
-	  accepting zero or one argument and whose <dfn>initial
-	    value</dfn> is the value and whose <dfn>conversion procedure</dfn> is <code><var>proc</var></code>.</p>
+	  on <code><var>obj</var></code> in the dynamic environment of
+	  the call to <code>make-parameter</code>to obtain a value and
+	  returns a newly allocated parameter object, which is a
+	  procedure accepting zero or one argument and
+	  whose <dfn>initial value</dfn> is the value and
+	  whose <dfn>conversion procedure</dfn>
+	  is <code><var>proc</var></code>.</p>
 	<p>
 	  When a parameter object is invoked with zero arguments, the content
 	  of the cell of the parameter object in the parameterization of the
 	  invocation is returned.
 	</p>
-	<p>When a parameter object is invoked with one argument, its conversion
-	  function is applied to it to obtain a new value.  The previous value
-	  contained in the cell of the parameter object in the parameterization
-	  of the invocation is then replaced with the new value.  The result of
-	  the invocation is unspecified.</p>
+	<p>When a parameter object is invoked with one argument, its
+	  conversion function is applied to it in the dynamic
+	  environment of the call to the parameter object to obtain a
+	  new value.  The previous value contained in the cell of the
+	  parameter object in the parameterization of the invocation
+	  is then replaced with the new value.  The result of the
+	  invocation is unspecified.</p>
       </dd>
 
       <dt class="syntax"><code>(parameterize ([<span class="token">param-expr</span> <span class="token">expression</span>] &hellip;) <span class="token">body</span>)</code></dt>
@@ -1444,20 +1449,23 @@
 	<p><i>Semantics:</i> Evaluates
 	  the <code><span class="token">param-expr</span></code>s
 	  and <code><span class="token">expressions</span></code> in
-	  an arbitrary order to obtain parameter objects and values,
-	  respectively.  An assertion violation is raised if one of
-	  the obtained parameter objects is not actually a parameter
-	  object.  For each parameter object, a newly allocated cell
-	  is constructed that holds the value of the corresponding
-	  expression.  A new parameterization that differs from the
-	  parameterization of the continuation of
-	  the <code>parameterize</code> expression in mapping the
-	  obtained parameter objects to the respectively newly
-	  allocated cells is then constructed.  Finally, the most
-	  recent continuation frame in the continuation of
-	  the <code>parameterize</code> expression is annotated with a
-	  parameterization continuation mark whose value is the new
-	  parameterization and
+	  an arbitrary order to obtain parameter objects and arbitrary
+	  objects, respectively.  An assertion violation is raised if
+	  one of the obtained parameter objects is not actually a
+	  parameter object.  The objects are then mapped to respective
+	  values by invoking the conversion procedures of the
+	  corresponding parameter objects in the dynamic environment
+	  of the <code>parameterize</code> expression on them.  For
+	  each parameter object, a newly allocated cell is then
+	  constructed that holds the obtained corresponding value.  A
+	  new parameterization that differs from the parameterization
+	  of the continuation of the <code>parameterize</code>
+	  expression in mapping the obtained parameter objects to the
+	  respectively newly allocated cells is then constructed.
+	  Finally, the most recent continuation frame in the
+	  continuation of the <code>parameterize</code> expression is
+	  annotated with a parameterization continuation mark whose
+	  value is the new parameterization and
 	  the <code><span class="token">body</span></code> is
 	  evaluated in this continuation.</p>
 	<p>It is unspecified which value prevails if two of the
@@ -1489,6 +1497,41 @@
 	context.</p>
       </dd>
     </dl>
+
+    <p>While the following example demonstrates many features of
+      parameter objects, it should not be considered to illustrate good
+      programming style.  Usually, the conversion procedure should be idempotent.</p>
+
+    <pre class="example">(define p (make-parameter 10 (lambda (x) (* x x))))
+(define ps #f)
+
+(p)<span class="result">100</span>
+
+(p 12)
+(p)<span class="result">144</span>
+
+(parameterize ([p (p)])
+  (set! ps (current-parameterization))
+  (p))<span class="result">20736</span>
+(p)<span class="result">144</span>
+
+(parameterization? ps)<span class="result">#t</span>
+
+(call-with-parameterization ps
+  (lambda ()
+    (let ([x (p)])
+      (p 0)
+      (list x (p)))))<span class="result">(20736 0)</span>
+
+(p)<span class="result">144</span></pre>
+
+    <p>The following example shows how continuation marks can be used
+    to test that the last expression in a <code>parameterize</code>
+    body is in tail context if the <code>parameterize</code> expression itself is:</p>
+
+<pre class="example">(with-continuation-mark 'in-tail-context? #t
+  (parameterize ([(make-parameter 0) 1])
+    (call-with-immediate-continuation-mark 'in-tail-context? values)))<span class="result">#t</span></pre>
 
     <p><i>Note:</i> The parameter objects defined in this specification are
       fully compatible with the parameter objects
@@ -1547,13 +1590,28 @@
 	  are delivered to the initial continuation, the values are
 	  delivered to the continuation of the call
 	  to <code>call-in-initial-continuation</code>.  When an
-	  exception is raised in the dynamic extent of the handler of the continuation
-	  prompt of the initial continuation, the exception is raised
-	  in the continuation of the call
-	  to <code>call-in-initial-continuation</code>.</p>
+	  exception is raised in the dynamic extent of the handler of
+	  the continuation prompt of the initial continuation,
+	  an <code>&uncaught-exception-error</code> condition whose
+	  reason is the raised object is raised in the continuation of
+	  the call to <code>call-in-initial-continuation</code>.</p>
 	<p>This extends the semantics of <code>raise</code>.</p>
       </dd>
     </dl>
+
+<pre class="example">(let ([tag (make-continuation-prompt-tag)]
+      [p (make-parameter 0)])
+  (parameterize ([p 1])
+    (call-in-initial-continuation
+      (lambda ()
+        (list (continuation-prompt-available? (call/cc values))
+              (p))))))<span class="result">(#f 1)</span>
+
+(guard (c
+        [(uncaught-exception-error? c) (uncaught-exception-error-reason c)])
+  (call-in-initial-continuation
+    (lambda ()
+      (raise 42))))<span class="result">42</span></pre>
 
     <h3>Promises</h3>
 
@@ -1587,10 +1645,12 @@
 	  is raised in the dynamic extent of the handler of the
 	  continuation prompt of the initial continuation and the
 	  promise still hasn't delivered values or has raised an
-	  exception, the object is raised in the continuation in which
-	  the promise was forced.  Otherwise, the already delivered
-	  values are delivered again, or the already raised exception
-	  is raised again in the forcing continuation.</p>
+	  exception, an <code>&uncaught-exception-error</code>
+	  condition whose reason is the object is raised in the
+	  continuation in which the promise was forced.  Otherwise,
+	  the already delivered values are delivered again, or the
+	  already raised exception is raised again in the forcing
+	  continuation.</p>
 
 	<p>If a call to <code>force</code> occurs in tail context
 	  during the evaluation
