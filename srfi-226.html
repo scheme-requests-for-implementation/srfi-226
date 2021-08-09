@@ -1553,7 +1553,11 @@
     <h3>Initial Continuations</h3>
 
     <p>This section describes the <code>(srfi :226 control
-	call-in-initial-continuation)</code> library.</p>
+	call-in-initial-continuation)</code> library.  The library, in
+	addition to the procedures and syntax described here, also
+	exports the <code>&uncaught-exception</code> condition type
+	and associated procedures from <code>(srfi :226 control
+	threads)</code>.</p>
 
     <p>An <dfn>initial continuation</dfn> continuation is a continuation
       that consists of a single continuation prompt tagged with the
@@ -1616,7 +1620,10 @@
     <h3>Promises</h3>
 
     <p>This section describes the <code>(srfi :226 control
-	promises)</code> library.</p>
+	promises)</code> library. The library, in addition to the
+      procedures and syntax described here, also exports
+      the <code>&uncaught-exception</code> condition type and
+      associated procedures from <code>(srfi :226 control threads)</code>.</p>
 
     <p><dfn>Promises</dfn> are objects that can be <dfn>forced</dfn>
       to deliver values or raise exceptions.</p>
@@ -1903,12 +1910,19 @@
       </dd>
     </dl>
 
+    <pre class="example">(guard (c [(eqv? c 42) c])
+  (+ 1
+     (call-with-continuation-prompt
+       (lambda ()
+         (raise 42)))))<span class="result">43</span></pre>
+
     <h3>Threads</h3>
 
     <p>This section describes the <code>(srfi :226 control
 	threads)</code> library.  The library, in addition to the
-      continuation types and syntax described here, also exports the
-      following procedures from <cite>SRFI 18</cite>:
+	condition types and associated procedures and syntax described
+	here, also exports the following procedures from <cite>SRFI
+	18</cite>:
     </p>
 
     <ul>
@@ -2042,6 +2056,42 @@
 	  to <code>make-thread</code>.</p>
       </dd>
     </dl>
+
+    <pre class="example">(let ([p (make-parameter 0)])
+(parameterize ([p 1])
+  (let ([y
+         (thread-join!
+          (thread-start!
+           (thread
+             (let ([x (p)])
+               (p 2)
+               x))))])
+    (list y (p)))))<span class="result">(1 2)</span></pre>
+
+    <pre class="example">(let [(l '())]
+  (define out!
+    (lambda (x)
+      (set! l (cons x l))))
+  (define get
+    (lambda ()
+      (reverse l)))
+  (thread-join!
+   (thread-start!
+    (thread
+      (dynamic-wind
+          (lambda ()
+            (out! 'in))
+          (lambda ()
+            (call/cc
+             (lambda (k)
+               (thread-join!
+                (thread-start!
+                 (thread
+                   (out! 'thread)
+                   (k)))))))
+          (lambda ()
+            (out! 'out))))))
+  (get))<span class="result">(in thread in out out)</pre>
 
     <h2 id="implementation">Implementation</h2>
 

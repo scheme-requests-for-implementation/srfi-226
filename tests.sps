@@ -415,7 +415,6 @@
                      (do () (#f)
                        (thread-yield!))))])
            (do () (signal?)
-             (display "Wait...")
              (thread-yield!))
            (thread-terminate! t)
            (guard (c
@@ -805,6 +804,27 @@
 	  (force q)
 	  (set! x (+ x 4)))
 	x))
+
+(test 43
+      (guard (c [(eqv? c 42) c])
+	(+ 1
+	   (call-with-continuation-prompt
+	    (lambda ()
+	      (raise 42))))))
+
+(test '(1 2)
+      (let ([p (make-parameter 0)])
+	(parameterize ([p 1])
+	  (let ([y
+		 (thread-join!
+		  (thread-start!
+		   (thread
+		    (let ([x (p)])
+		      (p 2)
+		      x))))])
+	    (list y (p))))))
+
+
 ;;; Test End
 
 (test-end)
