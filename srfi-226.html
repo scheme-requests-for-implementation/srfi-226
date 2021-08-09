@@ -130,10 +130,30 @@
 
     <h2 id="issues">Issues</h2>
 
-    <ul>
-      <li>There should be more examples.</li></ul>
+    <p>The following questions were raised by John Cowan on the SRFI
+      155 mailing list and have to be decided upon:</p>
 
-    <p>None at present.</p>
+    <ul>
+      <li><p>Should fewer, but larger libraries be defined?  It has been
+	suggested that only three libraries are provided.  One for
+	promises, one for threads, and one for the rest.</p></li>
+      <li><p>Should <code>thread-terminate!</code> be dropped because it
+	is inherently unsafe?  In this case, the condition
+	types <code>&uncaught-exception-error</code>
+	and <code>&thread-already-terminated</code> could be dropped
+	as well.  This would have the pleasant implication that the
+	semantics of <code>call-in-initial-continuation</code>
+	and <code>delay</code> could be simplified as well.</p></li>
+      <li><p>Should <code>condition-variable-signal!</code> be dropped?</p></li>
+      <li><p>Should the time objects of <cite>SRFI 18</cite> be replaced
+      with jiffies?  This would mean that previously ad-hoc overloaded
+	procedures have to be split into up to three versions.</p></li>
+      <li><p>Should the specific fields on mutexes and condition
+      variables be dropped?  Other builtin types also don't have such
+	  fields.</p></li>
+      <li><p>Should the specific field of threads only be made
+	  accessible through keys indexing a (thread-local) dictionary?</p></li>
+    </ul>
 
     <h2 id="rationale">Rationale</h2>
 
