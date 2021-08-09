@@ -778,6 +778,33 @@
 	 (lambda ()
 	   (raise 42)))))
 
+(test #t (promise? (make-promise 1 2)))
+(test #t (promise? (delay 3)))
+(test #t (promise? (force (make-promise (make-promise 4)))))
+(test '(1 2) (call-with-values
+		 (lambda () (force (delay
+				     (define x 1)
+				     (values x 2))))
+	       list))
+(test 5
+      (let* ([p (make-parameter 3)]
+	     [q (parameterize
+		    ([p 5])
+		  (delay (p)))])
+	(force q)))
+
+(test 1
+      (let* ([x 0]
+	     (q (delay
+		  (set! x (+ x 1))
+		  (raise #t))))
+	(guard (c [(uncaught-exception-error? c)])
+	  (force q)
+	  (set! x (+ x 2)))
+	(guard (c [(uncaught-exception-error? c)])
+	  (force q)
+	  (set! x (+ x 4)))
+	x))
 ;;; Test End
 
 (test-end)

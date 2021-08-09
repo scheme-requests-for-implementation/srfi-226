@@ -1718,6 +1718,36 @@
       regard to the dynamic environment, the semantics of promises are
       now equivalent to that of threads.</p>
 
+    <pre class="example">(promise? (make-promise 1 2))<span class="result">#t</span>
+(promise? (delay 3))<span class="result">#t</span>
+(promise? (force (make-promise (make-promise 4))))<span class="result">#t</span>
+
+(call-with-values
+    (lambda ()
+      (force
+       (delay
+         (define x 1)
+         (values x 2))))
+  list)<span class="result">(1 2)</span>
+
+(let* ([p (make-parameter 3)]
+       [q (parameterize
+              ([p 5])
+            (delay (p)))])
+  (force q))<span class="result">5</span>
+
+(let* ([x 0]
+       (q (delay
+            (set! x (+ x 1))
+            (raise #t))))
+  (guard (c [(uncaught-exception-error? c)])
+    (force q)
+    (set! x (+ x 2)))
+  (guard (c [(uncaught-exception-error? c)])
+    (force q)
+    (set! x (+ x 4)))
+  x)<span class="result">1</span></pre>
+
     <h3>Exceptions</h3>
 
     <p>This section describes the <code>(srfi :226 control
