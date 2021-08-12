@@ -384,7 +384,7 @@
 	  at the start of each thread.</p></li>
       <li><p>In the literature, many sets of delimited control
 	  operators can be found, with varying expressiveness.
-	  Instead of primarly providing some or all of these, it makes
+	  Instead of primarily providing some or all of these, it makes
 	  more sense to provide abstractions on top of which all these,
 	  like <code>reset</code>/<code>shift</code>, can be built.
 	  This SRFI offers these abstractions to Scheme
@@ -423,7 +423,7 @@
 	  parameter objects, threads) have been carefully considered
 	  and their semantics have been designed accordingly.
 	  Incorporating these features as defined (or a suitable
-	  subset of these) in a Scheme implemention guarantees
+	  subset of these) in a Scheme implementation guarantees
 	  consistency and coherence.</p></li>
       <li><p>As the sample implementation shows, the features defined
 	  in this SRFI are not hard to implement in a Scheme
@@ -1296,7 +1296,7 @@
     </dl>
 
     <pre class="example">(define tag (make-continuation-prompt-tag))
-(define key (make-contiuation-mark-key))
+(define key (make-continuation-mark-key))
 (define key1 (make-continuation-mark-key))
 (define key2 (make-continuation-mark-key))
 
@@ -1780,7 +1780,7 @@
     <p>This section describes the <code>(srfi :226 control
 	exceptions)</code> library.</p>
 
-    <p>Conceptionally, each continuation contains at least one
+    <p>Conceptually, each continuation contains at least one
       otherwise inaccessible exception handler stack continuation
       mark, whose value is a list of exception handlers,
       which are one-argument procedures.  The <dfn>exception handler
