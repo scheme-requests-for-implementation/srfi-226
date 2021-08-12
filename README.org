@@ -1,4 +1,4 @@
-* SRFI 226: Control Operators
+* SRFI 226: Control Features
 
 ** by Marc Nieper-Wißkirchen
 
@@ -6,7 +6,7 @@
 
 keywords: [[https://srfi.schemers.org/?keywords=continuations][Continuations]], [[https://srfi.schemers.org/?keywords=control-flow][Control Flow]]
 
-This repository hosts [[https://srfi.schemers.org/srfi-226/][SRFI 226]]: Control Operators, a [[https://srfi.schemers.org/][Scheme Request for Implementation]].
+This repository hosts [[https://srfi.schemers.org/srfi-226/][SRFI 226]]: Control Features, a [[https://srfi.schemers.org/][Scheme Request for Implementation]].
 
 This SRFI is in /draft/ status.
 
