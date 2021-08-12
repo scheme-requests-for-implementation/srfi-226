@@ -1033,7 +1033,7 @@
 	  continuation delimited
 	  by <code><var>prompt-tag</var></code>, and <code>#f</code>
 	  otherwise.</p>
-      </dd>
+      </dd></dl>
 
       <pre class="example">(define tag (make-continuation-prompt-tag))
 (call-with-continuation-prompt-tag
@@ -1048,7 +1048,7 @@
   (lambda ()
     (continuation-prompt-tag-available? tag
       (call-with-composable-continuation values tag))))<span class="result">#f</span></pre>
-
+      <dl>
       <dt class="procedure"><code>(dynamic-wind <var>pre-thunk</var> <var>thunk</var> <var>post-thunk</var>)</code></dt>
       <dd>
 	<p>The <code>dynamic-wind</code> procedure
@@ -2111,7 +2111,7 @@
                    (k)))))))
           (lambda ()
             (out! 'out))))))
-  (get))<span class="result">(in thread in out out)</pre>
+  (get))<span class="result">(in thread in out out)</span></pre>
 
     <h2 id="implementation">Implementation</h2>
 
