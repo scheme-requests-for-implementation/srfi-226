@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Control Operators</title>
+    <link href="/admin.css" rel="stylesheet">
+    <link href="/list.css" rel="stylesheet">
+    <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script type="text/x-mathjax-config">
+     MathJax.Hub.Config({
+       tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+     });
+    </script>
+    <script crossorigin="anonymous" integrity=
+            "sha384-Ra6zh6uYMmH5ydwCqqMoykyf1T/+ZcnOQfFPhDrp2kI4OIxadnhsvvA2vv9A7xYv" src=
+            "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
+            type="text/javascript"></script>
+  </head>
+
+  <body>
+    <h1>SRFI 226: Control Operators</h1>
+    <p class="authors">by Marc Nieper-Wißkirchen</p>
+    <p class="based-on"></p>
+    <p class="status">status: <em>draft</em> (2021-08-06)</p>
+    <p class="keywords">keywords: <a href="https://srfi.schemers.org/?keywords=continuations">Continuations</a>, <a href="https://srfi.schemers.org/?keywords=control-flow">Control Flow</a></p><span class="see-also">See also <a href="/srfi-18/">SRFI 18: Multithreading support</a>, <a href="/srfi-34/">SRFI 34: Exception Handling for Programs</a>, <a href="/srfi-39/">SRFI 39: Parameter objects</a>, <a href="/srfi-45/">SRFI 45: Primitives for Expressing Iterative Lazy Algorithms</a>, <a href="/srfi-97/">SRFI 97: SRFI Libraries</a>, <a href="/srfi-154/">SRFI 154: First-class dynamic extents</a>, <a href="/srfi-155/">SRFI 155: Promises</a>, <a href="/srfi-157/">SRFI 157: Continuation marks</a>, and <a href="/srfi-158/">SRFI 158: Generators and Accumulators</a>.</span>
+
+    <ul class="info">
+      <li><a href="srfi-226.html">The SRFI Document</a></li>
+      <li><a href="https://srfi-email.schemers.org/srfi-226/">Discussion Archive</a></li>
+      <li><a href="https://github.com/scheme-requests-for-implementation/srfi-226">Git repo (on Github)</a></li>
+      <li>
+        <a href="mailto:srfi-226@srfi.schemers.org">srfi-226@<span class="antispam">nospam</span>srfi.schemers.org (subscribers only)</a></li>
+      <li>
+        <span class="firefox-column-workaround">
+          <form method="POST" action="https://www.simplelists.com/subscribe.php">
+            <div class="title">Subscribe to srfi-226 mailing list</div>
+            <input name="email"
+                   placeholder="email address"
+                   tabindex="1"
+                   type="email" >
+            <input name="name"
+                   placeholder="full name"
+                   tabindex="2"
+                   type="text" >
+            <p>
+              <input id="sub-digest"
+                     name="digest"
+                     tabindex="3"
+                     type="checkbox"
+                     value="digest" >
+              <label for="sub-digest">daily digest?</label></p>
+            <input class="submit"
+                   name="submit"
+                   tabindex="4"
+                   type="submit"
+                   value="Subscribe to srfi-226" >
+            <input type="hidden" name="action" value="subscribe">
+            <input type="hidden" name="list" value="srfi-226@srfi.schemers.org"></form></a></li>
+      <li>
+        <span class="firefox-column-workaround">
+          <form method="POST" action="https://www.simplelists.com/subscribe.php">
+            <p class="title">Unsubscribe from srfi-226 mailing list</p>
+            <input name="email"
+                   placeholder="email address"
+                   tabindex="5"
+                   type="email" >
+            <input class="submit"
+                   name="submit"
+                   tabindex="6"
+                   type="submit"
+                   value="Unsubscribe from srfi-226" >
+            <input name="action"
+                   type="hidden"
+                   value="unsubscribe" >
+            <input name="list"
+                   type="hidden"
+                   value="srfi-226@srfi.schemers.org"></form></a></li></ul>
+    <h2>Abstract</h2>    <p>This SRFI defines a rich set of control operators for the
+      Scheme programming language, including the
+      venerable <code>call/cc</code>
+      (<code>call-with-current-continuation</code>).  The set of
+      operators was highly influenced by the control operators provided
+      by <a href="https://racket-lang.org/"><cite>Racket</cite></a>.
+
+    <p>Continuations can be delimited by continuation prompts, and all
+      continuations become delimited continuations, at the latest by
+      the default prompt at the start of each thread.  Moreover,
+      continuations are divided into composable and non-composable
+      continuations, which can be captured and reinstated.</p>
+
+    <p>To investigate continuations, this SRFI supports continuation
+      marks and offers operators to set and retrieve them.</p>
+
+    <p>Moreover, this SRFI defines clear semantics of
+      exceptions, parameter objects, promises, and threads consistent
+      with the other concepts defined here.</p></body></html>
