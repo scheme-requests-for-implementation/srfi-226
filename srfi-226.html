@@ -307,12 +307,12 @@
 
     <p>A naive implementation of <code>delay</code> and <code>force</code> does
       not support iterative lazy algorithms as was observed, for example,
-      in <a href="van-tonder"><cite>SRFI 45</cite></a>.  That SRFI
+      in <a href="#van-tonder"><cite>SRFI 45</cite></a>.  That SRFI
       and <cite>R<sup>7</sup>RS</cite> solve the problem by providing another
       primitive, <code>delay-force</code> (called <code>lazy</code>
       in <cite>SRFI 45</cite>).  When continuation marks are available,
       however, such an irksome primitive is not needed;
-      see <a href="nieper2">SRFI 155</a>.  Consequently, this specification
+      see <a href="#nieper2">SRFI 155</a>.  Consequently, this specification
       defines <dfn>promises</dfn> in a way that makes <code>delay-force</code>
       superfluous.</p>
 
