@@ -522,10 +522,11 @@
 
     <h4>Conditions</h4>
 
-    <p><i>Note:</i> If this SRFI is implemented in a system that does
-      not support the condition system of <cite>R6RS</cite>, the
-      respective parts of this specification should be
-      applied <i>mutatis mutandis</i>.</p>
+    <p><i>Note:</i> If this SRFI is implemented in a system that does not
+      support the condition system of <cite>R6RS</cite>, the respective parts
+      of this specification should be applied <i>mutatis mutandis</i>.  We
+      follow the presentation style of <cite>R6RS</cite> for the condition
+      types defined in this and the other libraries.</p>
 
     <dl class="entries">
       <dt class="entry"><code>&amp;continuation</code><span class="type">condition-type</span></dt>
@@ -737,9 +738,9 @@
 	<p><i>Note:</i> As a continuation prompt tagged with the
 	  default prompt tag is available in the initial continuation
 	  of each thread, including the primordial thread,
-	  the <code>call-with-current-procedure</code> defined here is
+	  the <code>call-with-current-continuation</code> defined here is
 	  a conservative extension of
-	  the <code>call-with-current-procedure</code> of earlier
+	  the <code>call-with-current-continuation</code> of earlier
 	  Scheme reports.</p>
       </dd>
     </dl>
@@ -1589,17 +1590,16 @@
 	and associated procedures from <code>(srfi :226 control
 	threads)</code>.</p>
 
-    <p>An <dfn>initial continuation</dfn> continuation is a continuation
-      that consists of a single continuation prompt tagged with the
-      default prompt and with the default handler.  Moreover, a single
-      initial exception handler is installed in an initial
-      continuation that, when invoked on a <code>&amp;serious</code>
+    <p>An <dfn>initial continuation</dfn> is one that consists of a single
+      continuation prompt tagged with the default prompt and with the default
+      handler.  Moreover, a single initial exception handler is installed in an
+      initial continuation that, when invoked on a <code>&amp;serious</code>
       condition or on a non-condition object, aborts to the most recent
-      continuation prompt tagged with the default prompt tag and calls
-      its handler with a thunk that, when evaluated, raises an
-      exception whose condition is the object.  When invoked on a
-      non-<code>&amp;serious</code> condition object, the initial
-      handler returns with unspecified values instead.</p>
+      continuation prompt tagged with the default prompt tag and calls its
+      handler with a thunk that, when evaluated, raises an exception whose
+      condition is the object.  When invoked on a non-<code>&amp;serious</code>
+      condition object, the initial handler returns with unspecified values
+      instead.</p>
 
     <p>Executing a top-level program starts with the initial
       continuation.  When values are delivered in the initial
@@ -1607,7 +1607,7 @@
       raised in the dynamic extent of the handler of the initial
       continuation prompt, the program may exit or may provide a
       choice of other options.  It is expected that the initial
-      exception handler reports than an exception has been raised, and
+      exception handler reports that an exception has been raised, and
       displays information about the condition object that was
       provided.</p>
 
@@ -1817,8 +1817,8 @@
     <dl class="entries">
       <dt class="procedure"><code>(with-exception-handler <var>handler</var> <var>thunk</var>)</code></dt>
       <dd>
-	<p><code>It is an assertion violation
-	if <var>handler</var></code> is not a procedure or does not
+	<p>It is an assertion violation
+	if <code><var>handler</var></code> is not a procedure or does not
 	accept one argument.</p>
 	<p>Installs <code><var>handler</var></code> in the
 	  continuation to the call
