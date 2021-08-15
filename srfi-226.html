@@ -989,6 +989,16 @@
       define <code>call-in-continuation</code> in terms of invoking a
       continuation, so the former is the more primitive notion.</p>
 
+    <p><i>Remark:</i> That a primitive like <code>call-in-continuation</code>
+      is needed, was already noted in <a href="#feeley3"><cite>A better API for
+      first-class continuations</cite></a>.  In that paper, it is
+      called <code>continuation-graft</code>.  (The two accompanying
+      procedures <code>continuation-capture</code>
+      and <code>continuation-return</code> in that paper are
+      just <code>call/cc</code> and <code>apply</code> in the context of this
+      SRFI, which treats continuations as procedures for compatiblity
+      reasons.)</p>
+
     <dl class="entries">
       <dt class="procedure"><code>(call-with-continuation-barrier <var>thunk</var>)</code></dt>
       <dd>
@@ -1137,6 +1147,17 @@
 	continuation mark for a key for which the continuation frame
 	has already been annotated with a mark, the most recent
 	annotation prevails.</p>
+
+    <p><i>Remark:</i> In <cite>A better API for first-class
+      continuations</cite>, the idea of a portable debugger using a procedure
+      named <code>continuation-next</code> to walk up a continuation was
+      presented.  With continuation marks this can be easily achieved when
+      frames are explicitly marked.  The advantage of an explicit marking is
+      that the debugger can then be instructed to automatically skip over
+      frames installed by standard library procedures, for example.  A Scheme
+      system could offer a debug mode, in which every frame is automatically
+      marked in a specific way that is understood by the debugger.
+    </p>
 
     <dl class="entries">
       <dt class="syntax"><code>(with-continuation-mark <span class="token">key-expr</span> <span class="token">val-expr</span> <span class="token">expression</span>)</code></dt>
@@ -2257,6 +2278,11 @@
 	<p>Marc
 	Feeley: <a href="https://srfi.schemers.org/srfi-39/srfi-39.html"><cite>SRFI
 	39: Parameter objects</cite></a>.</p>
+      </li>
+      <li id="feeley3">
+	<p>Marc Feeley: <a href="http://www.iro.umontreal.ca/~feeley/papers/FeeleySW01.pdf"><cite>A better API for first-class
+	continuations</cite></a>, Scheme and Functional Programming Workshop
+	(SFPW'01), pages 1-3, September 2001.
       </li>
       <li id="filinski"><p>Andrzej Filinski: <cite>Representing
       monads</cite>, POPL '94: Proceedings of the 21st ACM
