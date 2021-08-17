@@ -118,25 +118,89 @@
 
     <h2 id="abstract">Abstract</h2>
 
-    <p>This SRFI defines a rich set of control operators for the
-      Scheme programming language, including the venerable
-      <code>call/cc</code>
-      (<code>call-with-current-continuation</code>). The set of
-      operators was highly influenced by the control
-      operators provided by <a href="#racket"><cite>Racket</cite></a>.
+    <p>Whenever an expression is evaluated during the run of a Scheme program,
+    there is a continuation awaiting the values of the expression. It is a
+    distinguishing property of the Scheme programming language to offer a
+    procedure (named <code>call/cc</code>) that captures the current
+    continuation as a procedure, which, when called, aborts the then current
+    continuation and reinstates the captured one.</p>
 
-    <p>Continuations can be delimited by continuation prompts, and all
-      continuations become delimited continuations, at the latest by
-      the default prompt at the start of each thread.  Moreover,
-      continuations are divided into composable and non-composable
-      continuations, which can be captured and reinstated.</p>
+    <p>One can visualize a continuation as a list of (continuation) frames
+      where a non-tail call adds a frame to the top of the list and where the return
+      from a non-tail call removes the appropriate frame.</p>
 
-    <p>To investigate continuations, this SRFI supports continuation
-      marks and offers operators to set and retrieve them.</p>
+    <p>Moreover, each expression is evaluated in a dynamic environment that
+      conceptually holds the values of parameters like the current output port
+      and the dynamic-wind stack at the point of evaluation.  As the dynamic
+      environment is captured and reinstated along the continuation when the
+      <code>call/cc</code> machinery is used, we can view it conceptually as
+      part of the continuation.</p>
 
-    <p>Moreover, this SRFI defines clear semantics of
-      exceptions, parameter objects, promises, and threads consistent
-      with the other concepts defined here.</p>
+    <p>The libraries defined in this SRFI are all concerned with continuations
+      in a wider sense. More specifically, the contributions are as follows:</p>
+
+    <p><i>Continuation Prompts:</i> A continuation prompt is a special
+    continuation frame, which is tagged with a so-called prompt tag. Procedures
+    to install continuation prompts and to abort the current continuation and
+    to escape back to a previously installed continuation prompt are
+    provided. Moreover, continuation prompts are equipped with handlers that
+    are invoked when a continuation is aborted to them.</p>
+
+    <p><i>Continuations:</i> When continuations are captured, the list of
+    captured continuation frames are always delimited at some continuation
+    prompt. This extends the semantics of Scheme’s
+    <code>call-with-current-continuation</code>.  Moreover, a procedure to
+    capture so-called composable continuations is provided. As opposed to
+    continuations captured by <code>call-with-current-continuation</code>,
+    invoking a composable continuation does not abort the then current
+    continuation, so composable continuations behave like ordinary procedures.
+    Together with continuation prompts, composable continuations allow one to
+    implement the various proposed sets of control operators for delimited
+    continuations. Finally, a primitive is provided that allows calling a thunk
+    in a given continuation instead of just delivering values to it.</p>
+
+    <p><i>Continuation Marks:</i> Continuation marks are a provided feature
+      that allows one to attach arbitrary information to continuation frames,
+      which are captured and reinstated along the rest of the
+      continuation. Conceptually, exception handlers and parameters are
+      implemented in terms of continuation marks, but the syntax and procedures
+      defined in this SRFI allow the user to use them in more general
+      ways. Moreover, they reify the notion of a tail call, allowing, for
+      example, to test for tail context.</p>
+
+    <p><i>Exceptions:</i> The exception mechanism
+    of <a href="#sperber"><cite>R6RS</cite></a>
+    and <a href="#shinn"><cite>R7RS</cite></a> is detailed with respect to the
+    concepts introduced in this SRFI.  Moreover, the
+    <code>with-exception-handler</code> procedure and the <code>guard</code>
+    syntax gain additional tail context guarantees.</p>
+
+    <p><i>Parameters:</i> The parameter object mechanism
+    of <a href="#feeley2"><cite>SRFI 39</cite></a> and <cite>R7RS</cite> is
+    detailed with respect to the concepts introduced in this SRFI.  Procedures
+    to retrieve the current parameterization and to reinstall it later are
+    provided. Moreover, the parameterize syntax gains an additional tail
+    context guarantee.</p>
+
+    <p><i>Delayed evaluation:</i> The syntax and procedures on delayed
+      evaluation of <cite>R7RS</cite> are revisited and redefined to handle the
+      following satisfactorily: the parameterization of the delayed expression
+      being forced, the treatment of exceptions raised during forcing of
+      delayed expressions, and iterative lazy algorithms. Moreover, their
+      semantics are detailed with respect to the concepts introduced in this
+      SRFI, and promises can naturally deliver an arbitrary number of values
+      when being forced. Finally, the initial continuation of a delayed
+      expression being forced is defined in a way that makes it interchangeably
+      with the initial continuation of a thread.</p>
+
+    <p><i>Threads:</i> The thread mechanism of <a href="#feeley1"><cite>SRFI
+      18</cite></a> is detailed with respect to the concepts introduced in this
+      SRFI.  In particular, mutation of parameter objects in multithreaded
+      applications is specified. Moreover, the API is stripped by
+      removing <code>thread-terminate!</code>.</p>
+
+    <p>Large parts of this SRFI have been inspired by the control operators
+      provided by <a href="#racket"><cite>Racket</cite></a>.
 
     <h2 id="issues">Issues</h2>
 
@@ -147,13 +211,13 @@
       <li><p>Should fewer, but larger libraries be defined?  It has been
 	suggested that only three libraries are provided.  One for
 	promises, one for threads, and one for the rest.</p></li>
-      <li><p>Should <code>thread-terminate!</code> be dropped because it
-	is inherently unsafe?  In this case, the condition
-	types <code>&uncaught-exception-error</code>
-	and <code>&thread-already-terminated</code> could be dropped
-	as well.  This would have the pleasant implication that the
-	semantics of <code>call-in-initial-continuation</code>
-	and <code>delay</code> could be simplified as well.</p></li>
+      <li><p>Should <code>thread-terminate!</code> be dropped because it is
+	inherently unsafe?  (The abstract already says so.)  In this case, the
+	condition types <code>&uncaught-exception-error</code>
+	and <code>&thread-already-terminated</code> could be dropped as well.
+	This would have the pleasant implication that the semantics
+	of <code>call-in-initial-continuation</code> and <code>delay</code>
+	could be simplified as well.</p></li>
       <li><p>Should <code>condition-variable-signal!</code> be dropped?</p></li>
       <li><p>Should the time objects of <cite>SRFI 18</cite> be replaced
       with jiffies?  This would mean that previously ad-hoc overloaded
@@ -284,8 +348,8 @@
       deeply linked with the concepts that are involved in this specification.
       For example, each thread possesses an initial continuation, containing a
       continuation prompt with a handler that has to be described.  For that,
-      this specification extends the semantics of <a href="#feeley1"><cite>SRFI
-      18</cite></a> to provide consistent semantics in the presence of multiple
+      this specification extends the semantics of <cite>SRFI
+      18</cite> to provide consistent semantics in the presence of multiple
       threads, continuations, continuation prompts, and parameterizations.</p>
 
     <h4>Parameter Objects</h4>
@@ -354,8 +418,8 @@
     <h3>Relation to Other SRFIs</h3>
 
     <p>This SRFI supersedes <a href="#kelsey2"><cite>SRFI
-	  34</cite></a>, <a href="#feeley2"><cite>SRFI
-	  39</cite></a>, <a href="#nieper1"><cite>SRFI
+	  34</cite></a>, <cite>SRFI
+	  39</cite>, <a href="#nieper1"><cite>SRFI
 	  154</cite></a>, <cite>SRFI
 	  155</cite>, and <a href="#nieper3"><cite>SRFI
 	  157</cite></a>.</p>
@@ -2034,7 +2098,7 @@
 	  and <code>uncaught-exception-error-reason</code> are the
 	  same as <code>uncaught-exception</code>
 	  and <code>uncaught-exception-reason</code>
-	  in <a href="#feeley1"><cite>SRFI 18</cite></a>.</p>
+	  in <cite>SRFI 18</cite>.</p>
 	<p><i>Note:</i> The names defined in this specification are
 	  more in line with the naming conventions
 	  in <cite>R<sup>6</sup>RS</cite>.</p>
@@ -2048,7 +2112,7 @@
   make-thread-already-terminated-error thread-already-terminated-error?)</pre>
 	<p>Procedure <code>thread-already-terminated-error?</code>  is the same
 	  as <code>terminated-thread-exception?</code>
-	  in <a href="#feeley1"><cite>SRFI 18</cite></a>.</p>
+	  in <cite>SRFI 18</cite>.</p>
       </dd>
       <dt class="entry"><code>&amp;thread-timeout</code><span class="type">condition-type</span></dt>
       <dt class="procedure"><code>(make-thread-timeout-error <var>obj</var></code>)</dt>
@@ -2059,7 +2123,7 @@
   make-thread-timeout-error thread-timeout-error?)</pre>
 	<p>Procedure <code>thread-timeout-error?</code>  is the same
 	  as <code>join-timeout-exception?</code>
-	  in <a href="#feeley1"><cite>SRFI 18</cite></a>.</p>
+	  in <cite>SRFI 18</cite>.</p>
       </dd>
       <dt class="entry"><code>&amp;thread-abandoned-mutex</code><span class="type">condition-type</span></dt>
       <dt class="procedure"><code>(make-thread-abandoned-mutex-error <var>obj</var></code>)</dt>
@@ -2070,7 +2134,7 @@
   make-thread-abandoned-mutex-error thread-abandoned-mutex-error?)</pre>
 	<p>Procedure <code>thread-abandoned-mutex-error?</code>  is the same
 	  as <code>abandoned-mutex-exception?</code>
-	  in <a href="#feeley1"><cite>SRFI 18</cite></a>.</p>
+	  in <cite>SRFI 18</cite>.</p>
       </dd>
     </dl>
 
