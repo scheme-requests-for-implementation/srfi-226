@@ -760,15 +760,15 @@
     <p>Each <dfn>continuation (procedure)</dfn> is a procedure.</p>
 
     <dl class="entries">
+      <dt class="procedure"><code>(call-with-non-composable-continuation <var>proc</var> <var>prompt-tag</var>)</code></dt>
+      <dt class="procedure"><code>(call-with-non-composable-continuation <var>proc</var>)</code></dt>
       <dt class="procedure"><code>(call-with-current-continuation <var>proc</var>)</code></dt>
-      <dt class="procedure"><code>(call-with-current-continuation <var>proc</var> <var>prompt-tag</var>)</code></dt>
       <dt class="procedure"><code>(call/cc <var>proc</var>)</code></dt>
-      <dt class="procedure"><code>(call/cc <var>proc</var> <var>prompt-tag</var>)</code></dt>
       <dd>
 	<p>If not supplied, <code><var>prompt-tag</var></code>
 	defaults to the default prompt tag.</p>
 	<p>It is an error if <code><var>proc</var></code> does not accept one argument.</p>
-	<p>The procedure <code>call-with-current-continuation</code>
+	<p>The procedure <code>call-with-non-composable-continuation</code>
 	  packages all active procedure calls in the current
 	  continuation up to but not including a continuation prompt
 	  tagged with <code><var>prompt-tag</var></code> as a
@@ -787,7 +787,7 @@
 	</p>
 	<p>We say that the continuation procedure
 	is <dfn>delimited</dfn> by <code><var>prompt-tag</var></code>.</p>
-	<p>If a call to <code>call-with-current-continuation</code>
+	<p>If a call to <code>call-with-non-composable-continuation</code>
 	occurs in a tail context, the call
 	to <code><var>proc</var></code> is also in a tail context.</p>
 	<p>If a continuation prompt tagged
@@ -798,13 +798,15 @@
 	  with <code><var>prompt-tag</var></code> is not available in
 	  the current continuation when the continuation procedure is called, an exception with condition
 	  type <code>&amp;continuation</code> is raised.</p>
-	<p>The identifier <code>call/cc</code> is an alias for <code>call-with-current-continuation</code>.</p>
+	<p>The identifier <code>call/cc</code> is an alias
+	for <code>call-with-current-continuation</code>, which does
+	not take a <code><var>prompt-tag</var></code> argument.</p>
 	<p><i>Note:</i> As a continuation prompt tagged with the
 	  default prompt tag is available in the initial continuation
 	  of each thread, including the primordial thread,
-	  the <code>call-with-current-continuation</code> defined here is
+	  the <code>call-with-non-composable-continuation</code> defined here is
 	  a conservative extension of
-	  the <code>call-with-current-continuation</code> of earlier
+	  the <code>call-with-non-composable-continuation</code> of earlier
 	  Scheme reports.</p>
       </dd>
     </dl>
@@ -817,7 +819,7 @@
    (call-with-continuation-prompt
     (lambda ()
       (* 3
-         (call-with-current-continuation
+         (call-with-non-composable-continuation
           (lambda (k)
             (* 5
                (call-with-continuation-prompt
@@ -871,7 +873,7 @@
 	  type <code>&amp;continuation</code> is raised.</p>
 	<p><i>Note:</i> The difference between the continuation
 	  procedure returned
-	  by <code>call-with-current-continuation</code>
+	  by <code>call-with-non-composable-continuation</code>
 	  and <code>call-with-composable-continuation</code> is that
 	  the former removes portions of the then-current
 	  continuation, while the latter does not.  The former
@@ -884,7 +886,7 @@
     </dl>
 
     <p>The following example is similar to the previous one except
-    that the call to <code>call-with-current-continuation</code> is
+    that the call to <code>call-with-non-composable-continuation</code> is
     replaced with a call
     to <code>call-with-composable-continuation</code>.  Accordingly,
     invoking the captured continuation does not remove any active
@@ -1080,7 +1082,7 @@
 	exception with condition type <code>&amp;continuation</code> is
 	  raised.</p>
 	<p>This extends the semantics
-	  of <code>call-with-current-continuation</code>
+	  of <code>call-with-non-composable-continuation</code>
 	  and <code>call-with-composable-continuation</code>.</p>
 	<p>The calls to the <code><var>thunk</var></code>s are never in tail
 	  context.</p>
@@ -1124,11 +1126,11 @@
 (call-with-continuation-prompt-tag
   (lambda ()
     (continuation-prompt-tag-available? tag
-      (call-with-current-continuation values))))<span class="result">#t</span>
+      (call-with-non-composable-continuation values))))<span class="result">#t</span>
 (call-with-continuation-prompt-tag
   (lambda ()
     (continuation-prompt-tag-available? tag
-      (call-with-current-continuation values tag))))<span class="result">#t</span>
+      (call-with-non-composable-continuation values tag))))<span class="result">#t</span>
 (call-with-continuation-prompt-tag
   (lambda ()
     (continuation-prompt-tag-available? tag
@@ -1167,7 +1169,7 @@
 	  in <code><var>pre-thunk</var></code>
 	  or <code><var>post-thunks</var></code>.
 	<p>This extends the semantics
-	  of <code>abort-current-continuation</code>, <code>call-with-current-continuation</code>,
+	  of <code>abort-current-continuation</code>, <code>call-with-non-composable-continuation</code>,
 	  and <code>call-with-composable-continuation</code>.</p>
 	<p>The calls to the <code><var>thunk</var></code>s are never in tail
 	  context.</p>

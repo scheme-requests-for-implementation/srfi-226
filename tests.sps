@@ -574,7 +574,7 @@
            (call-with-continuation-prompt
             (lambda ()
               (* 3
-                 (call/cc
+                 (call-with-non-composable-continuation
                   (lambda (k)
                     (* 5
                        (call-with-continuation-prompt
@@ -669,7 +669,7 @@
 	 (lambda ()
 	   (list
 	    (continuation-prompt-available? tag (call-with-current-continuation values))
-	    (continuation-prompt-available? tag (call-with-current-continuation values tag))
+	    (continuation-prompt-available? tag (call-with-non-composable-continuation values tag))
 	    (continuation-prompt-available? tag (call-with-composable-continuation values tag))))
 	 tag)))
 

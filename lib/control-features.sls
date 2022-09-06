@@ -25,6 +25,7 @@
 (library (control-features)
   (export call-with-continuation-prompt abort-current-continuation
 	  call-with-current-continuation call-with-composable-continuation
+	  call-with-non-composable-continuation
 	  continuation?
 	  call-in-continuation continuation-prompt-available?
 	  call-with-continuation-barrier dynamic-wind
@@ -710,10 +711,10 @@
 		 (f (cdr mf*)))
 	       maybe-again-thunk))))))
 
-  (define/who call-with-current-continuation
+  (define/who call-with-non-composable-continuation
     (case-lambda
       [(proc)
-       (call-with-current-continuation proc (default-continuation-prompt-tag))]
+       (call-with-non-composable-continuation proc (default-continuation-prompt-tag))]
       [(proc prompt-tag)
        (assert (procedure? proc))
        (assert (continuation-prompt-tag? prompt-tag))
@@ -725,6 +726,10 @@
 		 (current-marks)
 		 (current-winders)
 		 prompt-tag))))]))
+
+  (define/who call-with-current-continuation
+    (lambda (proc)
+      (call-with-non-composable-continuation proc)))
 
   (define/who call-with-composable-continuation
     (case-lambda
