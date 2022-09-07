@@ -1812,10 +1812,10 @@
 	<p><i>Syntax:</i>
 	  <code><span class="token">Body</span></code> is a body.</p>
 	<p><i>Semantics:</i> Evaluates to a promise that behaves as
-	  follows when forced in a continuation: If the promise
+	  follows when forced in a continuation <var>k</var>: If the promise
 	  already has delivered values, the same values are delivered
 	  again, and if the promise already has raised an exception,
-	  the same exception is raised again in the continuation.
+	  the same exception is raised again in the continuation <var>k</var>.
 	  Otherwise, <code><span class="token">body</span></code> is
 	  evaluated in an initial continuation.  The parameterization
 	  of the initial continuation is the same as the
@@ -1826,16 +1826,16 @@
 	  values are delivered to the continuation in which the
 	  promise was forced.  Otherwise, the already delivered values
 	  are delivered again, or the already raised exception is
-	  raised again in the forcing continuation.  When an exception
+	  raised again in the continuation <var>k</var>.  When an exception
 	  is raised in the dynamic extent of the handler of the
 	  continuation prompt of the initial continuation and the
 	  promise still hasn't delivered values or has raised an
 	  exception, an <code>&uncaught-exception-error</code>
 	  condition whose reason is the object is raised in the
-	  continuation in which the promise was forced.  Otherwise,
+	  continuation <var>k</var>.  Otherwise,
 	  the already delivered values are delivered again, or the
-	  already raised exception is raised again in the forcing
-	  continuation.</p>
+	  already raised exception is raised again in the
+	  continuation <var>k</var>.</p>
 
 	<p>If a call to <code>force</code> occurs in tail context
 	  during the evaluation
