@@ -39,13 +39,11 @@
 
   (define lock!
     (lambda ()
-      ;(display "Lock!\n")
       (assert (not (locked?)))
       (set! *lock* #t)))
 
   (define unlock!
     (lambda ()
-      ;(display "Unlock!\n")
       (assert (locked?))
       (set! *lock* #f)))
 

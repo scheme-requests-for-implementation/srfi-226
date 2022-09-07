@@ -824,6 +824,18 @@
 		      x))))])
 	    (list y (p))))))
 
+(test 'default (tlref (make-thread-local 'default)))
+
+(test 45 (let ([tl (make-thread-local #f)]) (tlset! tl 45) (tlref tl)))
+
+(test '(1 2)
+      (let* ([tl (make-thread-local 1)]
+	     [x (thread-join!
+		 (thread-start!
+		  (thread
+		   (tlset! tl 2)
+		   (tlref tl))))])
+	(list (tlref tl) x)))
 
 ;;; Test End
 

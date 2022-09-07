@@ -375,6 +375,21 @@
       observed by the other thread.  This is a clear semantics because this is
       the same behavior as implemented by lexical variables.</p>
 
+    <h4>Thread locals</h4>
+
+    <p>Although they have been proposed for this application,
+      parameter objects are unsuited to provide thread-local cells.  The
+      main reason is that the current parameterization is part of the
+      current continuation.  As the current continuation can be captured
+      and reinstated in any thread, the parametrization cannot be a
+      per-thread entity.</p>
+
+    <p>Instead, this specification defines first-class thread locals
+      akin to thread-specific storage in the <a href="c17"><cite>C
+      programming language</cite></a> and to thread-specific data keys
+      in <cite>POSIX</cite>.  In particular, the former be efficiently
+      implemented in terms of the latter.</p>
+
     <h4>Promises</h4>
 
     <p>A naive implementation of <code>delay</code> and <code>force</code> does
@@ -579,6 +594,8 @@
       <dd>procedure or <code>#f</code></dd>
       <dt><code><var>k</var></code></dt>
       <dd>undelimited continuation</dd>
+      <dt><code><var>tl</var></code></dt>
+      <dd>thread local</dd>
     </dl>
 
     <h3>Iterators</h3>
@@ -2069,8 +2086,6 @@
       <li><code>thread?</code></li>
       <li><code>make-thread</code></li>
       <li><code>thread-name</code></li>
-      <li><code>thread-specific</code></li>
-      <li><code>thread-specific-set!</code></li>
       <li><code>thread-start!</code></li>
       <li><code>thread-yield!</code></li>
       <li><code>thread-sleep!</code></li>
@@ -2079,16 +2094,12 @@
       <li><code>mutex?</code></li>
       <li><code>make-mutex</code></li>
       <li><code>mutex-name</code></li>
-      <li><code>mutex-specific</code></li>
-      <li><code>mutex-specific-set!</code></li>
       <li><code>mutex-state</code></li>
       <li><code>mutex-lock!</code></li>
       <li><code>mutex-unlock!</code></li>
       <li><code>condition-variable?</code></li>
       <li><code>make-condition-variable</code></li>
       <li><code>condition-variable-name</code></li>
-      <li><code>condition-specific</code></li>
-      <li><code>condition-specific-set!</code></li>
       <li><code>condition-signal!</code></li>
       <li><code>condition-broadcast!</code></li>
       <li><code>current-time</code></li>
@@ -2266,6 +2277,46 @@
             (out! 'out))))))
   (get))<span class="result">(in thread in out out)</span></pre>
 
+    <h4>Thread locals</h4>
+
+    <p>The procedures in this subsection are also exported by
+      the <code>(srfi :226 control thread-locals)</code> library.</p>
+
+    <p><dfn>Thread locals</dfn> are opaque values used to identify
+      thread-specific locations.</p>
+
+    <p>The <dfn>thread-specific storage</dfn> is an opaque table
+      associating to each current and future thread and to
+      each thread local a cell that holds a value.</p>
+
+    <dl class="entries">
+      <dt class="entry"><code>(make-thread-local <var>obj</var>)</code><span class="type"> procedure</span></dt>
+      <dd>
+	<p>Returns a thread local that is not <code>equal?</code> to
+	any prior or future results
+	from <code>make-thread-local</code>.  The
+	object <code><var>obj</var></code> is stored the cells
+	associated to the thread local in the thread-specific
+	storage.</p>
+      </dd>
+      <dt class="entry"><code>(thread-local? <var>obj</var>)</code><span class="type"> procedure</span></dt>
+      <dd>
+	<p>Returns <code>#t</code> if <code><var>obj</var></code> is a thread local, and <code>#f</code> otherwise.</p>
+      </dd>
+      <dt class="entry"><code>(tlref <var>tl</var>)</code><span class="type"> procedure</span></dt>
+      <dd>
+	<p>Returns the value of the cell associated to the current
+	thread and to <code><var>tl</var></code> in the
+	thread-specific storage.</p>
+      </dd>
+      <dt class="entry"><code>(tlset! <var>tl</var> <var>obj</var>)</code><span class="type"> procedure</span></dt>
+      <dd>
+	<p>Sets the value of the cell associated to the current
+	  thread and to <code><var>tl</var></code> in the
+	  thread-specific storage to <code><var>obj</var></code>.</p>
+      </dd>
+    </dl>
+
     <h2 id="implementation">Implementation</h2>
 
     <h3>Portability</h3>
@@ -2427,6 +2478,9 @@
 	  call/cc:: direct implementation of shift and reset</cite>,
 	  ACM SIGPLAN Notices, Volume 37, Issue 9, September 2002,
 	  pp. 271–282. DOI: <a href="https://doi.org/10.1145/583852.581504">10.1145/583852.581504</a>.</p></li>
+      <li id="c17">
+        <p><a href="https://www.iso.org/standard/74528.html">ISO/IEC 9899:2018 Information technology — Programming languages — C</a></p>
+      </li>
       <li id="kawai">
 	<p>Shiro Kawai, John Cowan, Thomas
 	Gilray: <a href="https://srfi.schemers.org/srfi-158/srfi-158.html"><cite>SRFI
@@ -2463,6 +2517,9 @@
 	<p>Marc Nieper-Wißkirchen:
 	  <a href="https://srfi.schemers.org/srfi-157/srfi-157.html"><cite>SRFI
 	      157: Continuation marks</cite></a>.</p>
+      </li>
+      <li id="posix">
+        <p><a href="http://get.posixcertified.ieee.org/">Portable Operating System Interface (IEEE 1003)</a></p>
       </li>
       <li id="r7rs">
 	<p><a href="https://github.com/johnwcowan/r7rs-work/blob/master/R7RSHomePage.md">R7RS Home Page</a>.</p>

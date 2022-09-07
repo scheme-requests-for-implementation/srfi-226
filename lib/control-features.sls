@@ -48,8 +48,8 @@
 	  read-char peek-char read
 	  write-char newline display write
 	  call-in-initial-continuation
-	  current-thread thread? make-thread thread-name thread-specific
-	  thread-specific-set! thread-start! thread-yield!
+	  current-thread thread? make-thread thread-name
+	  thread-start! thread-yield!
 	  thread-terminate! thread-join!
 	  &thread make-thread-error thread-error?
 	  &uncaught-exception
@@ -64,7 +64,8 @@
 	  delay make-promise promise? force
 	  run
 	  (rename (call-with-current-continuation call/cc))
-	  (rename (%thread thread)))
+	  (rename (%thread thread))
+	  make-thread-local thread-local? tlref tlset!)
   (import (rename (except (rnrs (6))
 			  call/cc
 			  call-with-current-continuation
@@ -86,6 +87,7 @@
 		  (write rnrs:write))
 	  (rnrs mutable-pairs (6))
 	  (control-features define-who)
+	  (control-features make-ephemeron-eq-hashtable)
 	  (control-features primitives)
 	  (control-features threading))
 
@@ -1327,6 +1329,32 @@
 	[_
 	 (syntax-violation who "invalid syntax" stx)])))
 
+  ;; Thread locals
+
+  (define-record-type thread-local
+    (nongenerative) (sealed #t) (opaque #t)
+    (fields (mutable default)))
+
+  (define make-storage
+    (lambda ()
+      (make-ephemeron-eq-hashtable)))
+
+  (define/who tlref
+    (lambda (tl)
+      (unless (thread-local? tl)
+	(assertion-violation who "not a thread local" tl))
+      (hashtable-ref (current-thread-storage) tl (thread-local-default tl))))
+
+  (define/who tlset!
+    (lambda (tl obj)
+      (unless (thread-local? tl)
+	(assertion-violation who "not a thread local" tl))
+      (hashtable-set! (current-thread-storage) tl obj)))
+
+  (define current-thread-storage
+    (lambda ()
+      (thread-storage (current-thread))))
+
   ;; Threads
 
   (define-syntax %thread
@@ -1352,11 +1380,11 @@
 	    (mutable %thread)
 	    name
 	    (mutable current-state)
-	    (mutable specific)
 	    (mutable end-result)
 	    (mutable end-exception)
 	    (mutable %mutex)
-	    (mutable %condition-variable)))
+	    (mutable %condition-variable)
+	    storage))
 
   (define make-thread-thunk
     (lambda (thread ps thunk)
@@ -1389,13 +1417,14 @@
       (unless (procedure? thunk)
 	(assertion-violation who "not a procedure" thunk))
       (let ([thread
-	     (%make-thread #f #f #f name (thread-state new) #f '() #f (make-%mutex) (make-%condition-variable))])
+	     (%make-thread #f #f #f name (thread-state new) '() #f (make-%mutex) (make-%condition-variable) (make-storage))])
 	(thread-thunk-set! thread (make-thread-thunk thread (current-parameterization) thunk))
 	thread)]))
 
   (define make-primordial-thread
     (lambda ()
-      (%make-thread #f #f (%current-thread) 'primordial (thread-state runnable) #f '() #f (make-%mutex) (make-%condition-variable))))
+      (%make-thread #f #f (%current-thread) 'primordial (thread-state runnable) '() #f (make-%mutex) (make-%condition-variable)
+		    (make-storage))))
 
   (define/who thread-start!
     (lambda (thread)
