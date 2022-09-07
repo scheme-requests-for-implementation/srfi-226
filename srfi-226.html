@@ -1742,6 +1742,13 @@
       non-<code>&amp;serious</code> condition object, the initial
       handler returns with unspecified values instead.</p>
 
+    <p><i>Note:</i> There is usually more than one initial
+    continuation.  The primordial thread starts in an initial
+    continuation, but new initial continuations are created when new
+    threads or new promises are created or when the
+    procedure <code>call-in-initial-continuation</code> is invoked
+      (see below).</p>
+
     <p>Executing a top-level program starts with the initial
       continuation.  When values are delivered in the initial
       continuation, the program exits normally.  When an exception is
