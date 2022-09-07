@@ -588,6 +588,17 @@
       iterator for a non-empty list returns the head of the list and
       an iterator for its tail.</p>
 
+    <h3>Safety</h3>
+
+    <p>The libraries described by this SRFI are <i>safe libraries</i>
+      in the sense of <cite>R<sup>6</sup>RS</cite>.  In particular, in
+      the presence of multiple threads, concurrent reading and writing
+      to a location must not threaten system integrity in ways that
+      might result in execution that is inconsistent with the
+      semantics described in the Scheme reports and in this document.
+      All modifications to single locations in the store must appear
+      atomic to each thread.</p>
+
     <h3>Continuation Prompts</h3>
 
     <p>This section describes the <code>(srfi :226 control prompts)</code> library.</p>
