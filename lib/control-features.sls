@@ -40,7 +40,7 @@
 	  &continuation make-continuation-violation continuation-violation?
 	  continuation-violation-prompt-tag
 	  raise raise-continuable
-	  current-exception-handlers current-exception-handler with-exception-handler guard else =>
+	  exception-handler-stack current-exception-handler with-exception-handler guard else =>
 	  make-parameter parameterize
 	  parameterization? current-parameterization call-with-parameterization
 	  current-input-port current-output-port current-error-port
@@ -284,7 +284,7 @@
   (define clear-marks!
     (lambda ()
       (current-marks (make-marks (current-parameterization)
-				 (current-exception-handlers)))))
+				 (exception-handler-stack)))))
 
   (define set-mark!
     (lambda (key val)
@@ -530,13 +530,13 @@
   (define %raise
     (lambda (con)
       (let f ([con con])
-	(when (null? (current-exception-handlers))
+	(when (null? (exception-handler-stack))
 	  (abort-current-continuation (default-continuation-prompt-tag)
 	    (lambda ()
 	      (raise con))))
 	(let ([handler (current-exception-handler)])
 	  (with-continuation-mark (handler-stack-continuation-mark-key)
-	      (cdr (current-exception-handlers))
+	      (cdr (exception-handler-stack))
 	    (begin
 	      (handler con)
 	      (f (make-non-continuable-violation))))))))
@@ -546,7 +546,7 @@
     (lambda (con)
       (let ([handler (current-exception-handler)])
 	(with-continuation-mark (handler-stack-continuation-mark-key)
-	    (cdr (current-exception-handlers))
+	    (cdr (exception-handler-stack))
 	  (handler con)))))
 
   (define call-in-empty-continuation
@@ -1264,13 +1264,13 @@
       (lambda ()
 	mark-key)))
 
-  (define current-exception-handlers
+  (define exception-handler-stack
     (lambda ()
       (marks-ref (current-marks) (handler-stack-continuation-mark-key))))
 
   (define current-exception-handler
     (lambda ()
-      (car (current-exception-handlers))))
+      (car (exception-handler-stack))))
 
   (define/who with-exception-handler
     (lambda (handler thunk)
@@ -1279,7 +1279,7 @@
       (unless (procedure? thunk)
 	(assertion-violation who "not a procedure" thunk))
       (with-continuation-mark (handler-stack-continuation-mark-key)
-	  (cons handler (current-exception-handlers))
+	  (cons handler (exception-handler-stack))
 	(thunk))))
 
   (define-syntax/who guard
