@@ -295,6 +295,17 @@
       are installed at the start of each program, the start of each thread, and
       when promises are forced.</p>
 
+    <p>The reason that continuation prompts are called <i>prompts</i>
+      is that ​a continuation as we know from Scheme is usually
+      delimited at the <i>prompt</i> of the REPL.  In a strict sense,
+      an undelimited continuation does not return by definition.  But
+      this is not true for an actual continuation returned by even the
+      venerable <code>call/cc</code>.  When it is invoked, it will
+      deliver value at the REPL prompt.  (And when the program may not
+      have been running from a REPL, the prompt is that of the shell
+      or some HALT instruction.)  A <i>prompt</i> as defined by this
+      document just extends this scenario.</p>
+
     <h4>Composable and Non-Composable Continuations</h4>
 
     <p>When a continuation captured
