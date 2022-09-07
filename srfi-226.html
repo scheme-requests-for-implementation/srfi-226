@@ -605,7 +605,9 @@
       values on each invocation.  An iterator for the empty list
       returns <code>#f</code> and an iterator for the empty list.  An
       iterator for a non-empty list returns the head of the list and
-      an iterator for its tail.</p>
+      an iterator for its tail.  Note that this iterator protocol is
+      unsuitable for lists that potentially
+      contain <code>#f</code>.</p>
 
     <h3>Safety</h3>
 
@@ -1464,14 +1466,16 @@
 	  constructed by <code>continuation-mark-set-&gt;list</code>
 	  when applied to the same arguments.</p>
 	<p><i>Note:</i> Some recent SRFIs that have been included into
-	  early editions
-	  of <a href="#r7rs"><cite>R<sup>7</sup>RS Large</cite></a> or
-	  are to be included in its forthcoming editions feature the use
-	  of generators (see <a href="">SRFI 158</a>) to process lists
-	  (or objects of other sequence types).  As generators are
-	  fundamentally non-pure, we believe that their use should be
-	  limited in otherwise functional code.  The iterator concept
-	  used here, on the other hand, is fully functional.</p>
+	  early editions of <a href="#r7rs"><cite>R<sup>7</sup>RS
+	  Large</cite></a> or are to be included in its forthcoming
+	  editions feature the use of generators (see <a href="">SRFI
+	  158</a>) to process lists (or objects of other sequence
+	  types).  As generators are fundamentally non-pure, we
+	  believe that their use should be limited in otherwise
+	  functional code.  The iterator concept used here, on the
+	  other hand, is fully functional.  It does have to be
+	  modified for lists that may potentially
+	  contain <code>#f</code>, which cannot happen here.</p>
 	<p>If <code><var>mark-set</var></code> is <code>#f</code>, the
 	  mark set that would be returned
 	  by <code>(current-continuation-marks <var>prompt-tag</var>)</code>
