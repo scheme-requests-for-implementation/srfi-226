@@ -1294,7 +1294,14 @@
 	  the <code>with-continuation-mark</code> expression.</p>
 	<p>If a <code>with-continuation-mark</code> expression is in
 	tail context, <code>expression</code> is in tail context as
-	well.</p>
+	  well.</p>
+        <p><i>Note:</i> That <code>with-continuation-mark</code> is a
+          special form and not modeled as a procedure calling a thunk
+          goes back to the paper <a href="#clements"><cite>Modeling an
+          Algebraic Stepper</cite></a>, which introduced continuation
+          marks.  In fact, it makes optimization for a Scheme compiler
+          easier, and <code>with-continuation-mark</code> needs to be
+          efficient given its typical use cases.</p>
       </dd>
 
       <dt class="syntax"><code>(with-continuation-marks ([<span class="token">key-expr</span> <span class="token">val-expr</span>] &hellip;) <span class="token">body</span>)</code></dt>
@@ -2459,6 +2466,7 @@
 
     <ol class="bibliography">
       <li id="chezscheme"><p><a href="https://cisco.github.io/ChezScheme/">Chez Scheme</a>.</p></li>
+      <li id="clements"><p>John Clements, Matthew Flatt, Matthias Felleisen: <a href="https://link.springer.com/chapter/10.1007/3-540-45309-1_21"><cite>Modeling an Algebraic Stepper</cite></a>, ESOP 2001: Programming Languages and Systems, pp. 320–334</p></li>
       <li id="danvy"><p>Olivier Danvy, Andrzej
       Filinski: <cite>Abstracting control</cite>, LFP '90: Proceedings
       of the 1990 ACM conference on LISP and functional programming,
