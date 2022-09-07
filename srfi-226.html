@@ -147,17 +147,20 @@
     are invoked when a continuation is aborted to them.</p>
 
     <p><i>Continuations:</i> When continuations are captured, the list of
-    captured continuation frames are always delimited at some continuation
+    captured continuation frames are always delimited by some continuation
     prompt. This extends the semantics of Scheme’s
-    <code>call-with-current-continuation</code>.  Moreover, a procedure to
-    capture so-called composable continuations is provided. As opposed to
-    continuations captured by <code>call-with-current-continuation</code>,
-    invoking a composable continuation does not abort the then current
-    continuation, so composable continuations behave like ordinary procedures.
-    Together with continuation prompts, composable continuations allow one to
-    implement the various proposed sets of control operators for delimited
-    continuations. Finally, a primitive is provided that allows calling a thunk
-    in a given continuation instead of just delivering values to it.</p>
+    <code>call-with-current-continuation</code>.  Moreover, a
+    procedure to capture so-called composable continuations is
+    provided. As opposed to continuations captured
+    by <code>call-with-current-continuation</code>, invoking a
+    composable continuation does not abort the then current
+    continuation, so composable continuations behave like ordinary
+    procedures.  Together with continuation prompts, composable
+    continuations allow one to implement the various proposed sets of
+    control operators for delimited continuations. Finally, a
+    primitive (<code>call-in-continuation</code>) is provided that
+    allows calling a thunk in a given continuation instead of just
+    delivering values to it.</p>
 
     <p><i>Continuation Marks:</i> Continuation marks are a provided feature
       that allows one to attach arbitrary information to continuation frames,
@@ -170,17 +173,18 @@
 
     <p><i>Exceptions:</i> The exception mechanism
     of <a href="#sperber"><cite>R6RS</cite></a>
-    and <a href="#shinn"><cite>R7RS</cite></a> is detailed with respect to the
-    concepts introduced in this SRFI.  Moreover, the
+    and <a href="#shinn"><cite>R7RS</cite></a> is reinterpreted with
+    respect to the concepts introduced in this SRFI.  Moreover, the
     <code>with-exception-handler</code> procedure and the <code>guard</code>
     syntax gain additional tail context guarantees.</p>
 
     <p><i>Parameters:</i> The parameter object mechanism
-    of <a href="#feeley2"><cite>SRFI 39</cite></a> and <cite>R7RS</cite> is
-    detailed with respect to the concepts introduced in this SRFI.  Procedures
-    to retrieve the current parameterization and to reinstall it later are
-    provided. Moreover, the parameterize syntax gains an additional tail
-    context guarantee.</p>
+    of <a href="#feeley2"><cite>SRFI 39</cite></a>
+    and <cite>R7RS</cite> is reinterpreted with respect to the
+    concepts introduced in this SRFI.  Procedures to retrieve the
+    current parameterization and to reinstall it later are
+    provided. Moreover, the parameterize syntax gains an additional
+    tail context guarantee.</p>
 
     <p><i>Delayed evaluation:</i> The syntax and procedures on delayed
       evaluation of <cite>R7RS</cite> are revisited and redefined to handle the
@@ -196,8 +200,7 @@
     <p><i>Threads:</i> The thread mechanism of <a href="#feeley1"><cite>SRFI
       18</cite></a> is detailed with respect to the concepts introduced in this
       SRFI.  In particular, mutation of parameter objects in multithreaded
-      applications is specified. Moreover, the API is stripped by
-      removing <code>thread-terminate!</code>.</p>
+      applications is specified.</code>.</p>
 
     <p>Large parts of this SRFI have been inspired by the control operators
       provided by <a href="#racket"><cite>Racket</cite></a>.
@@ -211,13 +214,6 @@
       <li><p>Should fewer, but larger libraries be defined?  It has been
 	suggested that only three libraries are provided.  One for
 	promises, one for threads, and one for the rest.</p></li>
-      <li><p>Should <code>thread-terminate!</code> be dropped because it is
-	inherently unsafe?  (The abstract already says so.)  In this case, the
-	condition types <code>&uncaught-exception-error</code>
-	and <code>&thread-already-terminated</code> could be dropped as well.
-	This would have the pleasant implication that the semantics
-	of <code>call-in-initial-continuation</code> and <code>delay</code>
-	could be simplified as well.</p></li>
       <li><p>Should <code>condition-variable-signal!</code> be dropped?</p></li>
       <li><p>Should the time objects of <cite>SRFI 18</cite> be replaced
       with jiffies?  This would mean that previously ad-hoc overloaded
@@ -239,10 +235,10 @@
       <a href="#sperber"><cite>R<sup>6</sup>RS</cite></a> or as
       <a href="#shinn"><cite>R<sup>7</sup>RS</cite></a> libraries.
       Although a portable implementation is not possible, it is
-      demonstrated by the sample implementation that a small set of
-      primitives, which can easily be provided by any Scheme
-      implementation, suffices to implement the rich operators in this
-      SRFI.</p>
+      demonstrated by the sample implementation that
+      a <a href="#sample-implementation">small set of primitives</a>,
+      which can easily be provided by any Scheme implementation,
+      suffices to implement the rich operators in this SRFI.</p>
 
     <p>The theoretical concepts behind the operators described in this
       specification are well understood and not new.  The author of this SRFI
@@ -250,6 +246,10 @@
       to be able to stand on the shoulders of giants.  (See the various
       references in <a href="#dybvig"><cite>A Monadic Framework for Delimited
       Continuations</cite></a>, for example.)</p>
+
+    <p>Whenever this document refers to just <cite>R<sup>7</sup>RS</cite>,
+      the small language is meant as the large language is still a work in
+      progress as the time of writing of this SRFI.</p>
 
     <h3>Overview</h3>
 
@@ -296,16 +296,17 @@
     <h4>Composable and Non-Composable Continuations</h4>
 
     <p>When a continuation captured
-      with <code>call-with-current-continuation</code> is later invoked, the
-      invocation never returns to the continuation of the call to captured
-      continuation.  In this sense, such a continuation procedure is far from
-      being a function in the mathematical sense, as it doesn't deliver any
-      values.  In particular, it cannot be composed.  For that reason,
-      continuations captured by <code>call-with-current-continuation</code> are
-      also called <dfn>non-composable continuations</dfn>.</p>
+      with <code>call-with-current-continuation</code> is later
+      invoked, the invocation never returns to this call's
+      continuation.  In this sense, such a continuation procedure is
+      far from being a function in the mathematical sense, as it
+      doesn't deliver any values.  In particular, it cannot be
+      composed.  For that reason, continuations captured
+      by <code>call-with-current-continuation</code> are also
+      called <dfn>non-composable continuations</dfn>.</p>
 
     <p>This SRFI offers an
-      operator <code>call-with-composable-composition</code> that also captures
+      operator <code>call-with-composable-continuation</code> that also captures
       the current continuation, but reifies it into a different type of
       continuation, a <dfn>composable continuation</dfn>.  Contrary to
       non-composable continuations, a composable continuation, when invoked,
@@ -319,7 +320,7 @@
     <p><dfn>Continuation marks</dfn> are a feature that allows attaching
       information in the form of key-value pairs to individual continuation
       frames, which are maximal segments of continuations of a number of active
-      tail calls followed by at most one non-active tail call.  The set of
+      tail calls followed by at most one active non-tail call.  The set of
       continuation marks of the continuation frames of a continuation belongs
       to this continuation and is thus also captured
       by <code>call-with-current-continuation</code>
@@ -330,34 +331,39 @@
       and <code>force</code> of <a href="#kelsey1"><cite>R<sup>5</sup>RS</cite></a>
       that supports iterative lazy algorithms.</p>
 
-    <p>A crucial feature of continuation marks is that they allow one to attach
-      marks to the most recent continuation frame without creating active
-      non-tail calls.  This allows one to implement a <code>parameterize</code>
-      form where the last expression in its body is in tail context when
-      the <code>parameterize</code> form is in tail position.  Similarly, it
-      becomes possible to implement <code>with-exception-handler</code> in a
-      way so that its thunk is called in tail context if the call
+    <p>A crucial feature of continuation marks is that they allow one
+      to attach marks to the most recent continuation frame without
+      creating active non-tail calls.  This allows one to implement
+      a <code>parameterize</code> form where the last expression in
+      its body is in tail context when the <code>parameterize</code>
+      form is in tail position.  Similarly, it becomes possible to
+      implement <code>with-exception-handler</code> in a way so that
+      its thunk is called in tail context if the call
       to <code>with-exception-handler</code> is in tail context.</p>
+      The latter is not guaranteed by <cite>R<sup>6</sup>RS</cite>
+      and <cite>R<sup>7</sup>RS</cite> (but should have according to
+      the author of this SRFI).
 
     <p>In fact, with continuation marks, the concept of tail calls becomes
       operationally observable.</p>
 
     <h4>Continuations and Threads</h4>
 
-    <p>The concept of threads and the semantics of multithreaded programs are
-      deeply linked with the concepts that are involved in this specification.
-      For example, each thread possesses an initial continuation, containing a
-      continuation prompt with a handler that has to be described.  For that,
-      this specification extends the semantics of <cite>SRFI
-      18</cite> to provide consistent semantics in the presence of multiple
-      threads, continuations, continuation prompts, and parameterizations.</p>
+    <p>The concept of threads and the semantics of multithreaded
+      programs are deeply linked with the concepts that are involved
+      in this specification.  For example, each thread possesses an
+      initial continuation, containing a continuation prompt with a
+      handler that has to be described.  For that, this specification
+      extends the semantics of <cite>SRFI 18</cite> to make it
+      consistent in the presence of multiple threads, continuations,
+      continuation prompts, and parameterizations.</p>
 
     <h4>Parameter Objects</h4>
 
     <p>Parameter objects are a tool to provide dynamically-scoped variables to
       the Scheme language in a clean way.  As a definition of parameter objects
       in terms of continuation marks is possible, and as an implementation in
-      terms of these allows rich operations like capturing the current
+      terms of them allows rich operations like capturing the current
       parameterization to later reinstall it, this SRFI provides both.</p>
 
     <p>Moreover, this specification makes a decision on the behavior of mutable
@@ -424,7 +430,8 @@
 	  155</cite>, and <a href="#nieper3"><cite>SRFI
 	  157</cite></a>.</p>
 
-    <p><cite>SRFI 18</cite> is extended.</p>
+    <p>The programming model defined by <cite>SRFI 18</cite> is
+    extended.</p>
 
     <h3>Why this Proposal should be Incorporated as a Standard Feature
       in Scheme Implementations</h3>
@@ -432,14 +439,15 @@
     <ul>
       <li><p>In many if not most cases, <code>call/cc</code> (as
 	  defined in previous standards and without continuation
-	  prompts) is the wrong abstraction, a fact that has been
-	  well known for a long time (see <a href="#kiselyov"><cite>An
-	  argument against call/cc</cite></a>).  <code>call/cc</code>
-	  is usually advertised as the hammer that can be used to
-	  implement all other control operations.  In fact, this is
-	  not true for the undelimited continuations that the
-	  standard <code>call/cc</code> captures but for delimited
-	  continuations (see <a href="#filinski"><cite>Representing
+	  prompts) is the wrong abstraction, a fact that has been well
+	  known for a long time (see <a href="#kiselyov"><cite>An
+	  argument against call/cc</cite></a>).  The
+	  procedure <code>call/cc</code>, which captures undelimited
+	  continuations, is usually advertised as the hammer that can
+	  be used to implement all other control operations.  However,
+	  this is not true.  <i>Delimited continuations</i>, on the
+	  other hand, can be used to implement all other control
+	  operations (see <a href="#filinski"><cite>Representing
 	  Monads</cite></a>).  So it is actually delimited
 	  continuations that are needed in practice.  Now everything
 	  would be fine if delimited control operators could be
@@ -455,7 +463,7 @@
       <li><p>By implementing this SRFI, even <code>call/cc</code>
 	  becomes a delimited control operator thanks to the concept
 	  of continuation prompts and the fact that one is available
-	  at the start of each thread.</p></li>
+	  at the start of each thread, including the primordial thread.</p></li>
       <li><p>In the literature, many sets of delimited control
 	  operators can be found, with varying expressiveness.
 	  Instead of primarily providing some or all of these, it makes
@@ -671,9 +679,9 @@
       sequence of continuation frames.</p>
 
     <dl class="entries">
-      <dt><code>(call-with-continuation-prompt <var>thunk</var>)</code></dt>
-      <dt><code>(call-with-continuation-prompt <var>thunk</var> <var>prompt-tag</var>)</code></dt>
-      <dt><code>(call-with-continuation-prompt <var>thunk</var> <var>prompt-tag</var> <var>handler</var>)</code></dt>
+      <dt class="procedure"><code>(call-with-continuation-prompt <var>thunk</var>)</code></dt>
+      <dt class="procedure"><code>(call-with-continuation-prompt <var>thunk</var> <var>prompt-tag</var>)</code></dt>
+      <dt class="procedure"><code>(call-with-continuation-prompt <var>thunk</var> <var>prompt-tag</var> <var>handler</var>)</code></dt>
       <dd>
 	<p>If not supplied, <code><var>prompt-tag</var></code>
 	  defaults to the default prompt tag,
@@ -699,7 +707,7 @@
 	  context.</p>
       </dd>
 
-      <dt><code>(abort-current-continuation <var>prompt-tag</var> <var>obj</var>
+      <dt class="procedure"><code>(abort-current-continuation <var>prompt-tag</var> <var>obj</var>
       &hellip;)</code></dt>
       <dd>
 	<p>The <code>abort-current-continuation</code> procedure
@@ -898,7 +906,7 @@
    (call-with-continuation-prompt
     (lambda ()
       (* 3
-         (call/cc
+         (call-with-composable-continuation
           (lambda (k)
             (* 5
                (call-with-continuation-prompt
@@ -1107,7 +1115,7 @@
       (lambda ()
         (k 'ok)))))<span class="result">ok</span></pre>
 
-      <dl>
+      <dl class="entries">
       <dt class="procedure"><code>(continuation-prompt-available? <var>prompt-tag</var>)</code></dt>
       <dt class="procedure"><code>(continuation-prompt-available? <var>prompt-tag</var> <var>cont</var>)</code></dt>
       <dd>
@@ -1135,7 +1143,7 @@
   (lambda ()
     (continuation-prompt-tag-available? tag
       (call-with-composable-continuation values tag))))<span class="result">#f</span></pre>
-      <dl>
+      <dl class="entries">
       <dt class="procedure"><code>(dynamic-wind <var>pre-thunk</var> <var>thunk</var> <var>post-thunk</var>)</code></dt>
       <dd>
 	<p>The <code>dynamic-wind</code> procedure
@@ -1349,7 +1357,7 @@
 	  continuation marks for <code><var>key</var></code> captured
 	  in <code><var>mark-set</var></code> up to where the
 	  corresponding continuation frames were separated by a
-	  continuation prompts
+	  continuation prompt
 	  tagged <code><var>prompt-tag</var></code>, if at all.  The
 	  list elements correspond to the continuation frames that
 	  contained a continuation mark
@@ -1677,16 +1685,17 @@
 	and associated procedures from <code>(srfi :226 control
 	threads)</code>.</p>
 
-    <p>An <dfn>initial continuation</dfn> is one that consists of a single
-      continuation prompt tagged with the default prompt and with the default
-      handler.  Moreover, a single initial exception handler is installed in an
-      initial continuation that, when invoked on a <code>&amp;serious</code>
-      condition or on a non-condition object, aborts to the most recent
-      continuation prompt tagged with the default prompt tag and calls its
-      handler with a thunk that, when evaluated, raises an exception whose
-      condition is the object.  When invoked on a non-<code>&amp;serious</code>
-      condition object, the initial handler returns with unspecified values
-      instead.</p>
+    <p>An <dfn>initial continuation</dfn> is one that consists of a
+      single continuation prompt tagged with the default prompt tag
+      and with the default handler.  Moreover, a single initial
+      exception handler is installed in an initial continuation that,
+      when invoked on a <code>&amp;serious</code> condition or on a
+      non-condition object, aborts to the most recent continuation
+      prompt tagged with the default prompt tag and calls its handler
+      with a thunk that, when evaluated, raises an exception whose
+      condition is the object.  When invoked on a
+      non-<code>&amp;serious</code> condition object, the initial
+      handler returns with unspecified values instead.</p>
 
     <p>Executing a top-level program starts with the initial
       continuation.  When values are delivered in the initial
@@ -1832,15 +1841,15 @@
       promise dependent on the time when the promise is forced even in
       purely functional code.  As has already been observed Marc
       Feeley during the discussion period of <cite>SRFI 39</cite>, the
-      correct semantics would have been to evaluate the body of
-      a <code>delay</code> form in the parameterization of that form.
-      The <code>delay</code> syntax defined in this specification has
-      the correct semantics and is breaking compatibility
-      with <cite>R<sup>7</sup>RS</cite> for what we think is the
-      better.  The semantics defined here also work well in the
-      presence of capturing and applying continuations.  In fact, with
-      regard to the dynamic environment, the semantics of promises are
-      now equivalent to that of threads.</p>
+      more consistent semantics would have been to evaluate the body
+      of a <code>delay</code> form in the parameterization of that
+      form.  The <code>delay</code> syntax defined in this
+      specification has the more consistent semantics and is breaking
+      compatibility with <cite>R<sup>7</sup>RS</cite> for what we
+      think is the better.  The semantics defined here also work well
+      in the presence of capturing and applying continuations.  In
+      fact, with regard to the dynamic environment, the semantics of
+      promises are now equivalent to that of threads.</p>
 
     <pre class="example">(promise? (make-promise 1 2))<span class="result">#t</span>
 (promise? (delay 3))<span class="result">#t</span>
@@ -1945,7 +1954,7 @@
 	  current exception handler stack is empty, the current
 	  continuation is instead aborted to the most recent
 	  continuation prompt tagged with the default continuation
-	  prompt, and its handler invoked on a thunk that, when called,
+	  prompt tag, and its handler invoked on a thunk that, when called,
 	  raises <code><var>obj</var></code>.</p>
 	<p><i>Note:</i> The current exception handler stack becomes
 	  empty if the initial exception handler returns after having
@@ -2003,16 +2012,16 @@
 	  with the default prompt tag, whatever comes first.  It then
 	  binds the raised object
 	  to <code><span class="token">variable</span></code> and,
-	  within the scope of that binding, evaluates the clauses as if
-	  they were the clauses of a <code>cond</code> expression.  If
-	  every <code><span class="token">cond clause</span></code>
+	  within the scope of that binding, evaluates the clauses as
+	  if they were the clauses of a <code>cond</code> expression.
+	  If every <code><span class="token">cond clause</span></code>
 	  evaluates to <code>#f</code> and there is
 	  no <code>else</code> clause, the recorded continuation is
 	  reinstated with the most recent exception handler removed
-	  and a continuable exception with <code>obj</code> is raised
-	  in the resulting continuation.  Otherwise, the resulting
-	  values of the equivalent <code>cond</code> expression are
-	  delivered to the aborted continuation.</p>
+	  and a continuable exception with the same object originally
+	  raised is raised in the resulting continuation.  Otherwise,
+	  the resulting values of the equivalent <code>cond</code>
+	  expression are delivered to the aborted continuation.</p>
 	<p>If a <code>guard</code> expression is in tail context, the
 	  last expression
 	  in <code><span class="token">body</span></code> is in tail
@@ -2218,7 +2227,7 @@
       solely in terms of the facilities provided in <cite>R<sup>6</sup>RS</cite> or
       <cite>R<sup>7</sup>RS</cite> is not possible.</p>
 
-    <h3>Sample Implementation</h3>
+    <h3 id="sample-implementation">Sample Implementation</h3>
 
     <p>The sample implementation accompanying this SRFI demonstrates
       how the control operators can be implemented on top of a small
@@ -2315,10 +2324,11 @@
       Continuations</cite> and found in Racket's CS
       implementation.</p>
 
-    <p>Thanks go to Lassi Kortela for pointing out Marc Feeley's <cite>A better
-      API for first-class continuations</cite> to me, and to Jown Cowan for a
-      careful reading of the first draft and providing me with a lot of helpful
-      comments.</p>
+    <p>Thanks go to Lassi Kortela for pointing out Marc
+      Feeley's <cite>A better API for first-class continuations</cite>
+      to me, and to John Cowan and Vladimir Nikishkin for a careful
+      readings of the first draft and providing me with a lot of
+      helpful comments.</p>
 
     <p>Finally, I would like to thank Arthur A. Gleckler for
       <a href="https://srfi-email.schemers.org/srfi-224/msg/16888913/">encouraging me</a> to write a SRFI covering delimited
