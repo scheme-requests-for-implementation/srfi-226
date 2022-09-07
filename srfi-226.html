@@ -2160,7 +2160,41 @@
 	  as <code>abandoned-mutex-exception?</code>
 	  in <cite>SRFI 18</cite>.</p>
       </dd>
+      <dt class="entry"><code>&amp;concurrent-modification</code><span class="type">condition-type</span></dt>
+      <dt class="procedure"><code>(make-concurrent-modification-violation)</code></dt>
+      <dt class="procedure"><code>(concurrent-modification-violation? <var>obj</var></code>)</dt>
+      <dd>
+	<p>This condition type could be defined by</p>
+	<pre>(define-condition-type &amp;concurrent-modification-violation &amp;assertion
+	  make-concurrent-modification-violation concurrent-modification-violation?)</pre>
+	<p>A <code>&amp;concurrent-modification</code> violation is
+	  raised when a concurrent modification of a non-thread safe
+	  data structure is detected.</p>
+      </dd>
     </dl>
+
+    <p>The following example gives an implementation
+    of <code>list-&gt;vector</code> utilizing <code>&amp;concurrent-modification</code>:</p>
+
+    <pre class="example">(define list-&gt;vector
+  (lambda (ls)
+    (define-syntax safe
+      (syntax-rules ()
+        [(safe expr)
+         (guard (exc [(assertion-violation? exc)
+                      (raise
+                        (condition
+                          (make-who-condition 'list-&gt;vector)
+                          (make-message-condition "argument concurrently modified")
+                          (make-irritants-condition (list ls))
+                          (make-concurrent-modification-violation)))])
+           expr)]))
+    (let ([n (length ls)])
+      (do ([v (make-vector n)]
+           [i 0 (fx+ i 1)]
+           [ls ls (safe (cdr ls))])
+          ((fx=? i n) v)
+        (vector-set! v i (safe (car ls)))))))</pre>
 
     <h4>Threads</h4>
 
