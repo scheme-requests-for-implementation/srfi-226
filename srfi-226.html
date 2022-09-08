@@ -137,7 +137,7 @@
       part of the continuation.</p>
 
     <p>The libraries defined in this SRFI are all concerned with continuations
-      in a wider sense. More specifically, the contributions are as follows:</p>
+      in a wider sense. More specifically, the topics are as follows:</p>
 
     <p><i>Continuation Prompts:</i> A continuation prompt is a special
     continuation frame, which is tagged with a so-called prompt tag. Procedures
@@ -398,7 +398,7 @@
     <p>Instead, this specification defines first-class thread locals
       akin to thread-specific storage in the <a href="c17"><cite>C
       programming language</cite></a> and to thread-specific data keys
-      in <cite>POSIX</cite>.  In particular, the former be efficiently
+      in <cite>POSIX</cite>.  In particular, the former can be efficiently
       implemented in terms of the latter.</p>
 
     <h4>Promises</h4>
@@ -428,7 +428,7 @@
     <h3>Relation to Other Standards</h3>
 
     <p>This specification is meant to be applicable to both
-      standards <cite>R<sup>6</sup>RS</cite>
+      standards, <cite>R<sup>6</sup>RS</cite>
       and <cite>R<sup>7</sup>RS</cite>.  The former standard allows
       the use of square brackets synonymous with parentheses in the
       syntax.  In its non-normative appendix C, advice is given in
@@ -481,12 +481,12 @@
 	  would be fine if delimited control operators could be
 	  expressed in terms of <code>call/cc</code>.  This, however,
 	  is not faithfully possible, especially not without space
-	  leaks as <code>call/cc</code> will capture parts of the
+	  leaks, as <code>call/cc</code> will capture parts of the
 	  continuation that will never be reached after reinstating
 	  (see <a href="#gasbichler"><cite>Final Shift for Call/cc:
 	  Direct implementation of Shift and Reset</cite></a>).  Thus,
 	  in hindsight Scheme should have always offered delimited
-	  control operators in favor of
+	  control operators instead of
 	  <code>call/cc</code>.  Implementing this SRFI remedies that.</p></li>
       <li><p>By implementing this SRFI, even <code>call/cc</code>
 	  becomes a delimited control operator thanks to the concept
@@ -496,7 +496,7 @@
 	  operators can be found, with varying expressiveness.
 	  Instead of primarily providing some or all of these, it makes
 	  more sense to provide abstractions on top of which all these,
-	  like <code>reset</code>/<code>shift</code>, can be built.
+	  like <code>reset</code> and <code>shift</code>, can be built.
 	  This SRFI offers these abstractions to Scheme
 	  implementations.</p></li>
       <li><p>The continuation marks as defined in this SRFI can be
@@ -2382,7 +2382,9 @@
 	<p><i>Note:</i> The
 	  primitive <code>%call-with-current-continuation</code>
 	  neither supports <code>dynamic-wind</code> nor continuation
-	  barriers.</p>
+	  barriers.  It can thus be viewed as
+	  the <a href="#clinger"><cite>R4RS</cite></a> procedure with
+	  the name <code>call-with-current-continuation</code>.</p>
       </dd>
       <dt class="procedure"><code>(%call-in-continuation <var>k</var> <var>thunk</var>)</code></dt>
       <dd>
@@ -2467,6 +2469,10 @@
     <ol class="bibliography">
       <li id="chezscheme"><p><a href="https://cisco.github.io/ChezScheme/">Chez Scheme</a>.</p></li>
       <li id="clements"><p>John Clements, Matthew Flatt, Matthias Felleisen: <a href="https://link.springer.com/chapter/10.1007/3-540-45309-1_21"><cite>Modeling an Algebraic Stepper</cite></a>, ESOP 2001: Programming Languages and Systems, pp. 320–334</p></li>
+      <li id="clinger">
+	<p>William Clinger, Jonathan Rees: <a href="https://standards.scheme.org/official/r4rs.pdf"><cite>Revised<sup>4</sup>
+	  Report on the Algorithmic Language Scheme</cite></a>.</p>
+      </li>
       <li id="danvy"><p>Olivier Danvy, Andrzej
       Filinski: <cite>Abstracting control</cite>, LFP '90: Proceedings
       of the 1990 ACM conference on LISP and functional programming,
