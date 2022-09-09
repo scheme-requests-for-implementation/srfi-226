@@ -118,51 +118,98 @@
 
     <h2 id="abstract">Abstract</h2>
 
-    <p>This SRFI defines a rich set of control operators for the
-      Scheme programming language, including the venerable
-      <code>call/cc</code>
-      (<code>call-with-current-continuation</code>). The set of
-      operators was highly influenced by the control
-      operators provided by <a href="#racket"><cite>Racket</cite></a>.
+    <p>Whenever an expression is evaluated during the run of a Scheme program,
+    there is a continuation awaiting the values of the expression. It is a
+    distinguishing property of the Scheme programming language to offer a
+    procedure (named <code>call/cc</code>) that captures the current
+    continuation as a procedure, which, when called, aborts the then current
+    continuation and reinstates the captured one.</p>
 
-    <p>Continuations can be delimited by continuation prompts, and all
-      continuations become delimited continuations, at the latest by
-      the default prompt at the start of each thread.  Moreover,
-      continuations are divided into composable and non-composable
-      continuations, which can be captured and reinstated.</p>
+    <p>One can visualize a continuation as a list of (continuation) frames
+      where a non-tail call adds a frame to the top of the list and where the return
+      from a non-tail call removes the appropriate frame.</p>
 
-    <p>To investigate continuations, this SRFI supports continuation
-      marks and offers operators to set and retrieve them.</p>
+    <p>Moreover, each expression is evaluated in a dynamic environment that
+      conceptually holds the values of parameters like the current output port
+      and the dynamic-wind stack at the point of evaluation.  As the dynamic
+      environment is captured and reinstated along the continuation when the
+      <code>call/cc</code> machinery is used, we can view it conceptually as
+      part of the continuation.</p>
 
-    <p>Moreover, this SRFI defines clear semantics of
-      exceptions, parameter objects, promises, and threads consistent
-      with the other concepts defined here.</p>
+    <p>The libraries defined in this SRFI are all concerned with continuations
+      in a wider sense. More specifically, the topics are as follows:</p>
+
+    <p><i>Continuation Prompts:</i> A continuation prompt is a special
+    continuation frame, which is tagged with a so-called prompt tag. Procedures
+    to install continuation prompts and to abort the current continuation and
+    to escape back to a previously installed continuation prompt are
+    provided. Moreover, continuation prompts are equipped with handlers that
+    are invoked when a continuation is aborted to them.</p>
+
+    <p><i>Continuations:</i> When continuations are captured, the list of
+    captured continuation frames are always delimited by some continuation
+    prompt. This extends the semantics of Scheme’s
+    <code>call-with-current-continuation</code>.  Moreover, a
+    procedure to capture so-called composable continuations is
+    provided. As opposed to continuations captured
+    by <code>call-with-current-continuation</code>, invoking a
+    composable continuation does not abort the then current
+    continuation, so composable continuations behave like ordinary
+    procedures.  Together with continuation prompts, composable
+    continuations allow one to implement the various proposed sets of
+    control operators for delimited continuations. Finally, a
+    primitive (<code>call-in-continuation</code>) is provided that
+    allows calling a thunk in a given continuation instead of just
+    delivering values to it.</p>
+
+    <p><i>Continuation Marks:</i> Continuation marks are a provided feature
+      that allows one to attach arbitrary information to continuation frames,
+      which are captured and reinstated along the rest of the
+      continuation. Conceptually, exception handlers and parameters are
+      implemented in terms of continuation marks, but the syntax and procedures
+      defined in this SRFI allow the user to use them in more general
+      ways. Moreover, they reify the notion of a tail call, allowing, for
+      example, to test for tail context.</p>
+
+    <p><i>Exceptions:</i> The exception mechanism
+    of <a href="#sperber"><cite>R6RS</cite></a>
+    and <a href="#shinn"><cite>R7RS</cite></a> is reinterpreted with
+    respect to the concepts introduced in this SRFI.  Moreover, the
+    <code>with-exception-handler</code> procedure and the <code>guard</code>
+    syntax gain additional tail context guarantees.</p>
+
+    <p><i>Parameters:</i> The parameter object mechanism
+    of <a href="#feeley2"><cite>SRFI 39</cite></a>
+    and <cite>R7RS</cite> is reinterpreted with respect to the
+    concepts introduced in this SRFI.  Procedures to retrieve the
+    current parameterization and to reinstall it later are
+    provided. Moreover, the parameterize syntax gains an additional
+    tail context guarantee.</p>
+
+    <p><i>Delayed evaluation:</i> The syntax and procedures on delayed
+      evaluation of <cite>R7RS</cite> are revisited and redefined to handle the
+      following satisfactorily: the parameterization of the delayed expression
+      being forced, the treatment of exceptions raised during forcing of
+      delayed expressions, and iterative lazy algorithms. Moreover, their
+      semantics are detailed with respect to the concepts introduced in this
+      SRFI, and promises can naturally deliver an arbitrary number of values
+      when being forced. Finally, the initial continuation of a delayed
+      expression being forced is defined in a way that makes it interchangeably
+      with the initial continuation of a thread.</p>
+
+    <p><i>Threads:</i> The thread mechanism of <a href="#feeley1"><cite>SRFI
+      18</cite></a> is detailed with respect to the concepts introduced in this
+      SRFI.  In particular, mutation of parameter objects in multithreaded
+      applications is specified.</code>.</p>
+
+    <p>Large parts of this SRFI have been inspired by the control operators
+      provided by <a href="#racket"><cite>Racket</cite></a>.
 
     <h2 id="issues">Issues</h2>
 
-    <p>The following questions were raised by John Cowan on the SRFI
-      155 mailing list and have to be decided upon:</p>
-
     <ul>
-      <li><p>Should fewer, but larger libraries be defined?  It has been
-	suggested that only three libraries are provided.  One for
-	promises, one for threads, and one for the rest.</p></li>
-      <li><p>Should <code>thread-terminate!</code> be dropped because it
-	is inherently unsafe?  In this case, the condition
-	types <code>&uncaught-exception-error</code>
-	and <code>&thread-already-terminated</code> could be dropped
-	as well.  This would have the pleasant implication that the
-	semantics of <code>call-in-initial-continuation</code>
-	and <code>delay</code> could be simplified as well.</p></li>
-      <li><p>Should <code>condition-variable-signal!</code> be dropped?</p></li>
-      <li><p>Should the time objects of <cite>SRFI 18</cite> be replaced
-      with jiffies?  This would mean that previously ad-hoc overloaded
-	procedures have to be split into up to three versions.</p></li>
-      <li><p>Should the specific fields on mutexes and condition
-      variables be dropped?  Other builtin types also don't have such
-	  fields.</p></li>
-      <li><p>Should the specific field of threads only be made
-	  accessible through keys indexing a (thread-local) dictionary?</p></li>
+      <li><p>A brief table of contents should be added before the
+	  final draft.</p></li>
     </ul>
 
     <h2 id="rationale">Rationale</h2>
@@ -175,10 +222,10 @@
       <a href="#sperber"><cite>R<sup>6</sup>RS</cite></a> or as
       <a href="#shinn"><cite>R<sup>7</sup>RS</cite></a> libraries.
       Although a portable implementation is not possible, it is
-      demonstrated by the sample implementation that a small set of
-      primitives, which can easily be provided by any Scheme
-      implementation, suffices to implement the rich operators in this
-      SRFI.</p>
+      demonstrated by the sample implementation that
+      a <a href="#sample-implementation">small set of primitives</a>,
+      which can easily be provided by any Scheme implementation,
+      suffices to implement the rich operators in this SRFI.</p>
 
     <p>The theoretical concepts behind the operators described in this
       specification are well understood and not new.  The author of this SRFI
@@ -186,6 +233,10 @@
       to be able to stand on the shoulders of giants.  (See the various
       references in <a href="#dybvig"><cite>A Monadic Framework for Delimited
       Continuations</cite></a>, for example.)</p>
+
+    <p>Whenever this document refers to just <cite>R<sup>7</sup>RS</cite>,
+      the small language is meant as the large language is still a work in
+      progress as the time of writing of this SRFI.</p>
 
     <h3>Overview</h3>
 
@@ -229,19 +280,31 @@
       are installed at the start of each program, the start of each thread, and
       when promises are forced.</p>
 
+    <p>The reason that continuation prompts are called <i>prompts</i>
+      is that ​a continuation as we know from Scheme is usually
+      delimited at the <i>prompt</i> of the REPL.  In a strict sense,
+      an undelimited continuation does not return by definition.  But
+      this is not true for an actual continuation returned by even the
+      venerable <code>call/cc</code>.  When it is invoked, it will
+      deliver value at the REPL prompt.  (And when the program may not
+      have been running from a REPL, the prompt is that of the shell
+      or some HALT instruction.)  A <i>prompt</i> as defined by this
+      document just extends this scenario.</p>
+
     <h4>Composable and Non-Composable Continuations</h4>
 
     <p>When a continuation captured
-      with <code>call-with-current-continuation</code> is later invoked, the
-      invocation never returns to the continuation of the call to captured
-      continuation.  In this sense, such a continuation procedure is far from
-      being a function in the mathematical sense, as it doesn't deliver any
-      values.  In particular, it cannot be composed.  For that reason,
-      continuations captured by <code>call-with-current-continuation</code> are
-      also called <dfn>non-composable continuations</dfn>.</p>
+      with <code>call-with-current-continuation</code> is later
+      invoked, the invocation never returns to this call's
+      continuation.  In this sense, such a continuation procedure is
+      far from being a function in the mathematical sense, as it
+      doesn't deliver any values.  In particular, it cannot be
+      composed.  For that reason, continuations captured
+      by <code>call-with-current-continuation</code> are also
+      called <dfn>non-composable continuations</dfn>.</p>
 
     <p>This SRFI offers an
-      operator <code>call-with-composable-composition</code> that also captures
+      operator <code>call-with-composable-continuation</code> that also captures
       the current continuation, but reifies it into a different type of
       continuation, a <dfn>composable continuation</dfn>.  Contrary to
       non-composable continuations, a composable continuation, when invoked,
@@ -255,7 +318,7 @@
     <p><dfn>Continuation marks</dfn> are a feature that allows attaching
       information in the form of key-value pairs to individual continuation
       frames, which are maximal segments of continuations of a number of active
-      tail calls followed by at most one non-active tail call.  The set of
+      tail calls followed by at most one active non-tail call.  The set of
       continuation marks of the continuation frames of a continuation belongs
       to this continuation and is thus also captured
       by <code>call-with-current-continuation</code>
@@ -266,34 +329,41 @@
       and <code>force</code> of <a href="#kelsey1"><cite>R<sup>5</sup>RS</cite></a>
       that supports iterative lazy algorithms.</p>
 
-    <p>A crucial feature of continuation marks is that they allow one to attach
-      marks to the most recent continuation frame without creating active
-      non-tail calls.  This allows one to implement a <code>parameterize</code>
-      form where the last expression in its body is in tail context when
-      the <code>parameterize</code> form is in tail position.  Similarly, it
-      becomes possible to implement <code>with-exception-handler</code> in a
-      way so that its thunk is called in tail context if the call
+    <p>A crucial feature of continuation marks is that they allow one
+      to attach marks to the most recent continuation frame without
+      creating active non-tail calls.  This allows one to implement
+      a <code>parameterize</code> form where the last expression in
+      its body is in tail context when the <code>parameterize</code>
+      form is in tail position.  Similarly, it becomes possible to
+      implement <code>with-exception-handler</code> in a way so that
+      its thunk is called in tail context if the call
       to <code>with-exception-handler</code> is in tail context.</p>
+      The latter is not guaranteed by <cite>R<sup>6</sup>RS</cite>
+      and <cite>R<sup>7</sup>RS</cite> (but should have according to
+      the author of this SRFI).
 
     <p>In fact, with continuation marks, the concept of tail calls becomes
       operationally observable.</p>
 
     <h4>Continuations and Threads</h4>
 
-    <p>The concept of threads and the semantics of multithreaded programs are
-      deeply linked with the concepts that are involved in this specification.
-      For example, each thread possesses an initial continuation, containing a
-      continuation prompt with a handler that has to be described.  For that,
-      this specification extends the semantics of <a href="#feeley1"><cite>SRFI
-      18</cite></a> to provide consistent semantics in the presence of multiple
-      threads, continuations, continuation prompts, and parameterizations.</p>
+    <p>The concept of threads and the semantics of multithreaded
+      programs are deeply linked with the concepts that are involved
+      in this specification.  For example, each thread possesses an
+      initial continuation, containing a continuation prompt with a
+      handler that has to be described.  For that, this specification
+      contains a specification of a thread system mostly
+      API-compatible with <cite>SRFI 18</cite> (and that exist
+      alongside <cite>SRFI 18</cite>).  This helps making the
+      existence of multiple threads, continuations, continuation
+      prompts, and parameterizations mutually compatible.</p>
 
     <h4>Parameter Objects</h4>
 
     <p>Parameter objects are a tool to provide dynamically-scoped variables to
       the Scheme language in a clean way.  As a definition of parameter objects
       in terms of continuation marks is possible, and as an implementation in
-      terms of these allows rich operations like capturing the current
+      terms of them allows rich operations like capturing the current
       parameterization to later reinstall it, this SRFI provides both.</p>
 
     <p>Moreover, this specification makes a decision on the behavior of mutable
@@ -302,6 +372,21 @@
       is mutated by one of the threads, the mutation will also (eventually) be
       observed by the other thread.  This is a clear semantics because this is
       the same behavior as implemented by lexical variables.</p>
+
+    <h4>Thread locals</h4>
+
+    <p>Although they have been proposed for this application,
+      parameter objects are unsuited to provide thread-local cells.  The
+      main reason is that the current parameterization is part of the
+      current continuation.  As the current continuation can be captured
+      and reinstated in any thread, the parametrization cannot be a
+      per-thread entity.</p>
+
+    <p>Instead, this specification defines first-class thread locals
+      akin to thread-specific storage in the <a href="c17"><cite>C
+      programming language</cite></a> and to thread-specific data keys
+      in <cite>POSIX</cite>.  In particular, the former can be efficiently
+      implemented in terms of the latter.</p>
 
     <h4>Promises</h4>
 
@@ -330,7 +415,7 @@
     <h3>Relation to Other Standards</h3>
 
     <p>This specification is meant to be applicable to both
-      standards <cite>R<sup>6</sup>RS</cite>
+      standards, <cite>R<sup>6</sup>RS</cite>
       and <cite>R<sup>7</sup>RS</cite>.  The former standard allows
       the use of square brackets synonymous with parentheses in the
       syntax.  In its non-normative appendix C, advice is given in
@@ -354,13 +439,14 @@
     <h3>Relation to Other SRFIs</h3>
 
     <p>This SRFI supersedes <a href="#kelsey2"><cite>SRFI
-	  34</cite></a>, <a href="#feeley2"><cite>SRFI
-	  39</cite></a>, <a href="#nieper1"><cite>SRFI
+	  34</cite></a>, <cite>SRFI
+	  39</cite>, <a href="#nieper1"><cite>SRFI
 	  154</cite></a>, <cite>SRFI
 	  155</cite>, and <a href="#nieper3"><cite>SRFI
 	  157</cite></a>.</p>
 
-    <p><cite>SRFI 18</cite> is extended.</p>
+    <p>The programming model defined by <cite>SRFI 18</cite> is
+    extended.</p>
 
     <h3>Why this Proposal should be Incorporated as a Standard Feature
       in Scheme Implementations</h3>
@@ -368,35 +454,36 @@
     <ul>
       <li><p>In many if not most cases, <code>call/cc</code> (as
 	  defined in previous standards and without continuation
-	  prompts) is the wrong abstraction, a fact that has been
-	  well known for a long time (see <a href="#kiselyov"><cite>An
-	  argument against call/cc</cite></a>).  <code>call/cc</code>
-	  is usually advertised as the hammer that can be used to
-	  implement all other control operations.  In fact, this is
-	  not true for the undelimited continuations that the
-	  standard <code>call/cc</code> captures but for delimited
-	  continuations (see <a href="#filinski"><cite>Representing
+	  prompts) is the wrong abstraction, a fact that has been well
+	  known for a long time (see <a href="#kiselyov"><cite>An
+	  argument against call/cc</cite></a>).  The
+	  procedure <code>call/cc</code>, which captures undelimited
+	  continuations, is usually advertised as the hammer that can
+	  be used to implement all other control operations.  However,
+	  this is not true.  <i>Delimited continuations</i>, on the
+	  other hand, can be used to implement all other control
+	  operations (see <a href="#filinski"><cite>Representing
 	  Monads</cite></a>).  So it is actually delimited
 	  continuations that are needed in practice.  Now everything
 	  would be fine if delimited control operators could be
 	  expressed in terms of <code>call/cc</code>.  This, however,
 	  is not faithfully possible, especially not without space
-	  leaks as <code>call/cc</code> will capture parts of the
+	  leaks, as <code>call/cc</code> will capture parts of the
 	  continuation that will never be reached after reinstating
 	  (see <a href="#gasbichler"><cite>Final Shift for Call/cc:
 	  Direct implementation of Shift and Reset</cite></a>).  Thus,
 	  in hindsight Scheme should have always offered delimited
-	  control operators in favor of
+	  control operators instead of
 	  <code>call/cc</code>.  Implementing this SRFI remedies that.</p></li>
       <li><p>By implementing this SRFI, even <code>call/cc</code>
 	  becomes a delimited control operator thanks to the concept
 	  of continuation prompts and the fact that one is available
-	  at the start of each thread.</p></li>
+	  at the start of each thread, including the primordial thread.</p></li>
       <li><p>In the literature, many sets of delimited control
 	  operators can be found, with varying expressiveness.
 	  Instead of primarily providing some or all of these, it makes
 	  more sense to provide abstractions on top of which all these,
-	  like <code>reset</code>/<code>shift</code>, can be built.
+	  like <code>reset</code> and <code>shift</code>, can be built.
 	  This SRFI offers these abstractions to Scheme
 	  implementations.</p></li>
       <li><p>The continuation marks as defined in this SRFI can be
@@ -478,6 +565,10 @@
       instead of <code>(srfi 226 :control)</code>.  Moreover, the
       library name parts are singularized.</p>
 
+    <p>It is expected that a future Scheme standard building on the
+      procedures and syntax defined in this document will choose a
+      different packaging into libraries, possibly fewer ones.</p>
+
     <h3>Entry format</h3>
 
     <p>The following naming conventions imply type restrictions:</p>
@@ -505,6 +596,18 @@
       <dd>procedure or <code>#f</code></dd>
       <dt><code><var>k</var></code></dt>
       <dd>undelimited continuation</dd>
+      <dt><code><var>tl</var></code></dt>
+      <dd>thread local</dd>
+      <dt><code><var>timeout</var></code></dt>
+      <dd>real number or <code>#f</code></dd>
+      <dt><code><var>thread</var></code></dt>
+      <dd>thread</dd>
+      <dt><code><var>owner-thread</var></code></dt>
+      <dd>thread or <code>#f</code></dd>
+      <dt><code><var>mutex</var></code></dt>
+      <dd>mutex</dd>
+      <dt><code><var>condition-variable</var></code></dt>
+      <dd>condition variable</dd>
     </dl>
 
     <h3>Iterators</h3>
@@ -514,7 +617,20 @@
       values on each invocation.  An iterator for the empty list
       returns <code>#f</code> and an iterator for the empty list.  An
       iterator for a non-empty list returns the head of the list and
-      an iterator for its tail.</p>
+      an iterator for its tail.  Note that this iterator protocol is
+      unsuitable for lists that potentially
+      contain <code>#f</code>.</p>
+
+    <h3>Safety</h3>
+
+    <p>The libraries described by this SRFI are <i>safe libraries</i>
+      in the sense of <cite>R<sup>6</sup>RS</cite>.  In particular, in
+      the presence of multiple threads, concurrent reading and writing
+      to a location must not threaten system integrity in ways that
+      might result in execution that is inconsistent with the
+      semantics described in the Scheme reports and in this document.
+      All modifications to single locations in the store must appear
+      atomic to each thread.</p>
 
     <h3>Continuation Prompts</h3>
 
@@ -522,10 +638,11 @@
 
     <h4>Conditions</h4>
 
-    <p><i>Note:</i> If this SRFI is implemented in a system that does
-      not support the condition system of <cite>R6RS</cite>, the
-      respective parts of this specification should be
-      applied <i>mutatis mutandis</i>.</p>
+    <p><i>Note:</i> If this SRFI is implemented in a system that does not
+      support the condition system of <cite>R6RS</cite>, the respective parts
+      of this specification should be applied <i>mutatis mutandis</i>.  We
+      follow the presentation style of <cite>R6RS</cite> for the condition
+      types defined in this and the other libraries.</p>
 
     <dl class="entries">
       <dt class="entry"><code>&amp;continuation</code><span class="type">condition-type</span></dt>
@@ -606,9 +723,9 @@
       sequence of continuation frames.</p>
 
     <dl class="entries">
-      <dt><code>(call-with-continuation-prompt <var>thunk</var>)</code></dt>
-      <dt><code>(call-with-continuation-prompt <var>thunk</var> <var>prompt-tag</var>)</code></dt>
-      <dt><code>(call-with-continuation-prompt <var>thunk</var> <var>prompt-tag</var> <var>handler</var>)</code></dt>
+      <dt class="procedure"><code>(call-with-continuation-prompt <var>thunk</var>)</code></dt>
+      <dt class="procedure"><code>(call-with-continuation-prompt <var>thunk</var> <var>prompt-tag</var>)</code></dt>
+      <dt class="procedure"><code>(call-with-continuation-prompt <var>thunk</var> <var>prompt-tag</var> <var>handler</var>)</code></dt>
       <dd>
 	<p>If not supplied, <code><var>prompt-tag</var></code>
 	  defaults to the default prompt tag,
@@ -634,7 +751,7 @@
 	  context.</p>
       </dd>
 
-      <dt><code>(abort-current-continuation <var>prompt-tag</var> <var>obj</var>
+      <dt class="procedure"><code>(abort-current-continuation <var>prompt-tag</var> <var>obj</var>
       &hellip;)</code></dt>
       <dd>
 	<p>The <code>abort-current-continuation</code> procedure
@@ -695,15 +812,15 @@
     <p>Each <dfn>continuation (procedure)</dfn> is a procedure.</p>
 
     <dl class="entries">
+      <dt class="procedure"><code>(call-with-non-composable-continuation <var>proc</var> <var>prompt-tag</var>)</code></dt>
+      <dt class="procedure"><code>(call-with-non-composable-continuation <var>proc</var>)</code></dt>
       <dt class="procedure"><code>(call-with-current-continuation <var>proc</var>)</code></dt>
-      <dt class="procedure"><code>(call-with-current-continuation <var>proc</var> <var>prompt-tag</var>)</code></dt>
       <dt class="procedure"><code>(call/cc <var>proc</var>)</code></dt>
-      <dt class="procedure"><code>(call/cc <var>proc</var> <var>prompt-tag</var>)</code></dt>
       <dd>
 	<p>If not supplied, <code><var>prompt-tag</var></code>
 	defaults to the default prompt tag.</p>
 	<p>It is an error if <code><var>proc</var></code> does not accept one argument.</p>
-	<p>The procedure <code>call-with-current-continuation</code>
+	<p>The procedure <code>call-with-non-composable-continuation</code>
 	  packages all active procedure calls in the current
 	  continuation up to but not including a continuation prompt
 	  tagged with <code><var>prompt-tag</var></code> as a
@@ -722,7 +839,7 @@
 	</p>
 	<p>We say that the continuation procedure
 	is <dfn>delimited</dfn> by <code><var>prompt-tag</var></code>.</p>
-	<p>If a call to <code>call-with-current-continuation</code>
+	<p>If a call to <code>call-with-non-composable-continuation</code>
 	occurs in a tail context, the call
 	to <code><var>proc</var></code> is also in a tail context.</p>
 	<p>If a continuation prompt tagged
@@ -733,13 +850,15 @@
 	  with <code><var>prompt-tag</var></code> is not available in
 	  the current continuation when the continuation procedure is called, an exception with condition
 	  type <code>&amp;continuation</code> is raised.</p>
-	<p>The identifier <code>call/cc</code> is an alias for <code>call-with-current-continuation</code>.</p>
+	<p>The identifier <code>call/cc</code> is an alias
+	for <code>call-with-current-continuation</code>, which does
+	not take a <code><var>prompt-tag</var></code> argument.</p>
 	<p><i>Note:</i> As a continuation prompt tagged with the
 	  default prompt tag is available in the initial continuation
 	  of each thread, including the primordial thread,
-	  the <code>call-with-current-procedure</code> defined here is
+	  the <code>call-with-non-composable-continuation</code> defined here is
 	  a conservative extension of
-	  the <code>call-with-current-procedure</code> of earlier
+	  the <code>call-with-non-composable-continuation</code> of earlier
 	  Scheme reports.</p>
       </dd>
     </dl>
@@ -752,7 +871,7 @@
    (call-with-continuation-prompt
     (lambda ()
       (* 3
-         (call-with-current-continuation
+         (call-with-non-composable-continuation
           (lambda (k)
             (* 5
                (call-with-continuation-prompt
@@ -806,7 +925,7 @@
 	  type <code>&amp;continuation</code> is raised.</p>
 	<p><i>Note:</i> The difference between the continuation
 	  procedure returned
-	  by <code>call-with-current-continuation</code>
+	  by <code>call-with-non-composable-continuation</code>
 	  and <code>call-with-composable-continuation</code> is that
 	  the former removes portions of the then-current
 	  continuation, while the latter does not.  The former
@@ -819,7 +938,7 @@
     </dl>
 
     <p>The following example is similar to the previous one except
-    that the call to <code>call-with-current-continuation</code> is
+    that the call to <code>call-with-non-composable-continuation</code> is
     replaced with a call
     to <code>call-with-composable-continuation</code>.  Accordingly,
     invoking the captured continuation does not remove any active
@@ -831,7 +950,7 @@
    (call-with-continuation-prompt
     (lambda ()
       (* 3
-         (call/cc
+         (call-with-composable-continuation
           (lambda (k)
             (* 5
                (call-with-continuation-prompt
@@ -988,6 +1107,16 @@
       define <code>call-in-continuation</code> in terms of invoking a
       continuation, so the former is the more primitive notion.</p>
 
+    <p><i>Remark:</i> That a primitive like <code>call-in-continuation</code>
+      is needed, was already noted in <a href="#feeley3"><cite>A better API for
+      first-class continuations</cite></a>.  In that paper, it is
+      called <code>continuation-graft</code>.  (The two accompanying
+      procedures <code>continuation-capture</code>
+      and <code>continuation-return</code> in that paper are
+      just <code>call/cc</code> and <code>apply</code> in the context of this
+      SRFI, which treats continuations as procedures for compatiblity
+      reasons.)</p>
+
     <dl class="entries">
       <dt class="procedure"><code>(call-with-continuation-barrier <var>thunk</var>)</code></dt>
       <dd>
@@ -1005,7 +1134,7 @@
 	exception with condition type <code>&amp;continuation</code> is
 	  raised.</p>
 	<p>This extends the semantics
-	  of <code>call-with-current-continuation</code>
+	  of <code>call-with-non-composable-continuation</code>
 	  and <code>call-with-composable-continuation</code>.</p>
 	<p>The calls to the <code><var>thunk</var></code>s are never in tail
 	  context.</p>
@@ -1030,7 +1159,7 @@
       (lambda ()
         (k 'ok)))))<span class="result">ok</span></pre>
 
-      <dl>
+      <dl class="entries">
       <dt class="procedure"><code>(continuation-prompt-available? <var>prompt-tag</var>)</code></dt>
       <dt class="procedure"><code>(continuation-prompt-available? <var>prompt-tag</var> <var>cont</var>)</code></dt>
       <dd>
@@ -1049,16 +1178,16 @@
 (call-with-continuation-prompt-tag
   (lambda ()
     (continuation-prompt-tag-available? tag
-      (call-with-current-continuation values))))<span class="result">#t</span>
+      (call-with-non-composable-continuation values))))<span class="result">#t</span>
 (call-with-continuation-prompt-tag
   (lambda ()
     (continuation-prompt-tag-available? tag
-      (call-with-current-continuation values tag))))<span class="result">#t</span>
+      (call-with-non-composable-continuation values tag))))<span class="result">#t</span>
 (call-with-continuation-prompt-tag
   (lambda ()
     (continuation-prompt-tag-available? tag
       (call-with-composable-continuation values tag))))<span class="result">#f</span></pre>
-      <dl>
+      <dl class="entries">
       <dt class="procedure"><code>(dynamic-wind <var>pre-thunk</var> <var>thunk</var> <var>post-thunk</var>)</code></dt>
       <dd>
 	<p>The <code>dynamic-wind</code> procedure
@@ -1092,7 +1221,7 @@
 	  in <code><var>pre-thunk</var></code>
 	  or <code><var>post-thunks</var></code>.
 	<p>This extends the semantics
-	  of <code>abort-current-continuation</code>, <code>call-with-current-continuation</code>,
+	  of <code>abort-current-continuation</code>, <code>call-with-non-composable-continuation</code>,
 	  and <code>call-with-composable-continuation</code>.</p>
 	<p>The calls to the <code><var>thunk</var></code>s are never in tail
 	  context.</p>
@@ -1137,6 +1266,17 @@
 	has already been annotated with a mark, the most recent
 	annotation prevails.</p>
 
+    <p><i>Remark:</i> In <cite>A better API for first-class
+      continuations</cite>, the idea of a portable debugger using a procedure
+      named <code>continuation-next</code> to walk up a continuation was
+      presented.  With continuation marks this can be easily achieved when
+      frames are explicitly marked.  The advantage of an explicit marking is
+      that the debugger can then be instructed to automatically skip over
+      frames installed by standard library procedures, for example.  A Scheme
+      system could offer a debug mode, in which every frame is automatically
+      marked in a specific way that is understood by the debugger.
+    </p>
+
     <dl class="entries">
       <dt class="syntax"><code>(with-continuation-mark <span class="token">key-expr</span> <span class="token">val-expr</span> <span class="token">expression</span>)</code></dt>
       <dd>
@@ -1155,7 +1295,14 @@
 	  the <code>with-continuation-mark</code> expression.</p>
 	<p>If a <code>with-continuation-mark</code> expression is in
 	tail context, <code>expression</code> is in tail context as
-	well.</p>
+	  well.</p>
+        <p><i>Note:</i> That <code>with-continuation-mark</code> is a
+          special form and not modeled as a procedure calling a thunk
+          goes back to the paper <a href="#clements"><cite>Modeling an
+          Algebraic Stepper</cite></a>, which introduced continuation
+          marks.  In fact, it makes optimization for a Scheme compiler
+          easier, and <code>with-continuation-mark</code> needs to be
+          efficient given its typical use cases.</p>
       </dd>
 
       <dt class="syntax"><code>(with-continuation-marks ([<span class="token">key-expr</span> <span class="token">val-expr</span>] &hellip;) <span class="token">body</span>)</code></dt>
@@ -1261,7 +1408,7 @@
 	  continuation marks for <code><var>key</var></code> captured
 	  in <code><var>mark-set</var></code> up to where the
 	  corresponding continuation frames were separated by a
-	  continuation prompts
+	  continuation prompt
 	  tagged <code><var>prompt-tag</var></code>, if at all.  The
 	  list elements correspond to the continuation frames that
 	  contained a continuation mark
@@ -1338,14 +1485,16 @@
 	  constructed by <code>continuation-mark-set-&gt;list</code>
 	  when applied to the same arguments.</p>
 	<p><i>Note:</i> Some recent SRFIs that have been included into
-	  early editions
-	  of <a href="#r7rs"><cite>R<sup>7</sup>RS Large</cite></a> or
-	  are to be included in its forthcoming editions feature the use
-	  of generators (see <a href="">SRFI 158</a>) to process lists
-	  (or objects of other sequence types).  As generators are
-	  fundamentally non-pure, we believe that their use should be
-	  limited in otherwise functional code.  The iterator concept
-	  used here, on the other hand, is fully functional.</p>
+	  early editions of <a href="#r7rs"><cite>R<sup>7</sup>RS
+	  Large</cite></a> or are to be included in its forthcoming
+	  editions feature the use of generators (see <a href="">SRFI
+	  158</a>) to process lists (or objects of other sequence
+	  types).  As generators are fundamentally non-pure, we
+	  believe that their use should be limited in otherwise
+	  functional code.  The iterator concept used here, on the
+	  other hand, is fully functional.  It does have to be
+	  modified for lists that may potentially
+	  contain <code>#f</code>, which cannot happen here.</p>
 	<p>If <code><var>mark-set</var></code> is <code>#f</code>, the
 	  mark set that would be returned
 	  by <code>(current-continuation-marks <var>prompt-tag</var>)</code>
@@ -1589,17 +1738,24 @@
 	and associated procedures from <code>(srfi :226 control
 	threads)</code>.</p>
 
-    <p>An <dfn>initial continuation</dfn> continuation is a continuation
-      that consists of a single continuation prompt tagged with the
-      default prompt and with the default handler.  Moreover, a single
-      initial exception handler is installed in an initial
-      continuation that, when invoked on a <code>&amp;serious</code>
-      condition or on a non-condition object, aborts to the most recent
-      continuation prompt tagged with the default prompt tag and calls
-      its handler with a thunk that, when evaluated, raises an
-      exception whose condition is the object.  When invoked on a
+    <p>An <dfn>initial continuation</dfn> is one that consists of a
+      single continuation prompt tagged with the default prompt tag
+      and with the default handler.  Moreover, a single initial
+      exception handler is installed in an initial continuation that,
+      when invoked on a <code>&amp;serious</code> condition or on a
+      non-condition object, aborts to the most recent continuation
+      prompt tagged with the default prompt tag and calls its handler
+      with a thunk that, when evaluated, raises an exception whose
+      condition is the object.  When invoked on a
       non-<code>&amp;serious</code> condition object, the initial
       handler returns with unspecified values instead.</p>
+
+    <p><i>Note:</i> There is usually more than one initial
+    continuation.  The primordial thread starts in an initial
+    continuation, but new initial continuations are created when new
+    threads or new promises are created or when the
+    procedure <code>call-in-initial-continuation</code> is invoked
+      (see below).</p>
 
     <p>Executing a top-level program starts with the initial
       continuation.  When values are delivered in the initial
@@ -1607,7 +1763,7 @@
       raised in the dynamic extent of the handler of the initial
       continuation prompt, the program may exit or may provide a
       choice of other options.  It is expected that the initial
-      exception handler reports than an exception has been raised, and
+      exception handler reports that an exception has been raised, and
       displays information about the condition object that was
       provided.</p>
 
@@ -1664,10 +1820,10 @@
 	<p><i>Syntax:</i>
 	  <code><span class="token">Body</span></code> is a body.</p>
 	<p><i>Semantics:</i> Evaluates to a promise that behaves as
-	  follows when forced in a continuation: If the promise
+	  follows when forced in a continuation <var>k</var>: If the promise
 	  already has delivered values, the same values are delivered
 	  again, and if the promise already has raised an exception,
-	  the same exception is raised again in the continuation.
+	  the same exception is raised again in the continuation <var>k</var>.
 	  Otherwise, <code><span class="token">body</span></code> is
 	  evaluated in an initial continuation.  The parameterization
 	  of the initial continuation is the same as the
@@ -1678,16 +1834,16 @@
 	  values are delivered to the continuation in which the
 	  promise was forced.  Otherwise, the already delivered values
 	  are delivered again, or the already raised exception is
-	  raised again in the forcing continuation.  When an exception
+	  raised again in the continuation <var>k</var>.  When an exception
 	  is raised in the dynamic extent of the handler of the
 	  continuation prompt of the initial continuation and the
 	  promise still hasn't delivered values or has raised an
 	  exception, an <code>&uncaught-exception-error</code>
 	  condition whose reason is the object is raised in the
-	  continuation in which the promise was forced.  Otherwise,
+	  continuation <var>k</var>.  Otherwise,
 	  the already delivered values are delivered again, or the
-	  already raised exception is raised again in the forcing
-	  continuation.</p>
+	  already raised exception is raised again in the
+	  continuation <var>k</var>.</p>
 
 	<p>If a call to <code>force</code> occurs in tail context
 	  during the evaluation
@@ -1745,15 +1901,15 @@
       promise dependent on the time when the promise is forced even in
       purely functional code.  As has already been observed Marc
       Feeley during the discussion period of <cite>SRFI 39</cite>, the
-      correct semantics would have been to evaluate the body of
-      a <code>delay</code> form in the parameterization of that form.
-      The <code>delay</code> syntax defined in this specification has
-      the correct semantics and is breaking compatibility
-      with <cite>R<sup>7</sup>RS</cite> for what we think is the
-      better.  The semantics defined here also work well in the
-      presence of capturing and applying continuations.  In fact, with
-      regard to the dynamic environment, the semantics of promises are
-      now equivalent to that of threads.</p>
+      more consistent semantics would have been to evaluate the body
+      of a <code>delay</code> form in the parameterization of that
+      form.  The <code>delay</code> syntax defined in this
+      specification has the more consistent semantics and is breaking
+      compatibility with <cite>R<sup>7</sup>RS</cite> for what we
+      think is the better.  The semantics defined here also work well
+      in the presence of capturing and applying continuations.  In
+      fact, with regard to the dynamic environment, the semantics of
+      promises are now equivalent to that of threads.</p>
 
     <pre class="example">(promise? (make-promise 1 2))<span class="result">#t</span>
 (promise? (delay 3))<span class="result">#t</span>
@@ -1817,8 +1973,8 @@
     <dl class="entries">
       <dt class="procedure"><code>(with-exception-handler <var>handler</var> <var>thunk</var>)</code></dt>
       <dd>
-	<p><code>It is an assertion violation
-	if <var>handler</var></code> is not a procedure or does not
+	<p>It is an assertion violation
+	if <code><var>handler</var></code> is not a procedure or does not
 	accept one argument.</p>
 	<p>Installs <code><var>handler</var></code> in the
 	  continuation to the call
@@ -1835,7 +1991,7 @@
 	  in <cite>R<sup>6</sup>RS</cite> nor
 	  in <cite>R<sup>7</sup>RS</cite>.</p>
       </dd>
-      <dt class="procedure"><code>(current-exception-handlers)</code></dt>
+      <dt class="procedure"><code>(exception-handler-stack)</code></dt>
       <dd>
 	<p>Returns a newly allocated list containing the handlers of
 	  the current exception handler stack, with the most recently
@@ -1858,7 +2014,7 @@
 	  current exception handler stack is empty, the current
 	  continuation is instead aborted to the most recent
 	  continuation prompt tagged with the default continuation
-	  prompt, and its handler invoked on a thunk that, when called,
+	  prompt tag, and its handler invoked on a thunk that, when called,
 	  raises <code><var>obj</var></code>.</p>
 	<p><i>Note:</i> The current exception handler stack becomes
 	  empty if the initial exception handler returns after having
@@ -1916,16 +2072,17 @@
 	  with the default prompt tag, whatever comes first.  It then
 	  binds the raised object
 	  to <code><span class="token">variable</span></code> and,
-	  within the scope of that binding, evaluates the clauses as if
-	  they were the clauses of a <code>cond</code> expression.  If
-	  every <code><span class="token">cond clause</span></code>
+	  within the scope of that binding, evaluates the clauses as
+	  if they were the clauses of a <code>cond</code> expression.
+	  If every <code><span class="token">cond clause</span></code>
 	  evaluates to <code>#f</code> and there is
 	  no <code>else</code> clause, the recorded continuation is
 	  reinstated with the most recent exception handler removed
-	  and a continuable exception with <code>obj</code> is raised
-	  in the resulting continuation.  Otherwise, the resulting
-	  values of the equivalent <code>cond</code> expression are
-	  delivered to the aborted continuation.</p>
+	  and a continuable exception with the same object originally
+	  raised is raised in the resulting continuation.  Otherwise,
+	  the resulting values of the equivalent <code>cond</code>
+	  expression are delivered to the aborted continuation (the
+	  one captured and recorded).</p>
 	<p>If a <code>guard</code> expression is in tail context, the
 	  last expression
 	  in <code><span class="token">body</span></code> is in tail
@@ -1949,44 +2106,62 @@
     <h3>Threads</h3>
 
     <p>This section describes the <code>(srfi :226 control
-	threads)</code> library.  The library, in addition to the
-	condition types and associated procedures and syntax described
-	here, also exports the following procedures from <cite>SRFI
-	18</cite>:
-    </p>
+	threads)</code> library.  The library is compatible and mostly
+      API-compatible with <cite>SRFI 18</cite>.  For detailed
+      examples and a detailed rational, please see that SRFI.  The
+      author of this document does not claim any additional major
+      contributions; in fact, a lot of text from <cite>SRFI
+	18</cite> was copied verbatim or mostly verbatim.</p>
+
+    <p>The concepts of a <i>thread</i>, a <i>mutex</i>, and a
+      condition variable are described in the corresponding
+      subsections below.  As in <cite>SRFI 18</cite>, we do not
+      require specific fairness constraints from implementations of
+      this SRFI.  Please see <cite>SRFI 18</cite> for more comments on
+      fairness.</p>
+
+    <p>The API described in this sections differs from the API provided by <cite>SRFI 18</cite> in the following points:</p>
 
     <ul>
-      <li><code>current-thread</code></li>
-      <li><code>thread?</code></li>
-      <li><code>make-thread</code></li>
-      <li><code>thread-name</code></li>
-      <li><code>thread-specific</code></li>
-      <li><code>thread-specific-set!</code></li>
-      <li><code>thread-start!</code></li>
-      <li><code>thread-yield!</code></li>
-      <li><code>thread-sleep!</code></li>
-      <li><code>thread-terminate!</code></li>
-      <li><code>thread-join!</code></li>
-      <li><code>mutex?</code></li>
-      <li><code>make-mutex</code></li>
-      <li><code>mutex-name</code></li>
-      <li><code>mutex-specific</code></li>
-      <li><code>mutex-specific-set!</code></li>
-      <li><code>mutex-state</code></li>
-      <li><code>mutex-lock!</code></li>
-      <li><code>mutex-unlock!</code></li>
-      <li><code>condition-variable?</code></li>
-      <li><code>make-condition-variable</code></li>
-      <li><code>condition-variable-name</code></li>
-      <li><code>condition-specific</code></li>
-      <li><code>condition-specific-set!</code></li>
-      <li><code>condition-signal!</code></li>
-      <li><code>condition-broadcast!</code></li>
-      <li><code>current-time</code></li>
-      <li><code>time?</code></li>
-      <li><code>time-&gt;seconds</code></li>
-      <li><code>seconds-&gt;time</code></li>
+      <li><p>Neither threads, mutexes, nor condition variables possess
+	  a <code>name</code> field.  If such information is needed for
+	  debugging purposes, a weak hash table should be used
+	  instead.</p></li>
+      <li><p>Neither threads, mutexes, not condition variables
+	  possess <code>specific</code> fields.  If these are needed,
+	  weak hash tables could be used instead.  Moreover, this SRFI
+	  describes thread locals as a mechanism to associate data
+	  with threads.  In fact, thread locals allow library-specific
+	  and not only application-specific data as the
+	  thread-specific field of <cite>SRFI 18</cite>.</p></li>
+      <li><p>(Absolute) time objects are not supported.  They can be
+      replaced by relative times (given in seconds as real numbers)
+	  relative to the current time.</p></li>
+      <li><p>No time-related procedures are provided.  Instead, the
+	  procedures exported by the library <code>(scheme
+	  time)</code> of <cite>R<sup>7</sup>RS</cite> can be used,
+	  for example.</p></li>
+      <li><p>The procedures related to exception handling contained
+	  in <cite>SRFI 18</cite> are described elsewhere in this
+	  document.</p></li>
+      <li><p>The exception objects of <cite>SRFI 18</cite> are
+	  replaced by equivalent condition objects following the hierarchy
+	  of standard condition types of <cite>R<sup>6</sup>RS</cite>.</p></li>
+      <li><p>The procedure <code>thread-join!</code> does not have the
+      optional <code><var>timeout-val</var></code> argument.  The
+      procedure <code>mutex-state</code> never delivers the owner
+      thread; instead a procedure <code>mutex-owner</code> is provided
+      for this purpose.</p></li>
     </ul>
+
+    <p>A <dfn>timeout</dfn> is represented either by a real number
+      (object) or by <code>#f</code>.  If it is a real number, a
+      relative time in a number of seconds given by the real number is
+      represented (negative numbers the represented time is in the
+      past relative to the current time).  If it is <code>#f</code>,
+      an absolute time lying infinitely far in the future is
+      represented (meaning effectively no timeout).  A missing
+      optional timeout value defaults to <code>#f</code>.</p>
 
     <h4>Conditions</h4>
 
@@ -2013,7 +2188,7 @@
 	  and <code>uncaught-exception-error-reason</code> are the
 	  same as <code>uncaught-exception</code>
 	  and <code>uncaught-exception-reason</code>
-	  in <a href="#feeley1"><cite>SRFI 18</cite></a>.</p>
+	  in <cite>SRFI 18</cite>.</p>
 	<p><i>Note:</i> The names defined in this specification are
 	  more in line with the naming conventions
 	  in <cite>R<sup>6</sup>RS</cite>.</p>
@@ -2025,9 +2200,9 @@
 	<p>This condition type could be defined by</p>
 	<pre>(define-condition-type &amp;thread-already-terminated &amp;thread
   make-thread-already-terminated-error thread-already-terminated-error?)</pre>
-	<p>Procedure <code>thread-already-terminated-error?</code>  is the same
+	<p>The procedure <code>thread-already-terminated-error?</code>  is the same
 	  as <code>terminated-thread-exception?</code>
-	  in <a href="#feeley1"><cite>SRFI 18</cite></a>.</p>
+	  in <cite>SRFI 18</cite>.</p>
       </dd>
       <dt class="entry"><code>&amp;thread-timeout</code><span class="type">condition-type</span></dt>
       <dt class="procedure"><code>(make-thread-timeout-error <var>obj</var></code>)</dt>
@@ -2036,9 +2211,9 @@
 	<p>This condition type could be defined by</p>
 	<pre>(define-condition-type &amp;thread-timeout &amp;thread
   make-thread-timeout-error thread-timeout-error?)</pre>
-	<p>Procedure <code>thread-timeout-error?</code>  is the same
+	<p>The procedure <code>thread-timeout-error?</code>  is the same
 	  as <code>join-timeout-exception?</code>
-	  in <a href="#feeley1"><cite>SRFI 18</cite></a>.</p>
+	  in <cite>SRFI 18</cite>.</p>
       </dd>
       <dt class="entry"><code>&amp;thread-abandoned-mutex</code><span class="type">condition-type</span></dt>
       <dt class="procedure"><code>(make-thread-abandoned-mutex-error <var>obj</var></code>)</dt>
@@ -2047,13 +2222,167 @@
 	<p>This condition type could be defined by</p>
 	<pre>(define-condition-type &amp;thread-abandoned-mutex &amp;thread
   make-thread-abandoned-mutex-error thread-abandoned-mutex-error?)</pre>
-	<p>Procedure <code>thread-abandoned-mutex-error?</code>  is the same
+	<p>The procedure <code>thread-abandoned-mutex-error?</code>  is the same
 	  as <code>abandoned-mutex-exception?</code>
-	  in <a href="#feeley1"><cite>SRFI 18</cite></a>.</p>
+	  in <cite>SRFI 18</cite>.</p>
+      </dd>
+      <dt class="entry"><code>&amp;concurrent-modification</code><span class="type">condition-type</span></dt>
+      <dt class="procedure"><code>(make-concurrent-modification-violation)</code></dt>
+      <dt class="procedure"><code>(concurrent-modification-violation? <var>obj</var></code>)</dt>
+      <dd>
+	<p>This condition type could be defined by</p>
+	<pre>(define-condition-type &amp;concurrent-modification-violation &amp;assertion
+	  make-concurrent-modification-violation concurrent-modification-violation?)</pre>
+	<p>A <code>&amp;concurrent-modification</code> violation is
+	  raised when a concurrent modification of a non-thread safe
+	  data structure is detected.</p>
       </dd>
     </dl>
 
+    <p>The following example gives an implementation
+    of <code>list-&gt;vector</code> utilizing <code>&amp;concurrent-modification</code>:</p>
+
+    <pre class="example">(define list-&gt;vector
+  (lambda (ls)
+    (define-syntax safe
+      (syntax-rules ()
+        [(safe expr)
+         (guard (exc [(assertion-violation? exc)
+                      (raise
+                        (condition
+                          (make-who-condition 'list-&gt;vector)
+                          (make-message-condition "argument concurrently modified")
+                          (make-irritants-condition (list ls))
+                          (make-concurrent-modification-violation)))])
+           expr)]))
+    (let ([n (length ls)])
+      (do ([v (make-vector n)]
+           [i 0 (fx+ i 1)]
+           [ls ls (safe (cdr ls))])
+          ((fx=? i n) v)
+        (vector-set! v i (safe (car ls)))))))</pre>
+
     <h4>Threads</h4>
+
+    <p>A <dfn>thread</dfn> is a Scheme value of a specific type,
+      representing a virtual processor which shares object space with all other threads.</p>
+
+    <p> A <dfn>running</dfn> thread is a thread that is currently
+    executing. There can be more than one running thread on a
+    multiprocessor machine.  A <df>runnable</dfn> thread is a thread
+    that is ready to execute or running.  A thread
+    is <dfn>blocked</dfn> if it is waiting for a mutex to become
+    unlocked, an I/O operation to become possible, the end of
+    a <i>sleep</i> period, etc.  A <dfn>new</dfn> thread is a thread
+    that has not yet become runnable.  A new thread becomes runnable
+    when it is started.  A <dfn>terminated</dfn> thread is a thread
+    that can no longer become runnable (but "deadlocked" threads are
+    not considered terminated).
+
+    <p>The only valid transitions between the thread states are from
+      new to runnable, between runnable and blocked, and from any
+      state to terminated.  Any attempt to cause an invalid transition
+      raises an assertion violation.</p>
+
+    <dl class="entries">
+      <dt class="entry"><code>(make-thread <var>thunk</var>)</code><span class="type">procedure</span></dt>
+      <dd>
+	<p>Returns a new thread.  This thread is not automatically
+	  made runnable (the procedure <code>thread-start!</code> must be
+	  used for this).</p>
+	<p>The thread's execution consists of a call
+	  to <code><var>thunk</var></code> in an initial continuation
+	  as defined above.  The parameterization of the initial
+	  continuation is the same as the parameterization of the
+	  continuation of the invocation of <code>make-thread</code>.
+	  When an exception <var>e</var> is raised in the dynamic
+	  extent of the handler of the initial continuation prompt,
+	  an <code>&amp;uncaught-exception</code> error object is recorded to be
+	  raised for this thread and the thread finally
+	  terminated.  The <code>reason</code> field of
+	  the <code>&amp;uncaught-exception</code> error object is
+	  populated with the exception <var>e</var>.  When values are
+	  delivered to the initial continuation, the values are
+	  recorded to be delivered for this thread and the thread
+	  is finally terminated.</p>
+	<p>When a thread is finally terminated, all mutexes it owns are abandoned.</p>
+	<p>This extends the semantics of <code>raise</code>.</p>
+      </dd>
+      <dt class="entry"><code>(thread <span class="token">body</span>)</code><span class="type">syntax</span></dt>
+      <dd>
+	<p><i>Syntax:</i>
+	  <code><span class="token">Body</span></code> is a body.</p>
+	<p><i>Semantics:</i> Operationally equivalent to
+	  evaluating <code>(make-thread (lambda () <span class="token">body</span>))</code>.</p>
+	<p><i>Note:</i> As threads inherit the parameterization of
+	  when they are created, a <code>thread</code> expression
+	  conveys the meaning better than a call
+	  to <code>make-thread</code>.</p>
+      </dd>
+      <dt class="entry"><code>(thread? <var>obj</var>)</code><span class="type">procedure</span></dt>
+      <dd><p>Returns <code>#t</code> if <code><var>obj</var></code> is
+      a thread, and <code>#f</code> otherwise.</p>
+      </dd>
+      <dt class="entry"><code>(current-thread)</code><span class="type">procedure</span></dt>
+      <dd><p>Returns the current thread.</p>
+      </dd>
+      <dt class="entry"><code>(thread-start! <var>thread</var>)</code><span class="type">procedure</span></dt>
+      <dd><p>Makes <code><var>thread</var></code> runnable and returns
+	  it.  The thread <code><var>thread</var></code> must be a new
+	  thread.</p>
+	<p><i>Note:</i> It is useful to separate thread creation and
+	  thread activation to avoid the race condition that would
+	  occur if the created thread tries to examine a table in
+	  which the current thread stores the created thread.</p>
+      </dd>
+      <dt class="entry"><code>(thread-yield!)</code><span class="type">procedure</span></dt>
+      <dd><p>The current thread exits the running state.  Returns unspecified values.</p></dd>
+      <dt class="entry"><code>(thread-sleep! <var>timeout</var>)</code><span class="type">procedure</span></dt>
+      <dd><p>The current thread waits until the timeout <var>timeout</var> is
+	  reached.  This blocks the thread only if timeout represents
+	  a point in the future.  The
+	  procedure <code>thread-sleep!</code> returns unspecified
+	  values.</p>
+	<p>An assertion violation is raised if <code><var>timeout</var></code> is <code>#f</code>.</p>
+      </dd>
+      <dt class="entry"><code>(thread-terminate! <var>thread</var>)</code><span class="type">procedure</span></dt>
+      <dd><p>Schedules an abnormal termination
+	  of <code><var>thread</var></code>.  When the termination is
+	  due and if the thread is not already terminated, all mutexes
+	  owned by the thread become unlocked/abandoned and
+	  a <code>&amp;thread-already-terminated</code> error object to be raised
+	  is recorded for this thread.</p>
+	<p>If thread is the current
+	  thread, <code>thread-terminate!</code> does not return.
+	  Otherwise, the current thread waits until the
+	  termination of <code><var>thread</var></code> has occurred.
+	  Afterward, <code>thread-terminate!</code> returns unspecified values.</p>
+	<p>If a thread is scheduled for (abnormal) termination and is
+	  blocked, the termination is due and the thread terminated
+	  before it would be unblocked.</p>
+	<p><i>Note:</i> This operation must be used carefully
+	  because it terminates a thread abruptly and it is impossible
+	  for that thread to perform any kind of cleanup.  This may be a
+	  problem if the thread is in the middle of a critical section
+	  where some structure has been put in an inconsistent
+	  state.  However, another thread attempting to enter this
+	  critical section will raise an <code>&amp;thread-abandoned-mutex</code> violation
+	  because the mutex is unlocked/abandoned.  This helps avoid
+	  observing an inconsistent state.</p>
+      </dd>
+      <dt class="entry"><code>(thread-join! <var>thread</var> <var>timeout</var>)</code><span class="type">procedure</span></dt>
+      <dt class="entry"><code>(thread-join! <var>thread</var>)</code><span class="type">procedure</span></dt>
+      <dd><p>The current thread waits
+	  until <code><var>thread</var></code> terminates (normally or
+	  not) or until the timeout <code><var>timeout</var></code> is
+	  reached.  If the timeout is reached,
+	  a <code>&amp;thread-timeout</code> error is raised.
+	  Otherwise, if an error object to be raised is recorded for
+	  this thread, it is raised.  Otherwise, the result values to
+	  be delivered that are recorded for this thread are
+	  delivered.</p>
+      </dd>
+    </dl>
 
     <dl class="entries">
       <dt class="entry"><code>(thread <span class="token">body</span>)</code><span class="type">syntax</span></dt>
@@ -2123,6 +2452,214 @@
             (out! 'out))))))
   (get))<span class="result">(in thread in out out)</span></pre>
 
+    <h4>Mutexes</h4>
+
+    <p>A <dfn>mutex</dfn> is a Scheme value of a specific type,
+      representing a mutual exclusion device, also known as a lock and
+      binary semaphore.</p>
+
+    <p>A mutex can be in one of four states: <dfn>locked</dfn>
+      (either <dfn>owned</dfn> or not owned) and <dfn>unlocked</dfn>
+      (either <dfn>abandoned</dfn> or not abandoned).  An attempt to
+      lock a mutex only succeeds if the mutex is in an unlocked state,
+      otherwise the current thread must wait. A mutex in the
+      locked/owned state has an associated <dfn>owner thread</dfn>,
+      which by convention is the thread that is responsible for
+      unlocking the mutex (this case is typical of critical sections
+      implemented as "lock mutex, perform operation, unlock mutex").
+      A mutex in the locked/not-owned state is not linked to a
+      particular thread.  A mutex becomes locked when a thread locks
+      it using the <code>mutex-lock!</code> primitive.  A mutex
+      becomes unlocked/abandoned when the owner of a locked/owned
+      mutex terminates.  A mutex becomes unlocked/not-abandoned when a
+      thread unlocks it using the <code>mutex-unlock!</code>
+      primitive.  The mutex primitives specified in this SRFI do not
+      implement <i>recursive</i> mutex semantics; an attempt to lock a
+      mutex that is locked implies that the current thread must wait
+      even if the mutex is owned by the current thread (this can lead
+      to a deadlock if no other thread unlocks the mutex).</p>
+
+    <dl class="entries">
+      <dt class="entry"><code>(make-mutex)</code><span class="type">procedure</span></dt>
+      <dd>
+	<p>Returns a new mutex in the unlocked/not-abandoned
+	  state.</p>
+      </dd>
+      <dt class="entry"><code>(mutex? <var>obj</var>)</code><span class="type">procedure</span></dt>
+      <dd>
+	<p>Returns <code>#t</code> if <code><var>obj</var></code> is a
+	  mutex, and <code>#f</code> otherwise.</p>
+      </dd>
+      <dt class="entry"><code>(mutex-owner <var>mutex</var>)</code><span class="type">procedure</span></dt>
+      <dd><p>Returns the owner thread of <code><var>mutex</var></code>
+	  if <code><var>mutex</var></code> is in the locked/owned state,
+	  and <code>#f</code> otherwise.</p>
+      </dd>
+      <dt class="entry"><code>(mutex-state <var>mutex</var>)</code><span class="type">procedure</span></dt>
+      <dd>
+	<p>
+	  Returns one of the
+	  symbols <code>owned</code>, <code>not-owned</code>, <code>abandoned</code>, <code>not-abandoned</code>,
+	  reflecting the state of <code><var>mutex</var></code>.</p>
+	<p>
+	<p><i>Note:</i> To simplify the type
+	  of <code>mutex-state</code>, this procedure differs from the
+	  procedure with the same name in <cite>SRFI 18</cite>.
+	  Use <code>mutex-owner</code> to access a mutex's owner.</p>
+      </dd>
+      <dt class="entry"><code>(mutex-lock! <var>mutex</var> <var>timeout</var> <var>owner-thread</var>)</code><span class="type">procedure</span></dt>
+      <dt class="entry"><code>(mutex-lock! <var>mutex</var> <var>timeout</var>)</code><span class="type">procedure</span></dt>
+      <dt class="entry"><code>(mutex-lock! <var>mutex</var>)</code><span class="type">procedure</span></dt>
+      <dd>
+	<p>If <code><var>owner-thread</var></code> is not given, it defaults to <code>#f</code>.</p>
+	<p>If <code><var>mutex</var></code> is currently locked, the
+	  current thread waits until it is unlocked or until the timeout
+	  is reached.  If the timeout is reached, <code>#f</code> is
+	  returned.  Otherwise, <code><var>mutex</var></code> becomes
+	  locked with <code><var>owner-thread</var></code> as the owner
+	  unless <code><var>owner-thread</var></code> is terminated, in which
+	  case <code><var>mutex</var></code> becomes
+	  unlocked/abandoned.</p>
+	<p>After changing the state of the mutex,
+	  an <code>&abandoned-mutex</code> error is raised if the
+	  mutex was unlocked/abandoned before the state change,
+	  otherwise <code>mutex-lock!</code> returns <code>#t</code>.</p>
+	<p><i>Note:</i> It is not an error if the
+	  mutex is owned by the current thread (but the current thread
+	  will have to wait).</p>
+      </dd>
+      <dt class="entry"><code>(mutex-unlock! <var>mutex</var> <var>condition-variable</var>)</code><span class="type">procedure</span></dt>
+      <dt class="entry"><code>(mutex-unlock! <var>mutex</var>)</code><span class="type">procedure</span></dt>
+      <dd>
+	<p>Unlocks the mutex by making it unlocked/not-abandoned.  If
+	  <code><var>condition-variable</var></code> is supplied, the
+	  current thread is blocked and added to the
+	  <code><var>condition-variable</var></code> before
+	  unlocking <code><var>mutex</var></code>; the thread can
+	  unblock at any time but no later than when an appropriate
+	  call to <code>condition-variable-signal!</code> or
+	  <code>condition-variable-broadcast!</code> is performed (see below), and
+	  no later than the <code><var>timeout</var></code>.  If there
+	  are threads waiting to lock this mutex, the scheduler
+	  selects a thread, the mutex becomes locked/owned or
+	  locked/not-owned, and the thread is unblocked. <code>mutex-unlock!</code>
+	  returns <code>#f</code> when the timeout is reached, otherwise it
+	  returns <code>#t</code>.</p>
+	<p><i>Note:</i> It is not an error to unlock an unlocked mutex
+	  and a mutex that is owned by any thread.</p>
+	<p><i>Note:</i> The reason the thread can unblock at any time
+	  (when <code><var>condition-variable</var></code> is
+	  supplied) is to allow extending this SRFI with primitives
+	  that force a specific blocked thread to become runnable.
+	  For example a primitive to interrupt a thread so that it
+	  performs a certain operation, whether the thread is blocked
+	  or not, may be useful to handle the case where the scheduler
+	  has detected a serious problem (such as a deadlock) and it
+	  must unblock one of the threads (such as the primordial
+	  thread) so that it can perform some appropriate action.
+	  After a thread blocked on a condition-variable has handled
+	  such an interrupt it would be wrong for the scheduler to
+	  return the thread to the blocked state, because any calls
+	  to <code>condition-variable-broadcast!</code>  during the
+	  interrupt will have gone unnoticed.  It is necessary for the
+	  thread to remain runnable and return from the call to
+	  <code>mutex-unlock!</code> with a result of <code>#t</code>.</p>
+	<p><i>Note:</i> <code>mutex-unlock!</code> is related to the
+	  <i>wait</i> operation on condition variables available in
+	  other thread systems. The main difference is that <i>wait</i>
+	  automatically locks the mutex just after the thread is
+	  unblocked. This operation is not performed
+	  by <code>mutex-unlock!</code>  and so must be done by an
+	  explicit call to <code>mutex-lock!</code>.  This has the
+	  advantages that a different timeout and exception handler can
+	  be specified on the <code>mutex-lock!</code> and <code>mutex-unlock!</code> operations and the
+	  location of all the mutex operations is clearly apparent.</p>
+      </dd>
+    </dl>
+
+    <h4>Condition variables</h4>
+
+    <p>A <dfn>condition variable</dfn> is a Scheme value of a specific type,
+      representing a set of blocked threads.</p>
+
+    <p>The blocked threads represented by a condition variable are
+      waiting for a certain condition to become true.  When a thread
+      modifies some program state that might make the condition true,
+      the thread unblocks some number of threads (one or all depending
+      on the primitive used) so they can check the value of the
+      condition.  This allows complex forms of interthread
+      synchronization to be expressed more conveniently than with
+      mutexes alone.</p>
+
+    <dl class="entries">
+      <dt class="entry"><code>(make-condition-variable)</code><span class="type">procedure</span></dt>
+      <dd>
+	<p>Returns a new empty condition variable.</p>
+      </dd>
+      <dt class="entry"><code>(condition-variable? <var>obj</var>)</code><span class="type">procedure</span></dt>
+      <dd>
+	<p>Returns <code>#t</code> if <code><var>obj</var></code> is a
+	  condition variable, and <code>#f</code> otherwise.</p>
+      </dd>
+      <dt class="entry"><code>(condition-variable-signal! <var>condition-variable</var>)</code><span class="type">procedure</span></dt>
+      <dd>
+	<p>If there are threads blocked on <code><var>condition-variable</var></code>, the
+	scheduler selects a thread and unblocks it. The
+	procedure <code>condition-variable-signal!</code> returns
+	  unspecified values.</p>
+	<p><i>Note: </i> As their are no fairness constraints imposed
+	  on the scheduler by this SRFI, the scheduler may always select
+	  the same thread to unblock it.  If in doubt, use <code>condition-variable-broadcast!</code> instead.</p>
+      </dd>
+      <dt class="entry"><code>(condition-variable-broadcast! <var>condition-variable</var>)</code><span class="type">procedure</span></dt>
+      <dd>
+	<p>Unblocks all the threads blocked
+	  on <code><var>condition-variable</var></code>.  The
+	  procedure <code>condition-variable-broadcast!</code> returns
+	  an unspecified values.</p>
+      </dd>
+    </dl>
+
+    <h4>Thread locals</h4>
+
+    <p>The procedures in this subsection are also exported by
+      the <code>(srfi :226 control thread-locals)</code> library.</p>
+
+    <p><dfn>Thread locals</dfn> are opaque values used to identify
+      thread-specific locations.</p>
+
+    <p>The <dfn>thread-specific storage</dfn> is an opaque table
+      associating to each current and future thread and to
+      each thread local a cell that holds a value.</p>
+
+    <dl class="entries">
+      <dt class="entry"><code>(make-thread-local <var>obj</var>)</code><span class="type">procedure</span></dt>
+      <dd>
+	<p>Returns a thread local that is not <code>equal?</code> to
+	any prior or future results
+	from <code>make-thread-local</code>.  The
+	object <code><var>obj</var></code> is stored the cells
+	associated to the thread local in the thread-specific
+	storage.</p>
+      </dd>
+      <dt class="entry"><code>(thread-local? <var>obj</var>)</code><span class="type">procedure</span></dt>
+      <dd>
+	<p>Returns <code>#t</code> if <code><var>obj</var></code> is a thread local, and <code>#f</code> otherwise.</p>
+      </dd>
+      <dt class="entry"><code>(tlref <var>tl</var>)</code><span class="type">procedure</span></dt>
+      <dd>
+	<p>Returns the value of the cell associated to the current
+	thread and to <code><var>tl</var></code> in the
+	thread-specific storage.</p>
+      </dd>
+      <dt class="entry"><code>(tlset! <var>tl</var> <var>obj</var>)</code><span class="type">procedure</span></dt>
+      <dd>
+	<p>Sets the value of the cell associated to the current
+	  thread and to <code><var>tl</var></code> in the
+	  thread-specific storage to <code><var>obj</var></code>.</p>
+      </dd>
+    </dl>
+
     <h2 id="implementation">Implementation</h2>
 
     <h3>Portability</h3>
@@ -2131,7 +2668,7 @@
       solely in terms of the facilities provided in <cite>R<sup>6</sup>RS</cite> or
       <cite>R<sup>7</sup>RS</cite> is not possible.</p>
 
-    <h3>Sample Implementation</h3>
+    <h3 id="sample-implementation">Sample Implementation</h3>
 
     <p>The sample implementation accompanying this SRFI demonstrates
       how the control operators can be implemented on top of a small
@@ -2158,7 +2695,9 @@
 	<p><i>Note:</i> The
 	  primitive <code>%call-with-current-continuation</code>
 	  neither supports <code>dynamic-wind</code> nor continuation
-	  barriers.</p>
+	  barriers.  It can thus be viewed as
+	  the <a href="#clinger"><cite>R4RS</cite></a> procedure with
+	  the name <code>call-with-current-continuation</code>.</p>
       </dd>
       <dt class="procedure"><code>(%call-in-continuation <var>k</var> <var>thunk</var>)</code></dt>
       <dd>
@@ -2228,6 +2767,15 @@
       Continuations</cite> and found in Racket's CS
       implementation.</p>
 
+    <p>Thanks go to Lassi Kortela for pointing out Marc
+      Feeley's <cite>A better API for first-class continuations</cite>
+      to me, and to John Cowan and Vladimir Nikishkin for <i>very</i>
+      careful readings of the first draft and providing me with a lot
+      of helpful comments.</p>
+
+    <p>This document uses text copied verbatim from <cite>SRFI
+    18</cite>.</p>
+
     <p>Finally, I would like to thank Arthur A. Gleckler for
       <a href="https://srfi-email.schemers.org/srfi-224/msg/16888913/">encouraging me</a> to write a SRFI covering delimited
       continuations.</p>
@@ -2236,6 +2784,11 @@
 
     <ol class="bibliography">
       <li id="chezscheme"><p><a href="https://cisco.github.io/ChezScheme/">Chez Scheme</a>.</p></li>
+      <li id="clements"><p>John Clements, Matthew Flatt, Matthias Felleisen: <a href="https://link.springer.com/chapter/10.1007/3-540-45309-1_21"><cite>Modeling an Algebraic Stepper</cite></a>, ESOP 2001: Programming Languages and Systems, pp. 320–334</p></li>
+      <li id="clinger">
+	<p>William Clinger, Jonathan Rees: <a href="https://standards.scheme.org/official/r4rs.pdf"><cite>Revised<sup>4</sup>
+	  Report on the Algorithmic Language Scheme</cite></a>.</p>
+      </li>
       <li id="danvy"><p>Olivier Danvy, Andrzej
       Filinski: <cite>Abstracting control</cite>, LFP '90: Proceedings
       of the 1990 ACM conference on LISP and functional programming,
@@ -2258,6 +2811,11 @@
 	Feeley: <a href="https://srfi.schemers.org/srfi-39/srfi-39.html"><cite>SRFI
 	39: Parameter objects</cite></a>.</p>
       </li>
+      <li id="feeley3">
+	<p>Marc Feeley: <a href="http://www.iro.umontreal.ca/~feeley/papers/FeeleySW01.pdf"><cite>A better API for first-class
+	continuations</cite></a>, Scheme and Functional Programming Workshop
+	(SFPW'01), pages 1-3, September 2001.
+      </li>
       <li id="filinski"><p>Andrzej Filinski: <cite>Representing
       monads</cite>, POPL '94: Proceedings of the 21st ACM
       SIGPLAN-SIGACT symposium on Principles of programming
@@ -2273,6 +2831,9 @@
 	  call/cc:: direct implementation of shift and reset</cite>,
 	  ACM SIGPLAN Notices, Volume 37, Issue 9, September 2002,
 	  pp. 271–282. DOI: <a href="https://doi.org/10.1145/583852.581504">10.1145/583852.581504</a>.</p></li>
+      <li id="c17">
+        <p><a href="https://www.iso.org/standard/74528.html">ISO/IEC 9899:2018 Information technology — Programming languages — C</a></p>
+      </li>
       <li id="kawai">
 	<p>Shiro Kawai, John Cowan, Thomas
 	Gilray: <a href="https://srfi.schemers.org/srfi-158/srfi-158.html"><cite>SRFI
@@ -2309,6 +2870,9 @@
 	<p>Marc Nieper-Wißkirchen:
 	  <a href="https://srfi.schemers.org/srfi-157/srfi-157.html"><cite>SRFI
 	      157: Continuation marks</cite></a>.</p>
+      </li>
+      <li id="posix">
+        <p><a href="http://get.posixcertified.ieee.org/">Portable Operating System Interface (IEEE 1003)</a></p>
       </li>
       <li id="r7rs">
 	<p><a href="https://github.com/johnwcowan/r7rs-work/blob/master/R7RSHomePage.md">R7RS Home Page</a>.</p>
