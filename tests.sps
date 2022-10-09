@@ -861,6 +861,32 @@
 		   (tlref tl))))])
 	(list (tlref tl) x)))
 
+;;; See <https://srfi-email.schemers.org/srfi-226/msg/20946964/>.
+
+(test '((1 3 5) . 11)
+      (let ([res '()])
+        (define put!
+          (lambda (obj)
+            (set! res (cons obj res))))
+        (define result
+          (lambda ()
+            (reverse res)))
+        (define val
+          (call-with-continuation-prompt
+           (lambda ()
+             (+ 1
+                (call-with-composable-continuation
+                 (lambda (k)
+                   (call-with-continuation-barrier
+                    (lambda ()
+                      (dynamic-wind
+                          (lambda () (put! 1))
+                          (lambda ()
+                            (put! (k 2))
+                            10)
+                          (lambda () (put! 5)))))))))))
+        (cons (result) val)))
+
 ;;; Test End
 
 (test-end)
