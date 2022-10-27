@@ -288,8 +288,15 @@
 
   (define set-mark!
     (lambda (key val)
-      (current-marks
-       (cons (cons key val) (current-marks)))))
+      (let ([marks (current-marks)])
+	(current-marks
+	 (cond
+	  [(assq key marks) =>
+	   (lambda (entry)
+	     (set-cdr! entry val)
+	     marks)]
+	  [else
+	   (cons (cons key val) marks)])))))
 
   (define ref-mark
     (lambda (key default)
