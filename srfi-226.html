@@ -1348,7 +1348,7 @@
 	  order to obtain a list of keys and a list of corresponding
 	  values, respectively. The most recent continuation frame in
 	  the continuation of the <code>with-continuation-marks</code>
-	  expression is then dynamically annotated with a continuation
+	  expression is then effectively annotated with a continuation
 	  mark mapping the keys to the values,
 	  and <code>body</code> is evaluated in the continuation
 	  of the <code>with-continuation-marks</code> expression.</p>
@@ -1357,6 +1357,8 @@
 	<p>If a <code>with-continuation-marks</code> expression is in
 	  tail context, the last expression of <code>body</code> is in
 	  tail context as well.</p>
+        <p><i>Note:</i> Note that continuation frames are conceptually
+          immutable.</p>
       </dd>
 
       <dt class="procedure"><code>(call-with-immediate-continuation-mark <var>key</var> <var>proc</var>)</code></dt>
