@@ -2413,11 +2413,12 @@
       <dd><p>The current thread waits
 	  until <code><var>thread</var></code> terminates (normally or
 	  not) or until the timeout <code><var>timeout</var></code> is
-	  reached.  If the timeout is reached,
-	  a <code>&amp;thread-timeout</code> condition object is raised.
-	  Otherwise, if an condition object to be raised is recorded for
-	  this thread, it is raised.  Otherwise, the result values to
-	  be delivered that are recorded for this thread are
+	  reached.  If the timeout is reached, a continuable exception
+	  of type <code>&amp;thread-timeout</code> is raised.
+	  Otherwise, if an condition object to be raised is recorded
+	  for this thread, a continuable exception with this condition
+	  object is raised.  Otherwise, the result values to be
+	  delivered that are recorded for this thread are
 	  delivered.</p>
       </dd>
     </dl>
