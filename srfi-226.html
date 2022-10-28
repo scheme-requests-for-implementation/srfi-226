@@ -749,7 +749,7 @@
 	  calls <code><var>thunk</var></code> with no arguments in the
 	  resulting continuation.</p>
 
-	<p>The calls to the <code><var>thunk</var></code>s are never in tail
+	<p>The calls to the <code><var>thunks</var></code> are never in tail
 	  context.</p>
       </dd>
 
@@ -762,7 +762,7 @@
 	  with <code><var>prompt-tag</var></code> is aborted and
 	  replaces them with a call to the handler recorded with the
 	  prompt tag with the
-	  arguments <code><var>obj</var></code>s.</p>
+	  arguments <code><var>objs</var></code>.</p>
 	<p>
 	  When a continuation prompt tagged
 	  with <code><var>prompt-tag</var></code> is not available in
@@ -1138,7 +1138,7 @@
 	<p>This extends the semantics
 	  of <code>call-with-non-composable-continuation</code>
 	  and <code>call-with-composable-continuation</code>.</p>
-	<p>The calls to the <code><var>thunk</var></code>s are never in tail
+	<p>The calls to the <code><var>thunks</var></code> are never in tail
 	  context.</p>
 	<p><i>Note:</i> As calling a composable continuation never
 	  aborts active procedure calls, a continuation barrier would
@@ -1225,7 +1225,7 @@
 	<p>This extends the semantics
 	  of <code>abort-current-continuation</code>, <code>call-with-non-composable-continuation</code>,
 	  and <code>call-with-composable-continuation</code>.</p>
-	<p>The calls to the <code><var>thunk</var></code>s are never in tail
+	<p>The calls to the <code><var>thunks</var></code> are never in tail
 	  context.</p>
       </dd>
     </dl>
@@ -1339,12 +1339,12 @@
       <dt class="syntax"><code>(with-continuation-marks ([<span class="token">key-expr</span> <span class="token">val-expr</span>] &hellip;) <span class="token">body</span>)</code></dt>
       <dd>
 	<p><i>Syntax:</i>
-	  <code>The <span class="token">key-expr</span></code>s and
-	  the <code><span class="token">val-expr</span></code>s are
+	  <code>The <span class="token">key-exprs</span></code> and
+	  the <code><span class="token">val-exprs</span></code> are
 	  be expressions, and <code><span class="token">body</span></code> is
 	  be a body.</p>
-	<p><i>Semantics:</i> The <code>key-expr</code>s and
-	  the <code>val-expr</code>s are evaluated in an unspecified
+	<p><i>Semantics:</i> The <code>key-exprs</code> and
+	  the <code>val-exprs</code> are evaluated in an unspecified
 	  order to obtain a list of keys and a list of corresponding
 	  values, respectively. The most recent continuation frame in
 	  the continuation of the <code>with-continuation-marks</code>
@@ -1654,12 +1654,12 @@
       <dt class="syntax"><code>(parameterize ([<span class="token">param-expr</span> <span class="token">expression</span>] &hellip;) <span class="token">body</span>)</code></dt>
       <dd>
 	<p><i>Syntax:</i>
-	  The <code><span class="token">param-expr</span></code>s and
-	  the <code><span class="token">expression</span></code>s are
+	  The <code><span class="token">param-exprs</span></code> and
+	  the <code><span class="token">expressions</span></code> are
 	  expressions, and <code><span class="token">body</span></code> is
 	  a body.</p>
 	<p><i>Semantics:</i> Evaluates
-	  the <code><span class="token">param-expr</span></code>s
+	  the <code><span class="token">param-exprs</span></code>
 	  and <code><span class="token">expressions</span></code> in
 	  an arbitrary order to obtain parameter objects and arbitrary
 	  objects, respectively.  An assertion violation is raised if
