@@ -1599,7 +1599,7 @@
 		    (c p)
 		    (let* ([q #f]
 			   [thunk
-			    (guard (exc [else (lambda () (raise exc))])
+			    (guard (exc [else (lambda () (raise-continuable exc))])
 			      (thunkify
 			       (call-in-initial-continuation
 				(lambda ()

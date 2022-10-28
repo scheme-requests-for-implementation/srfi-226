@@ -521,6 +521,16 @@
                            (lambda ()
                              1000)))))
 
+(test 51
+      (with-exception-handler
+       (lambda (exc)
+         (cond
+          [(uncaught-exception-condition? exc)
+           (uncaught-exception-condition-reason exc)]
+          [else (raise-continuable exc)]))
+       (lambda ()
+         (+ 9 (force (delay (raise 42)))))))
+
 ;;; See: <https://srfi-email.schemers.org/srfi-39/msg/2784435/>.
 (test '(once #f 1)
       (let ([l '()])
