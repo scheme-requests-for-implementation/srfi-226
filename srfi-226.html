@@ -200,7 +200,7 @@
 
     <p><i>Threads:</i> The thread mechanism of <a href="#feeley1"><cite>SRFI
       18</cite></a> is detailed with respect to the concepts introduced in this
-      SRFI.  In particular, mutation of parameter objects in multithreaded
+      SRFI.  In particular, mutation of parameter objects in multi-threaded
       applications is specified..</p>
 
     <p>Large parts of this SRFI have been inspired by the control operators
@@ -348,7 +348,7 @@
 
     <h4>Continuations and Threads</h4>
 
-    <p>The concept of threads and the semantics of multithreaded
+    <p>The concept of threads and the semantics of multi-threaded
       programs are deeply linked with the concepts that are involved
       in this specification.  For example, each thread possesses an
       initial continuation, containing a continuation prompt with a
@@ -369,7 +369,7 @@
 
     <p>Moreover, this specification makes a decision on the behavior of mutable
       parameter objects with respect to multiple threads.  If a parameter that
-      is inherited by a newly created thread and has not been reparameterized
+      is inherited by a newly created thread and has not been re-parameterized
       is mutated by one of the threads, the mutation will also (eventually) be
       observed by the other thread.  This is a clear semantics because this is
       the same behavior as implemented by lexical variables.</p>
@@ -380,7 +380,7 @@
       parameter objects are unsuited to provide thread-local cells.  The
       main reason is that the current parameterization is part of the
       current continuation.  As the current continuation can be captured
-      and reinstated in any thread, the parametrization cannot be a
+      and reinstated in any thread, the parameterization cannot be a
       per-thread entity.</p>
 
     <p>Instead, this specification defines first-class thread locals
@@ -562,9 +562,10 @@
 
     <p>In an implementation of <cite>R<sup>7</sup>RS</cite>, the
       composite library is named <code>(srfi 226)</code> instead, and
-      the sublibraries are sublibraries within <code>(srfi 226)</code>
-      instead of <code>(srfi 226 :control)</code>.  Moreover, the
-      library name parts are singularized.</p>
+      the component libraries are within the namespace <code>(srfi
+      226)</code> instead of <code>(srfi 226 :control)</code>.
+      Moreover, the library name parts are in the singular where
+      applicable.</p>
 
     <p>It is expected that a future Scheme standard building on the
       procedures and syntax defined in this document will choose a
@@ -734,7 +735,7 @@
 	  to <code>#f</code>.</p>
 
 	<p>The <code>call-with-continuation-prompt</code> procedure
-	  instates a continuation prompt that is tagged
+	  installs a continuation prompt that is tagged
 	  with <code><var>prompt-tag</var></code> and
 	  records <code><var>handler</var></code> in the continuation
 	  to its call.  Finally, <code><var>thunk</var></code> is
@@ -857,9 +858,9 @@
 	<p><i>Note:</i> As a continuation prompt tagged with the
 	  default prompt tag is available in the initial continuation
 	  of each thread, including the primordial thread,
-	  the <code>call-with-non-composable-continuation</code> defined here is
-	  a conservative extension of
-	  the <code>call-with-non-composable-continuation</code> of earlier
+	  the <code>call-with-non-composable-continuation</code>
+	  defined here is a conservative extension of
+	  the <code>call-with-current-continuation</code> of earlier
 	  Scheme reports.</p>
       </dd>
     </dl>
@@ -1115,14 +1116,14 @@
       procedures <code>continuation-capture</code>
       and <code>continuation-return</code> in that paper are
       just <code>call/cc</code> and <code>apply</code> in the context of this
-      SRFI, which treats continuations as procedures for compatiblity
+      SRFI, which treats continuations as procedures for compatibility
       reasons.)</p>
 
     <dl class="entries">
       <dt class="procedure"><code>(call-with-continuation-barrier <var>thunk</var>)</code></dt>
       <dd>
 	<p>The <code>call-with-continuation-barrier</code> procedure
-	  instates an otherwise inaccessible continuation prompt in
+	  installs an otherwise inaccessible continuation prompt in
 	  the current continuation and marks it as
 	  a <dfn>continuation barrier</dfn>.
 	  Finally, <code><var>thunk</var></code> is called with no
@@ -1327,8 +1328,8 @@
 	tail context, <code>expression</code> is in tail context as
 	  well.</p>
         <p><i>Note:</i> That <code>with-continuation-mark</code> is a
-          special form and not modeled as a procedure calling a thunk
-          goes back to the paper <a href="#clements"><cite>Modeling an
+          syntax and not modeled as a procedure calling a thunk goes
+          back to the paper <a href="#clements"><cite>Modeling an
           Algebraic Stepper</cite></a>, which introduced continuation
           marks.  In fact, it makes optimization for a Scheme compiler
           easier, and <code>with-continuation-mark</code> needs to be
@@ -1628,7 +1629,7 @@
       <dd>
 	<p>Invokes <code><var>proc</var></code>
 	  on <code><var>obj</var></code> in the dynamic environment of
-	  the call to <code>make-parameter</code>to obtain a value and
+	  the call to <code>make-parameter</code> to obtain a value and
 	  returns a newly allocated parameter object, which is a
 	  procedure accepting zero or one argument and
 	  whose <dfn>initial value</dfn> is the value and
@@ -2617,9 +2618,12 @@
       modifies some program state that might make the condition true,
       the thread unblocks some number of threads (one or all depending
       on the primitive used) so they can check the value of the
-      condition.  This allows complex forms of interthread
+      condition.  This allows complex forms of inter-thread
       synchronization to be expressed more conveniently than with
       mutexes alone.</p>
+
+    <p><i>Note:</i> The term <i>condition variable</i>, while
+      well-established, is misleading as it describes not a variable, but an object.</p>
 
     <dl class="entries">
       <dt class="entry"><code>(make-condition-variable)</code><span class="type">procedure</span></dt>
@@ -2755,9 +2759,9 @@
 	<p><i>Syntax:</i>
 	  <code><span class="token">Expression</span></code> is an
 	  expression,
-	  the <code><span class="token">formals</span></code>s are a
+	  the <code><span class="token">formals</span></code> are a
 	  formal parameter list and
-	  the <code><span class="token">body</span></code>s are
+	  the <code><span class="token">bodies</span></code> are
 	  bodies.</p>
 
 	<p><i>Semantics:</i>
