@@ -1151,7 +1151,7 @@
 
       <pre class="example">((call-with-continuation-barrier
   (lambda ()
-    (call/cc values))))<span class="result">&amp;continuation-violation <i>exception</i></span></pre>
+    (call/cc values))))<span class="result">&amp;continuation <i>exception</i></span></pre>
 
       <p>On the other hand, escaping jumps are not prohibited:</p>
 
@@ -1815,7 +1815,7 @@
 	  to <code>call-in-initial-continuation</code>.  When an
 	  exception is raised in the dynamic extent of the handler of
 	  the continuation prompt of the initial continuation,
-	  an <code>&uncaught-exception-error</code> condition whose
+	  an <code>&uncaught-exception</code> condition whose
 	  reason is the raised object is raised in the continuation of
 	  the call to <code>call-in-initial-continuation</code>.</p>
 	<p>This extends the semantics of <code>raise</code>.</p>
@@ -1831,7 +1831,7 @@
               (p))))))<span class="result">(#f 1)</span>
 
 (guard (c
-        [(uncaught-exception-error? c) (uncaught-exception-error-reason c)])
+        [(uncaught-exception-condition? c) (uncaught-exception-condition-reason c)])
   (call-in-initial-continuation
     (lambda ()
       (raise 42))))<span class="result">42</span></pre>
@@ -1871,8 +1871,8 @@
 	  is raised in the dynamic extent of the handler of the
 	  continuation prompt of the initial continuation and the
 	  promise still hasn't delivered values or has raised an
-	  exception, an <code>&uncaught-exception-error</code>
-	  condition whose reason is the object is raised in the
+	  exception, an <code>&uncaught-exception-condition</code>
+	  condition object whose reason is the object is raised in the
 	  continuation <var>k</var>.  Otherwise,
 	  the already delivered values are delivered again, or the
 	  already raised exception is raised again in the
@@ -1966,10 +1966,10 @@
        (q (delay
             (set! x (+ x 1))
             (raise #t))))
-  (guard (c [(uncaught-exception-error? c)])
+  (guard (c [(uncaught-exception-condition? c)])
     (force q)
     (set! x (+ x 2)))
-  (guard (c [(uncaught-exception-error? c)])
+  (guard (c [(uncaught-exception-condition? c)])
     (force q)
     (set! x (+ x 4)))
   x)<span class="result">1</span></pre>
@@ -2200,25 +2200,25 @@
 
     <dl class="entries">
       <dt class="entry"><code>&amp;thread</code><span class="type">condition-type</span></dt>
-      <dt class="procedure"><code>(make-thread-error <var>obj</var></code>)</dt>
-      <dt class="procedure"><code>(thread-error? <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(make-thread-condition <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(thread-condition? <var>obj</var></code>)</dt>
       <dd>
 	<p>This condition type could be defined by</p>
-	<pre>(define-condition-type &amp;thread &amp;error
-  make-thread-error thread-error?)</pre>
-	<p>This is a supertype for a set of more specific thread errors.</p>
+	<pre>(define-condition-type &amp;thread &amp;serious
+  make-thread-condition thread-condition?)</pre>
+	<p>This is a supertype for a set of more specific (serious) thread conditions.</p>
       </dd>
       <dt class="entry"><code>&amp;uncaught-exception</code><span class="type">condition-type</span></dt>
-      <dt class="procedure"><code>(make-uncaught-exception-error <var>obj</var></code>)</dt>
-      <dt class="procedure"><code>(uncaught-exception-error? <var>obj</var></code>)</dt>
-      <dt class="procedure"><code>(uncaught-exception-error-reason <var>condition</var></code>)</dt>
+      <dt class="procedure"><code>(make-uncaught-exception-condition <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(uncaught-exception-condition? <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(uncaught-exception-condition-reason <var>condition</var></code>)</dt>
       <dd>
 	<p>This condition type could be defined by</p>
 	<pre>(define-condition-type &amp;uncaught-exception &amp;thread
-  make-uncaught-exception-error uncaught-exception-error?
+  make-uncaught-exception-condition uncaught-exception-condition?
   (reason uncaught-exception-reason))</pre>
-	<p>Both <code>uncaught-exception-error?</code>
-	  and <code>uncaught-exception-error-reason</code> are the
+	<p>Both <code>uncaught-exception-condition?</code>
+	  and <code>uncaught-exception-condition-reason</code> are the
 	  same as <code>uncaught-exception</code>
 	  and <code>uncaught-exception-reason</code>
 	  in <cite>SRFI 18</cite>.</p>
@@ -2227,35 +2227,35 @@
 	  in <cite>R<sup>6</sup>RS</cite>.</p>
       </dd>
       <dt class="entry"><code>&amp;thread-already-terminated</code><span class="type">condition-type</span></dt>
-      <dt class="procedure"><code>(make-thread-already-terminated-error <var>obj</var></code>)</dt>
-      <dt class="procedure"><code>(thread-already-terminated-error? <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(make-thread-already-terminated-condition <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(thread-already-terminated-condition? <var>obj</var></code>)</dt>
       <dd>
 	<p>This condition type could be defined by</p>
 	<pre>(define-condition-type &amp;thread-already-terminated &amp;thread
-  make-thread-already-terminated-error thread-already-terminated-error?)</pre>
-	<p>The procedure <code>thread-already-terminated-error?</code>  is the same
+  make-thread-already-terminated-condition thread-already-terminated-condition?)</pre>
+	<p>The procedure <code>thread-already-terminated-condition?</code>  is the same
 	  as <code>terminated-thread-exception?</code>
 	  in <cite>SRFI 18</cite>.</p>
       </dd>
       <dt class="entry"><code>&amp;thread-timeout</code><span class="type">condition-type</span></dt>
-      <dt class="procedure"><code>(make-thread-timeout-error <var>obj</var></code>)</dt>
-      <dt class="procedure"><code>(thread-timeout-error? <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(make-thread-timeout-condition <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(thread-timeout-condition? <var>obj</var></code>)</dt>
       <dd>
 	<p>This condition type could be defined by</p>
 	<pre>(define-condition-type &amp;thread-timeout &amp;thread
-  make-thread-timeout-error thread-timeout-error?)</pre>
-	<p>The procedure <code>thread-timeout-error?</code>  is the same
+  make-thread-timeout-condition thread-timeout-condition?)</pre>
+	<p>The procedure <code>thread-timeout-condition?</code>  is the same
 	  as <code>join-timeout-exception?</code>
 	  in <cite>SRFI 18</cite>.</p>
       </dd>
       <dt class="entry"><code>&amp;thread-abandoned-mutex</code><span class="type">condition-type</span></dt>
-      <dt class="procedure"><code>(make-thread-abandoned-mutex-error <var>obj</var></code>)</dt>
-      <dt class="procedure"><code>(thread-abandoned-mutex-error? <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(make-thread-abandoned-mutex-condition <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(thread-abandoned-mutex-condition? <var>obj</var></code>)</dt>
       <dd>
 	<p>This condition type could be defined by</p>
 	<pre>(define-condition-type &amp;thread-abandoned-mutex &amp;thread
-  make-thread-abandoned-mutex-error thread-abandoned-mutex-error?)</pre>
-	<p>The procedure <code>thread-abandoned-mutex-error?</code>  is the same
+  make-thread-abandoned-mutex-condition thread-abandoned-mutex-condition?)</pre>
+	<p>The procedure <code>thread-abandoned-mutex-condition?</code>  is the same
 	  as <code>abandoned-mutex-exception?</code>
 	  in <cite>SRFI 18</cite>.</p>
       </dd>
@@ -2333,10 +2333,10 @@
 	  continuation of the invocation of <code>make-thread</code>.
 	  When an exception <var>e</var> is raised in the dynamic
 	  extent of the handler of the initial continuation prompt,
-	  an <code>&amp;uncaught-exception</code> error object is recorded to be
+	  an <code>&amp;uncaught-exception</code> condition object is recorded to be
 	  raised for this thread and the thread finally
 	  terminated.  The <code>reason</code> field of
-	  the <code>&amp;uncaught-exception</code> error object is
+	  the <code>&amp;uncaught-exception</code> condition object is
 	  populated with the exception <var>e</var>.  When values are
 	  delivered to the initial continuation, the values are
 	  recorded to be delivered for this thread and the thread
@@ -2386,7 +2386,7 @@
 	  of <code><var>thread</var></code>.  When the termination is
 	  due and if the thread is not already terminated, all mutexes
 	  owned by the thread become unlocked/abandoned and
-	  a <code>&amp;thread-already-terminated</code> error object to be raised
+	  a <code>&amp;thread-already-terminated</code> condition object to be raised
 	  is recorded for this thread.</p>
 	<p>If thread is the current
 	  thread, <code>thread-terminate!</code> does not return.
@@ -2412,8 +2412,8 @@
 	  until <code><var>thread</var></code> terminates (normally or
 	  not) or until the timeout <code><var>timeout</var></code> is
 	  reached.  If the timeout is reached,
-	  a <code>&amp;thread-timeout</code> error is raised.
-	  Otherwise, if an error object to be raised is recorded for
+	  a <code>&amp;thread-timeout</code> condition object is raised.
+	  Otherwise, if an condition object to be raised is recorded for
 	  this thread, it is raised.  Otherwise, the result values to
 	  be delivered that are recorded for this thread are
 	  delivered.</p>
@@ -2557,7 +2557,7 @@
 	  case <code><var>mutex</var></code> becomes
 	  unlocked/abandoned.</p>
 	<p>After changing the state of the mutex,
-	  an <code>&abandoned-mutex</code> error is raised if the
+	  an <code>&abandoned-mutex</code> condition object is raised if the
 	  mutex was unlocked/abandoned before the state change,
 	  otherwise <code>mutex-lock!</code> returns <code>#t</code>.</p>
 	<p><i>Note:</i> It is not an error if the

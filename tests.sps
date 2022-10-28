@@ -422,8 +422,8 @@
 (test 96 (let ([t (thread-start!
                    (thread (raise 97)))])
            (guard (c
-                   [(uncaught-exception-error? c)
-                    (fx+ -1 (uncaught-exception-error-reason c))])
+                   [(uncaught-exception-condition? c)
+                    (fx+ -1 (uncaught-exception-condition-reason c))])
              (thread-join! t))))
 
 (test 10 (let ([p (make-parameter 9)])
@@ -442,7 +442,7 @@
              (thread-yield!))
            (thread-terminate! t)
            (guard (c
-                   [(thread-already-terminated-error? c)])
+                   [(thread-already-terminated-condition? c)])
              (thread-join! t)
              #f)))
 
@@ -504,14 +504,14 @@
             (reverse l)))
         (out! x)
         (out!
-         (guard (c [(uncaught-exception-error? c)
-                    (uncaught-exception-error-reason c)])
+         (guard (c [(uncaught-exception-condition? c)
+                    (uncaught-exception-condition-reason c)])
            (force p)
            3))
         (out! x)
         (out!
-         (guard (c [(uncaught-exception-error? c)
-                    (uncaught-exception-error-reason c)])
+         (guard (c [(uncaught-exception-condition? c)
+                    (uncaught-exception-condition-reason c)])
            (force p)
            4))
         (out! x)
@@ -796,7 +796,7 @@
 		   (p)))))))
 (test 42
       (guard (c
-	      [(uncaught-exception-error? c) (uncaught-exception-error-reason c)])
+	      [(uncaught-exception-condition? c) (uncaught-exception-condition-reason c)])
 	(call-in-initial-continuation
 	 (lambda ()
 	   (raise 42)))))
@@ -821,10 +821,10 @@
 	     (q (delay
 		  (set! x (+ x 1))
 		  (raise #t))))
-	(guard (c [(uncaught-exception-error? c)])
+	(guard (c [(uncaught-exception-condition? c)])
 	  (force q)
 	  (set! x (+ x 2)))
-	(guard (c [(uncaught-exception-error? c)])
+	(guard (c [(uncaught-exception-condition? c)])
 	  (force q)
 	  (set! x (+ x 4)))
 	x))

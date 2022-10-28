@@ -52,16 +52,16 @@
 	  current-thread thread? make-thread thread-name
 	  thread-start! thread-yield!
 	  thread-terminate! thread-join!
-	  &thread make-thread-error thread-error?
+	  &thread make-thread-condition thread-condition?
 	  &uncaught-exception
-	  make-uncaught-exception-error uncaught-exception-error?
-	  uncaught-exception-error-reason
+	  make-uncaught-exception-condition uncaught-exception-condition?
+	  uncaught-exception-condition-reason
 	  &thread-already-terminated
 	  &thread-timeout
 	  &thread-abandoned-mutex
-	  make-thread-abandoned-mutex-error thread-abandoned-mutex-error?
-	  make-thread-timeout-error thread-timeout-error?
-	  make-thread-already-terminated-error thread-already-terminated-error?
+	  make-thread-abandoned-mutex-condition thread-abandoned-mutex-condition?
+	  make-thread-timeout-condition thread-timeout-condition?
+	  make-thread-already-terminated-condition thread-already-terminated-condition?
 	  delay make-promise promise? force
 	  run
 	  (rename (call-with-current-continuation call/cc))
@@ -109,21 +109,21 @@
 	     (condition c (make-who-condition who))
 	     c)))))
 
-  (define-condition-type &thread &error
-    make-thread-error thread-error?)
+  (define-condition-type &thread &serious
+    make-thread-condition thread-condition?)
 
   (define-condition-type &uncaught-exception &thread
-    make-uncaught-exception-error uncaught-exception-error?
-    (reason uncaught-exception-error-reason))
+    make-uncaught-exception-condition uncaught-exception-condition?
+    (reason uncaught-exception-condition-reason))
 
   (define-condition-type &thread-already-terminated &thread
-    make-thread-already-terminated-error thread-already-terminated-error?)
+    make-thread-already-terminated-condition thread-already-terminated-condition?)
 
   (define-condition-type &thread-timeout &thread
-    make-thread-timeout-error thread-timeout-error?)
+    make-thread-timeout-condition thread-timeout-condition?)
 
   (define-condition-type &thread-abandoned-mutex &thread
-    make-thread-abandoned-mutex-error thread-abandoned-mutex-error?)
+    make-thread-abandoned-mutex-condition thread-abandoned-mutex-condition?)
 
   ;; Continuation mark keys
 
@@ -488,7 +488,7 @@
 	      (trampoline
 	       (make-thread-thunk thread (make-parameterization) thunk))))
 	   (if (thread-end-exception thread)
-	       (raise (uncaught-exception-error-reason (thread-end-exception thread)))
+	       (raise (uncaught-exception-condition-reason (thread-end-exception thread)))
 	       (apply values (thread-end-result thread))))))))
 
   (define trampoline
@@ -529,7 +529,7 @@
 	 end-k
 	 (lambda ()
 	   (unless (symbol=? (thread-current-state thread) (thread-state terminated))
-	     (thread-end-exception-set! thread (make-uncaught-exception-error con))))))))
+	     (thread-end-exception-set! thread (make-uncaught-exception-condition con))))))))
 
   ;; SRFI 18 says that the handler should be called tail-called
   ;; by (some) primitives.  This doesn't make much sense with the
@@ -1480,7 +1480,7 @@
 	    (let ([s (thread-current-state thread)])
 	      (unless (symbol=? s (thread-state terminated))
 		 (thread-current-state-set! thread (thread-state terminated))
-		 (thread-end-exception-set! thread (make-thread-already-terminated-error))
+		 (thread-end-exception-set! thread (make-thread-already-terminated-condition))
 		 (if (symbol=? s (thread-state new))
 		     (%condition-variable-broadcast! cv)
 		     (%thread-terminate! (thread-%thread thread))))
@@ -1580,7 +1580,7 @@
 			k (current-parameterization)
 			(lambda (con)
 			  (end-k (lambda ()
-				   (raise (make-uncaught-exception-error con)))))
+				   (raise (make-uncaught-exception-condition con)))))
 			(current-thread)))
 		      (abort thunk))))))])
 	  (%current-dynamic-environment saved-env)
