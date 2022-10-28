@@ -1267,6 +1267,14 @@
 	<p>Moreover, when the continuation, in
 	  which <code><span class=token>protected-expr</span></code> is
 	  evaluated, is aborted, the <span class=token>cleanup-exprs</span> are sequentially evaluated and their values discarded.</p>
+        <p><i>Note:</i> The <code>unwind-protect</code> syntactic form
+          and its name stems from <a href="#pitman"><cite>Common
+          Lisp</cite></a>.  It is useful when it must be guaranteed
+          that
+          the <code><span class="token">cleanup-exprs</span></code>
+          are evaluated exactly once per evaluation of
+          the <code>unwind-protect</code> form (bar abnormal thread
+          termination).</p>
       </dd>
     </dl>
 
@@ -2916,8 +2924,13 @@
 	  <a href="https://srfi.schemers.org/srfi-157/srfi-157.html"><cite>SRFI
 	      157: Continuation marks</cite></a>.</p>
       </li>
+      <li id="pitman">
+        <p>Kent
+        Pitman: <a href="http://www.lispworks.com/documentation/HyperSpec/Front/index.htm">Common
+        Lisp HyperSpec</a>.</p>
+      </li>
       <li id="posix">
-        <p><a href="http://get.posixcertified.ieee.org/">Portable Operating System Interface (IEEE 1003)</a></p>
+        <p><a href="http://get.posixcertified.ieee.org/">Portable Operating System Interface (IEEE 1003)</a>.</p>
       </li>
       <li id="r7rs">
 	<p><a href="https://github.com/johnwcowan/r7rs-work/blob/master/R7RSHomePage.md">R7RS Home Page</a>.</p>
