@@ -32,6 +32,7 @@
           (put 'call-with-parameterization 'scheme-indent-function 1)
 	  (put 'abort-current-continuation 'scheme-indent-function 1)
 	  (put 'meta-continuation-case 'scheme-indent-function 1)
+	  (put 'unwind-protect 'scheme-indent-function 1)
 	  (put 'rec 'scheme-indent-function 1)
 	  (put 'with-syntax 'scheme-indent-function 1)
           (font-lock-add-keywords
@@ -40,6 +41,7 @@
               (1 font-lock-keyword-face)
               (2 font-lock-function-name-face nil t))
 	     ("(\\(%case-lambda-box\\)\\>" 1 font-lock-keyword-face)
+	     ("(\\(unwind-protect\\)\\>" 1 font-lock-keyword-face)
 	     ("(\\(call-in-continuation\\)\\>" 1 font-lock-keyword-face)
 	     ("(\\(call-with-parameterization\\)\\>" 1 font-lock-keyword-face)
 	     ("(\\(with-continuation-mark\\)\\>" 1 font-lock-keyword-face)

@@ -1273,11 +1273,11 @@
 
     <pre class="example">(define-syntax unwind-protect
   (syntax-rules ()
-    [(unwind-protect protected-form cleanup-form ...)
+    [(unwind-protect protected-expr cleanup-expr ...)
      (dynamic-wind
        (lambda () (values))
-       (lambda () (call-in-continuation-barrier (lambda () protected-form)))
-       (lambda () (values) cleanup-form ...))]))</pre>
+       (lambda () (call-with-continuation-barrier (lambda () protected-expr)))
+       (lambda () (values) cleanup-expr ...))]))</pre>
 
     <h3>Continuation Marks</h3>
 

@@ -294,6 +294,30 @@
                (k (cons void c))))))
         l))
 
+(test '(2 52)
+      (let* ([x 10]
+	     [y
+	      (unwind-protect (+ x 42) (set! x 1) (set! x (* x 2)))])
+	(list x y)))
+
+(test '(2 42)
+      (let* ([x 10]
+	     [y
+	      (call/cc
+	       (lambda (k)
+		 (unwind-protect (+ x (k 42)) (set! x 1) (set! x (* x 2)))))])
+	(list x y)))
+
+(test '(2 62)
+      (let* ([x 10]
+	     [y
+	      (guard (c [(continuation-violation? c) 62])
+		(unwind-protect
+		    (call-with-composable-continuation (lambda (c) (+ x 42)))
+		  (set! x 1)
+		  (set! x (* x 2))))])
+	(list x y)))
+
 (test '(in thread in out out)
       (let [(l '())]
         (define out!

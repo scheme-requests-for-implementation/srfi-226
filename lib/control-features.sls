@@ -29,6 +29,7 @@
 	  continuation?
 	  call-in-continuation continuation-prompt-available?
 	  call-with-continuation-barrier dynamic-wind
+	  unwind-protect
 	  with-continuation-mark with-continuation-marks
 	  call-with-immediate-continuation-mark
 	  current-continuation-marks continuation-marks continuation-mark-set?
@@ -889,6 +890,16 @@
   (define winders=?
     (lambda (w1 w2)
       (fx=? (winders-height w1) (winders-height w2))))
+
+  (define-syntax/who unwind-protect
+    (lambda (stx)
+      (syntax-case stx ()
+	[(_ protected-expr cleanup-expr ...)
+	 #'(dynamic-wind
+	     (lambda () (values))
+	     (lambda () (call-with-continuation-barrier (lambda () protected-expr)))
+	     (lambda () (values) cleanup-expr ...))]
+	[_ (syntax-violation who "invalid syntax" stx)])))
 
   ;; Continuation marks
 
