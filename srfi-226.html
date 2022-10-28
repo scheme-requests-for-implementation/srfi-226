@@ -1615,11 +1615,13 @@
     to cells that hold a value.</p>
 
     <p>Conceptually, each continuation contains at least one otherwise
-      inaccessible parameterization continuation mark, whose value is a
-      parameterization.  The <dfn>parameterization of a continuation</dfn> is
-      the value of the most recent parameterization continuation mark in the
-      continuation.  The parameterization of the current continuation is
-      the <dfn>current parameterization</dfn>.
+      inaccessible parameterization continuation mark, whose value is
+      a parameterization.  The <dfn>parameterization of a
+      continuation</dfn> is the value of the most recent
+      parameterization continuation mark in the continuation.  The
+      parameterization of the current continuation is the <dfn>current
+      parameterization</dfn>.  The (current) parameterization can
+      conceptually be seen as part of the dynamic environment.</p>
 
     <p>The parameterization of the initial continuation of a top-level program
       maps each current and future parameter object to a cell holding its
