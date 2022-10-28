@@ -1250,6 +1250,35 @@
            (set! n (+ n 4))))))
   n)<span class="result">7</span></pre>
 
+    <dl class="entries">
+      <dt class="syntax"><code>(unwind-protect <span class=token>protected-expr</span> <span class=token>cleanup-expr</span></code></dt>
+      <dd>
+	<p><i>Syntax:</i>
+	  <code><span class="token">Protected-expr</span></code> and the <code><span class="token">cleanup-exprs</span></code>
+	  are expressions.</p>
+	<p><i>Semantics:</i>
+	  The <code><span class=token>protected-expr</span></code> is
+	  evaluated with an installed continuation barrier in a
+	  continuation that sequentially evaluates
+	  the <code><span class=token>cleanup-exprs</span></code>, discards their
+	  values, and finally returns the values yielded by the
+	  evaluation of <code><span class=token>protected-expr</span></code>.</p>
+	<p>Moreover, when the continuation, in
+	  which <code><span class=token>protected-expr</span></code> is
+	  evaluated, is aborted, the <span class=token>cleanup-exprs</span> are sequentially evaluated and their values discarded.</p>
+      </dd>
+    </dl>
+
+    <p>The <code>unwind-protect</code> keyword can be defined as follows:</p>
+
+    <pre class="example">(define-syntax unwind-protect
+  (syntax-rules ()
+    [(unwind-protect protected-form cleanup-form ...)
+     (dynamic-wind
+       (lambda () (values))
+       (lambda () (call-in-continuation-barrier (lambda () protected-form)))
+       (lambda () (values) cleanup-form ...))]))</pre>
+
     <h3>Continuation Marks</h3>
 
     <p>This section describes the <code>(srfi :226 control
