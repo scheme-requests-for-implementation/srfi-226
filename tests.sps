@@ -801,6 +801,19 @@
 	 (lambda ()
 	   (raise 42)))))
 
+(test 43
+      (with-exception-handler
+       (lambda (exc)
+         (cond
+          [(uncaught-exception-condition? exc)
+           (uncaught-exception-condition-reason exc)]
+          [else (raise-continuable exc)]))
+       (lambda ()
+         (+ 1
+            (call-in-initial-continuation
+             (lambda ()
+               (raise 42)))))))
+
 (test #t (promise? (make-promise 1 2)))
 (test #t (promise? (delay 3)))
 (test #t (promise? (force (make-promise (make-promise 4)))))

@@ -1814,10 +1814,11 @@
 	  delivered to the continuation of the call
 	  to <code>call-in-initial-continuation</code>.  When an
 	  exception is raised in the dynamic extent of the handler of
-	  the continuation prompt of the initial continuation,
-	  an <code>&uncaught-exception</code> condition whose
-	  reason is the raised object is raised in the continuation of
-	  the call to <code>call-in-initial-continuation</code>.</p>
+	  the continuation prompt of the initial continuation, a
+	  continuable exception of
+	  type <code>&uncaught-exception</code> whose reason is the
+	  raised object is raised in the continuation of the call
+	  to <code>call-in-initial-continuation</code>.</p>
 	<p>This extends the semantics of <code>raise</code>.</p>
       </dd>
     </dl>

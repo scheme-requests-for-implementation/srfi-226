@@ -1568,23 +1568,23 @@
 
   (define call-in-initial-continuation
     (lambda (thunk)
-      (let* ([saved-env (%current-dynamic-environment)])
-	(let ([thunk
-	       (%call-with-current-continuation
-		(lambda (end-k)
-		  (thunkify
-		   (%call-with-current-continuation
-		    (lambda (k)
-		      (%current-dynamic-environment
-		       (make-initial-dynamic-environment
-			k (current-parameterization)
-			(lambda (con)
-			  (end-k (lambda ()
-				   (raise (make-uncaught-exception-condition con)))))
-			(current-thread)))
-		      (abort thunk))))))])
-	  (%current-dynamic-environment saved-env)
-	  (thunk)))))
+      (let* ([saved-env (%current-dynamic-environment)]
+	     [thunk
+	      (%call-with-current-continuation
+	       (lambda (end-k)
+	         (thunkify
+	          (%call-with-current-continuation
+	           (lambda (k)
+		     (%current-dynamic-environment
+		      (make-initial-dynamic-environment
+		       k (current-parameterization)
+		       (lambda (con)
+		         (end-k (lambda ()
+			          (raise-continuable (make-uncaught-exception-condition con)))))
+		       (current-thread)))
+		     (abort thunk))))))])
+	(%current-dynamic-environment saved-env)
+	(thunk))))
 
   (define/who force
     (lambda (p)
