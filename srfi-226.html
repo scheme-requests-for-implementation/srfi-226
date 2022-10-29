@@ -1605,7 +1605,17 @@
       <dt class="procedure"><code>(continuation-mark-key? <var>obj</var>)</code></dt>
       <dd>
 	<p>Returns <code>#t</code> if <code><var>obj</var></code> is a
-	mark key, and <code>#f</code> otherwise.</p>
+	  mark key, and <code>#f</code> otherwise.</p>
+        <p><i>Note:</i> This specification does not define the type of
+          mark keys conclusively; it only demands that the values
+          returned by <code>make-continuation-mark-key</code> are mark
+          keys.  This can be exploited by implementations who offer
+          specialized procedures for mark keys.  If the implementation
+          does not treat any key object in continuation marks
+          specially, <code>continuation-mark-key?</code> can
+          return <code>#t</code> on all objects.  (Note that in any
+          case, any Scheme object can be used as a key object in a
+          continuation mark.)</p>
       </dd>
     </dl>
 
@@ -2824,7 +2834,13 @@
       Feeley's <cite>A better API for first-class continuations</cite>
       to me, and to John Cowan and Vladimir Nikishkin for <i>very</i>
       careful readings of the first draft and providing me with a lot
-      of helpful comments.</p>
+      of helpful comments.  The same specifically applies to Marc
+      Feeley, without whose experience and insights I wouldn't want to
+      have missed.</p>
+
+    <p>I am grateful to Shiro Kawai who is working on an alternative
+      implementation of SRFI 226 for his Gauche system.  His comments
+      and questions about this SRFI helped a lot to improve it.</p>
 
     <p>This document uses text copied verbatim from <cite>SRFI
     18</cite>.</p>
