@@ -600,8 +600,10 @@
       <dd>undelimited continuation</dd>
       <dt><code><var>tl</var></code></dt>
       <dd>thread local</dd>
+      <dt><code><var>time</var></code></dt>
+      <dd>time object</code></dd>
       <dt><code><var>timeout</var></code></dt>
-      <dd>real number or <code>#f</code></dd>
+      <dd>time object or <code>#f</code></dd>
       <dt><code><var>thread</var></code></dt>
       <dd>thread</dd>
       <dt><code><var>owner-thread</var></code></dt>
@@ -2158,6 +2160,29 @@
        (lambda ()
          (raise 42)))))<span class="result">43</span></pre>
 
+    <h3>Time Objects</h3>
+
+    <p>This section describes the <code>(srfi :226 control
+	times)</code> library.  The time type defined in this library is used in <code>(srfi
+	:226 control threads)</code> for timeout arguments in various procedures.</p>
+
+    <p>The specification of this library is minimal to make it
+      compatible with existing and future Scheme time APIs.</p>
+
+    <p><dfn>Time objects</dfn> or simply <dfn>times</dfn> represent an
+      absolute time (in the process' proper time).</p>
+
+    <dl class="entries">
+      <dt class="procedure"><code>(time? <var>obj</var>)</code></dt>
+      <dd><p>Returns <code>#t</code> if <code><var>obj</var></code> is a time object, <code>#f</code> otherwise.</p></dd>
+      <dt class="procedure"><code>(current-time)</code></dt>
+      <dd><p>Returns the absolute time at the call to <code>current-time</code> as a time object.</p></dd>
+      <dt class="procedure"><code>(seconds+ time x)</code></dt>
+      <dd><p>Returns <code><var>x</var></code> seconds in the future of <code>time</code> as a time object.</p>
+	<p><i>Note:</i> If <code><var>x</var></code> is a negative real number, the returned time is actually in the past of <code><var>time</var></code>.</p>
+      </dd>
+    </dl>
+
     <h3>Threads</h3>
 
     <p>This section describes the <code>(srfi :226 control
@@ -2189,13 +2214,9 @@
 	  with threads.  In fact, thread locals allow library-specific
 	  and not only application-specific data as the
 	  thread-specific field of <cite>SRFI 18</cite>.</p></li>
-      <li><p>(Absolute) time objects are not supported.  They can be
-      replaced by relative times (given in seconds as real numbers)
-	  relative to the current time.</p></li>
-      <li><p>No time-related procedures are provided.  Instead, the
-	  procedures exported by the library <code>(scheme
-	  time)</code> of <cite>R<sup>7</sup>RS</cite> can be used,
-	  for example.</p></li>
+      <li><p>The interface for (absolute) time objects does not have a
+	  notion of an implementation-dependent <i>epoch</i>.  In particular, there are no procedures
+	  <code>time->seconds</code> and <code>seconds->time</code>.</p></li>
       <li><p>The procedures related to exception handling contained
 	  in <cite>SRFI 18</cite> are described elsewhere in this
 	  document.</p></li>
@@ -2209,11 +2230,8 @@
       for this purpose.</p></li>
     </ul>
 
-    <p>A <dfn>timeout</dfn> is represented either by a real number
-      (object) or by <code>#f</code>.  If it is a real number, a
-      relative time in a number of seconds given by the real number is
-      represented (negative numbers the represented time is in the
-      past relative to the current time).  If it is <code>#f</code>,
+    <p>A <dfn>timeout</dfn> is either represented by a time object
+      or by <code>#f</code>.  If it is <code>#f</code>,
       an absolute time lying infinitely far in the future is
       represented (meaning effectively no timeout).  A missing
       optional timeout value defaults to <code>#f</code>.</p>
