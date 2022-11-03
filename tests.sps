@@ -130,7 +130,17 @@
 
 (test 13 (+ 3 (call-with-current-continuation
                 (lambda (k)
-                  (+ 1 (call-in-continuation k (lambda () 10)))))))
+                  (+ 1 (call-in-continuation k (lambda (x) x) 10))))))
+
+(test #t (call-with-current-continuation
+           (lambda (k)
+             (non-composable-continuation? k))))
+
+(test #f (call-with-composable-continuation
+           (lambda (k)
+             (non-composable-continuation? k))))
+
+(test #f (non-composable-continuation? values))
 
 (test #t (call-with-current-continuation
            (lambda (k)
@@ -139,6 +149,8 @@
 (test #t (call-with-composable-continuation
            (lambda (k)
              (continuation? k))))
+
+(test #f (continuation? values))
 
 (test #f (continuation-prompt-available? tag))
 
@@ -294,6 +306,30 @@
                (k (cons void c))))))
         l))
 
+(test '(2 52)
+      (let* ([x 10]
+	     [y
+	      (unwind-protect (+ x 42) (set! x 1) (set! x (* x 2)))])
+	(list x y)))
+
+(test '(2 42)
+      (let* ([x 10]
+	     [y
+	      (call/cc
+	       (lambda (k)
+		 (unwind-protect (+ x (k 42)) (set! x 1) (set! x (* x 2)))))])
+	(list x y)))
+
+(test '(2 62)
+      (let* ([x 10]
+	     [y
+	      (guard (c [(continuation-violation? c) 62])
+		(unwind-protect
+		    (call-with-composable-continuation (lambda (c) (+ x 42)))
+		  (set! x 1)
+		  (set! x (* x 2))))])
+	(list x y)))
+
 (test '(in thread in out out)
       (let [(l '())]
         (define out!
@@ -398,8 +434,8 @@
 (test 96 (let ([t (thread-start!
                    (thread (raise 97)))])
            (guard (c
-                   [(uncaught-exception-error? c)
-                    (fx+ -1 (uncaught-exception-error-reason c))])
+                   [(uncaught-exception-condition? c)
+                    (fx+ -1 (uncaught-exception-condition-reason c))])
              (thread-join! t))))
 
 (test 10 (let ([p (make-parameter 9)])
@@ -418,7 +454,7 @@
              (thread-yield!))
            (thread-terminate! t)
            (guard (c
-                   [(thread-already-terminated-error? c)])
+                   [(thread-already-terminated-condition? c)])
              (thread-join! t)
              #f)))
 
@@ -480,14 +516,14 @@
             (reverse l)))
         (out! x)
         (out!
-         (guard (c [(uncaught-exception-error? c)
-                    (uncaught-exception-error-reason c)])
+         (guard (c [(uncaught-exception-condition? c)
+                    (uncaught-exception-condition-reason c)])
            (force p)
            3))
         (out! x)
         (out!
-         (guard (c [(uncaught-exception-error? c)
-                    (uncaught-exception-error-reason c)])
+         (guard (c [(uncaught-exception-condition? c)
+                    (uncaught-exception-condition-reason c)])
            (force p)
            4))
         (out! x)
@@ -496,6 +532,16 @@
 (test 1000 (force (delay (abort-current-continuation (default-continuation-prompt-tag)
                            (lambda ()
                              1000)))))
+
+(test 51
+      (with-exception-handler
+       (lambda (exc)
+         (cond
+          [(uncaught-exception-condition? exc)
+           (uncaught-exception-condition-reason exc)]
+          [else (raise-continuable exc)]))
+       (lambda ()
+         (+ 9 (force (delay (raise 42)))))))
 
 ;;; See: <https://srfi-email.schemers.org/srfi-39/msg/2784435/>.
 (test '(once #f 1)
@@ -649,6 +695,8 @@
 
 (test #t (continuation? (call/cc values)))
 (test #t (continuation? (call-with-composable-continuation values)))
+(test #t (non-composable-continuation? (call/cc values)))
+(test #f (non-composable-continuation? (call-with-composable-continuation values)))
 
 (test 'exception
       (guard (c
@@ -772,10 +820,23 @@
 		   (p)))))))
 (test 42
       (guard (c
-	      [(uncaught-exception-error? c) (uncaught-exception-error-reason c)])
+	      [(uncaught-exception-condition? c) (uncaught-exception-condition-reason c)])
 	(call-in-initial-continuation
 	 (lambda ()
 	   (raise 42)))))
+
+(test 43
+      (with-exception-handler
+       (lambda (exc)
+         (cond
+          [(uncaught-exception-condition? exc)
+           (uncaught-exception-condition-reason exc)]
+          [else (raise-continuable exc)]))
+       (lambda ()
+         (+ 1
+            (call-in-initial-continuation
+             (lambda ()
+               (raise 42)))))))
 
 (test #t (promise? (make-promise 1 2)))
 (test #t (promise? (delay 3)))
@@ -797,10 +858,10 @@
 	     (q (delay
 		  (set! x (+ x 1))
 		  (raise #t))))
-	(guard (c [(uncaught-exception-error? c)])
+	(guard (c [(uncaught-exception-condition? c)])
 	  (force q)
 	  (set! x (+ x 2)))
-	(guard (c [(uncaught-exception-error? c)])
+	(guard (c [(uncaught-exception-condition? c)])
 	  (force q)
 	  (set! x (+ x 4)))
 	x))
@@ -836,6 +897,32 @@
 		   (tlset! tl 2)
 		   (tlref tl))))])
 	(list (tlref tl) x)))
+
+;;; See <https://srfi-email.schemers.org/srfi-226/msg/20946964/>.
+
+(test '((1 3 5) . 11)
+      (let ([res '()])
+        (define put!
+          (lambda (obj)
+            (set! res (cons obj res))))
+        (define result
+          (lambda ()
+            (reverse res)))
+        (define val
+          (call-with-continuation-prompt
+           (lambda ()
+             (+ 1
+                (call-with-composable-continuation
+                 (lambda (k)
+                   (call-with-continuation-barrier
+                    (lambda ()
+                      (dynamic-wind
+                          (lambda () (put! 1))
+                          (lambda ()
+                            (put! (k 2))
+                            10)
+                          (lambda () (put! 5)))))))))))
+        (cons (result) val)))
 
 ;;; Test End
 

@@ -26,9 +26,12 @@
   (export call-with-continuation-prompt abort-current-continuation
 	  call-with-current-continuation call-with-composable-continuation
 	  call-with-non-composable-continuation
-	  continuation?
-	  call-in-continuation continuation-prompt-available?
+	  continuation? non-composable-continuation?
+	  call-in-continuation
+          call-in return-to
+          continuation-prompt-available?
 	  call-with-continuation-barrier dynamic-wind
+	  unwind-protect
 	  with-continuation-mark with-continuation-marks
 	  call-with-immediate-continuation-mark
 	  current-continuation-marks continuation-marks continuation-mark-set?
@@ -51,16 +54,16 @@
 	  current-thread thread? make-thread thread-name
 	  thread-start! thread-yield!
 	  thread-terminate! thread-join!
-	  &thread make-thread-error thread-error?
+	  &thread make-thread-condition thread-condition?
 	  &uncaught-exception
-	  make-uncaught-exception-error uncaught-exception-error?
-	  uncaught-exception-error-reason
+	  make-uncaught-exception-condition uncaught-exception-condition?
+	  uncaught-exception-condition-reason
 	  &thread-already-terminated
 	  &thread-timeout
 	  &thread-abandoned-mutex
-	  make-thread-abandoned-mutex-error thread-abandoned-mutex-error?
-	  make-thread-timeout-error thread-timeout-error?
-	  make-thread-already-terminated-error thread-already-terminated-error?
+	  make-thread-abandoned-mutex-condition thread-abandoned-mutex-condition?
+	  make-thread-timeout-condition thread-timeout-condition?
+	  make-thread-already-terminated-condition thread-already-terminated-condition?
 	  delay make-promise promise? force
 	  run
 	  (rename (call-with-current-continuation call/cc))
@@ -108,21 +111,21 @@
 	     (condition c (make-who-condition who))
 	     c)))))
 
-  (define-condition-type &thread &error
-    make-thread-error thread-error?)
+  (define-condition-type &thread &serious
+    make-thread-condition thread-condition?)
 
   (define-condition-type &uncaught-exception &thread
-    make-uncaught-exception-error uncaught-exception-error?
-    (reason uncaught-exception-error-reason))
+    make-uncaught-exception-condition uncaught-exception-condition?
+    (reason uncaught-exception-condition-reason))
 
   (define-condition-type &thread-already-terminated &thread
-    make-thread-already-terminated-error thread-already-terminated-error?)
+    make-thread-already-terminated-condition thread-already-terminated-condition?)
 
   (define-condition-type &thread-timeout &thread
-    make-thread-timeout-error thread-timeout-error?)
+    make-thread-timeout-condition thread-timeout-condition?)
 
   (define-condition-type &thread-abandoned-mutex &thread
-    make-thread-abandoned-mutex-error thread-abandoned-mutex-error?)
+    make-thread-abandoned-mutex-condition thread-abandoned-mutex-condition?)
 
   ;; Continuation mark keys
 
@@ -132,10 +135,10 @@
     (protocol
      (lambda (p)
        (case-lambda
-	 [() (p #f)]
-	 [(name)
-	  (assert (symbol? name))
-	  (p name)]))))
+	[() (p #f)]
+	[(name)
+	 (assert (symbol? name))
+	 (p name)]))))
 
   ;; Continuation prompt tags
 
@@ -145,10 +148,10 @@
     (protocol
      (lambda (p)
        (case-lambda
-	 [() (p #f)]
-	 [(name)
-	  (assert (symbol? name))
-	  (p name)]))))
+	[() (p #f)]
+	[(name)
+	 (assert (symbol? name))
+	 (p name)]))))
 
   (define default-continuation-prompt-tag
     (let ([prompt-tag (make-continuation-prompt-tag 'default)])
@@ -210,6 +213,12 @@
     (lambda (obj)
       (continuation-info? (%case-lambda-box-ref obj #f))))
 
+  (define non-composable-continuation?
+    (lambda (obj)
+      (cond
+       [(%case-lambda-box-ref obj #f) => continuation-info-non-composable?]
+       [else #f])))
+
   ;; Dynamic environment
 
   (define-record-type dynamic-environment
@@ -219,24 +228,24 @@
 
   (define current-metacontinuation
     (case-lambda
-      [() (dynamic-environment-metacontinuation
-	   (%current-dynamic-environment))]
-      [(mk) (dynamic-environment-metacontinuation-set!
-	     (%current-dynamic-environment) mk)]))
+     [() (dynamic-environment-metacontinuation
+	  (%current-dynamic-environment))]
+     [(mk) (dynamic-environment-metacontinuation-set!
+	    (%current-dynamic-environment) mk)]))
 
   (define current-marks
     (case-lambda
-      [() (dynamic-environment-marks
-	   (%current-dynamic-environment))]
-      [(marks) (dynamic-environment-marks-set!
-		(%current-dynamic-environment) marks)]))
+     [() (dynamic-environment-marks
+	  (%current-dynamic-environment))]
+     [(marks) (dynamic-environment-marks-set!
+	       (%current-dynamic-environment) marks)]))
 
   (define current-winders
     (case-lambda
-      [() (dynamic-environment-winders
-	   (%current-dynamic-environment))]
-      [(winders) (dynamic-environment-winders-set!
-		  (%current-dynamic-environment) winders)]))
+     [() (dynamic-environment-winders
+	  (%current-dynamic-environment))]
+     [(winders) (dynamic-environment-winders-set!
+		 (%current-dynamic-environment) winders)]))
 
   ;; Marks
 
@@ -247,14 +256,14 @@
 
   (define marks-ref
     (case-lambda
-      [(marks key)
-       (marks-ref marks key (lambda () (assert #f)))]
-      [(marks key fail)
-       (marks-ref marks key fail values)]
-      [(marks key fail succ)
-       (cond
-	[(assq key marks) => (lambda (a) (succ (cdr a)))]
-	[else (fail)])]))
+     [(marks key)
+      (marks-ref marks key (lambda () (assert #f)))]
+     [(marks key fail)
+      (marks-ref marks key fail values)]
+     [(marks key fail succ)
+      (cond
+       [(assq key marks) => (lambda (a) (succ (cdr a)))]
+       [else (fail)])]))
 
   (define marks-ref*
     (lambda (marks keys default)
@@ -288,8 +297,15 @@
 
   (define set-mark!
     (lambda (key val)
-      (current-marks
-       (cons (cons key val) (current-marks)))))
+      (let ([marks (current-marks)])
+	(current-marks
+	 (cond
+	  [(assq key marks) =>
+	   (lambda (entry)
+	     (set-cdr! entry val)
+	     marks)]
+	  [else
+	   (cons (cons key val) marks)])))))
 
   (define ref-mark
     (lambda (key default)
@@ -390,7 +406,7 @@
 	      '()]
 	     [(and barrier? (eq? tag (continuation-barrier-tag)))
 	      (continuation-violation who "applying the composable continuation would introduce a continuation barrier"
-				  prompt-tag)]
+				      prompt-tag)]
 	     [else
 	      (cons frame (f mk))]))))))
 
@@ -415,20 +431,20 @@
   (define empty-continuation
     (let ([continuation #f])
       (case-lambda
-	[()
-	 (assert continuation)]
-	[(k)
-	 (assert (procedure? k))
-	 (set! continuation k)])))
+       [()
+	(assert continuation)]
+       [(k)
+	(assert (procedure? k))
+	(set! continuation k)])))
 
   (define abort-continuation
     (let ([continuation #f])
       (case-lambda
-	[()
-	 (assert continuation)]
-	[(k)
-	 (assert (procedure? k))
-	 (set! continuation k)])))
+       [()
+	(assert continuation)]
+       [(k)
+	(assert (procedure? k))
+	(set! continuation k)])))
 
   (define abort
     (lambda (thunk)
@@ -480,7 +496,7 @@
 	      (trampoline
 	       (make-thread-thunk thread (make-parameterization) thunk))))
 	   (if (thread-end-exception thread)
-	       (raise (uncaught-exception-error-reason (thread-end-exception thread)))
+	       (raise (uncaught-exception-condition-reason (thread-end-exception thread)))
 	       (apply values (thread-end-result thread))))))))
 
   (define trampoline
@@ -521,7 +537,7 @@
 	 end-k
 	 (lambda ()
 	   (unless (symbol=? (thread-current-state thread) (thread-state terminated))
-	     (thread-end-exception-set! thread (make-uncaught-exception-error con))))))))
+	     (thread-end-exception-set! thread (make-uncaught-exception-condition con))))))))
 
   ;; SRFI 18 says that the handler should be called tail-called
   ;; by (some) primitives.  This doesn't make much sense with the
@@ -562,19 +578,19 @@
 
   (define call-in-empty-marks
     (case-lambda
-      [(thunk)
-       (call-in-empty-marks #f #f thunk)]
-      [(tag handler thunk)
-       (%call-with-current-continuation
-	(lambda (k)
-	  (when (or tag
-		    (not (empty-continuation? k))
-		    (not (empty-marks?)))
-	    (push-metacontinuation-frame!
-	     (make-metacontinuation-frame tag k handler (current-marks) (current-winders)))
-	    (clear-marks!)
-	    (current-winders '()))
-	  (abort thunk)))]))
+     [(thunk)
+      (call-in-empty-marks #f #f thunk)]
+     [(tag handler thunk)
+      (%call-with-current-continuation
+       (lambda (k)
+	 (when (or tag
+		   (not (empty-continuation? k))
+		   (not (empty-marks?)))
+	   (push-metacontinuation-frame!
+	    (make-metacontinuation-frame tag k handler (current-marks) (current-winders)))
+	   (clear-marks!)
+	   (current-winders '()))
+	 (abort thunk)))]))
 
   (define abort-to
     (lambda (k marks winders thunk)
@@ -590,15 +606,15 @@
 
   (define call-with-continuation-prompt
     (case-lambda
-      [(thunk)
-       (call-with-continuation-prompt thunk (default-continuation-prompt-tag))]
-      [(thunk prompt-tag)
-       (call-with-continuation-prompt thunk prompt-tag #f)]
-      [(thunk prompt-tag handler)
-       (let ([handler (or handler (make-default-handler prompt-tag))])
-	 (assert (continuation-prompt-tag? prompt-tag))
-	 (assert (procedure? handler))
-	 (call-in-empty-marks prompt-tag handler thunk))]))
+     [(thunk)
+      (call-with-continuation-prompt thunk (default-continuation-prompt-tag))]
+     [(thunk prompt-tag)
+      (call-with-continuation-prompt thunk prompt-tag #f)]
+     [(thunk prompt-tag handler)
+      (let ([handler (or handler (make-default-handler prompt-tag))])
+	(assert (continuation-prompt-tag? prompt-tag))
+	(assert (procedure? handler))
+	(call-in-empty-marks prompt-tag handler thunk))]))
 
   (define make-default-handler
     (lambda (prompt-tag)
@@ -715,19 +731,19 @@
 
   (define/who call-with-non-composable-continuation
     (case-lambda
-      [(proc)
-       (call-with-non-composable-continuation proc (default-continuation-prompt-tag))]
-      [(proc prompt-tag)
-       (assert (procedure? proc))
-       (assert (continuation-prompt-tag? prompt-tag))
-       (%call-with-current-continuation
-	(lambda (k)
-	  (proc (make-non-composable-continuation
-		 (take-metacontinuation who prompt-tag #f)
-		 k
-		 (current-marks)
-		 (current-winders)
-		 prompt-tag))))]))
+     [(proc)
+      (call-with-non-composable-continuation proc (default-continuation-prompt-tag))]
+     [(proc prompt-tag)
+      (assert (procedure? proc))
+      (assert (continuation-prompt-tag? prompt-tag))
+      (%call-with-current-continuation
+       (lambda (k)
+	 (proc (make-non-composable-continuation
+		(take-metacontinuation who prompt-tag #f)
+		k
+		(current-marks)
+		(current-winders)
+		prompt-tag))))]))
 
   (define/who call-with-current-continuation
     (lambda (proc)
@@ -735,20 +751,20 @@
 
   (define/who call-with-composable-continuation
     (case-lambda
-      [(proc)
-       (call-with-composable-continuation proc (default-continuation-prompt-tag))]
-      [(proc prompt-tag)
-       (assert (procedure? proc))
-       (assert (continuation-prompt-tag? prompt-tag))
-       (%call-with-current-continuation
-	(lambda (k)
-	  (proc
-	   (make-composable-continuation
-	    (take-metacontinuation who prompt-tag #t)
-	    k
-	    (current-marks)
-	    (current-winders)
-	    prompt-tag))))]))
+     [(proc)
+      (call-with-composable-continuation proc (default-continuation-prompt-tag))]
+     [(proc prompt-tag)
+      (assert (procedure? proc))
+      (assert (continuation-prompt-tag? prompt-tag))
+      (%call-with-current-continuation
+       (lambda (k)
+	 (proc
+	  (make-composable-continuation
+	   (take-metacontinuation who prompt-tag #t)
+	   k
+	   (current-marks)
+	   (current-winders)
+	   prompt-tag))))]))
 
   (define common-metacontinuation
     (lambda (who dest-mk current-mk tag)
@@ -779,20 +795,36 @@
       (do ([dest-mf* dest-mf* (cdr dest-mf*)])
 	  ((null? dest-mf*))
 	(when (eq? (metacontinuation-frame-tag (car dest-mf*)) (continuation-barrier-tag))
-	  (continuation-violation #f "apply the continuation would introduce a continuation barrier" tag)))))
+	  (continuation-violation #f "applying the continuation would introduce a continuation barrier" tag)))))
 
-  (define call-in-continuation
-    (lambda (k thunk)
-      ((continuation-resume-k 'call-in-continuation k) thunk)))
+  (define/who call-in-continuation
+    (lambda (k proc . args)
+      (unless (procedure? proc)
+        (assertion-violation who "not a procedure" proc))
+      ((continuation-resume-k 'call-in-continuation k) (lambda () (apply proc args)))))
+
+  (define/who call-in
+    (lambda (k proc . args)
+      (unless (non-composable-continuation? k)
+        (assertion-violation who "not a non-composable continuation object" k))
+      (unless (procedure? proc)
+        (assertion-violation who "not a procedure" proc))
+      ((continuation-resume-k 'call-in-continuation k) (lambda () (apply proc args)))))
+
+  (define/who return-to
+    (lambda (k args)
+      (unless (non-composable-continuation? k)
+        (assertion-violation who "not a non-composable continuation object" k))
+      ((continuation-resume-k 'call-in-continuation k) (lambda () (apply values args)))))
 
   (define/who continuation-prompt-available?
     (case-lambda
-      [(tag)
-       (metacontinuation-contains-prompt? (current-metacontinuation) tag)]
-      [(tag k)
-       (or (and (continuation-non-composable? who k)
-		(eq? (continuation-prompt-tag who k) tag))
-	   (metacontinuation-contains-prompt? (continuation-metacontinuation who k) tag))]))
+     [(tag)
+      (metacontinuation-contains-prompt? (current-metacontinuation) tag)]
+     [(tag k)
+      (or (and (continuation-non-composable? who k)
+	       (eq? (continuation-prompt-tag who k) tag))
+	  (metacontinuation-contains-prompt? (continuation-metacontinuation who k) tag))]))
 
   (define metacontinuation-contains-prompt?
     (lambda (mk tag)
@@ -812,9 +844,9 @@
       (unless (procedure? pre-thunk)
 	(assertion-violation who "not a procedure" pre-thunk))
       (unless (procedure? thunk)
-	(assertion-violation who "not a procedure" pre-thunk))
+	(assertion-violation who "not a procedure" thunk))
       (unless (procedure? post-thunk)
-	(assertion-violation who "not a procedure" pre-thunk))
+	(assertion-violation who "not a procedure" post-thunk))
       (%call-with-current-continuation
        (lambda (k)
 	 (let* ([winders (current-winders)]
@@ -883,6 +915,16 @@
     (lambda (w1 w2)
       (fx=? (winders-height w1) (winders-height w2))))
 
+  (define-syntax/who unwind-protect
+    (lambda (stx)
+      (syntax-case stx ()
+	[(_ protected-expr cleanup-expr ...)
+	 #'(dynamic-wind
+	       (lambda () (values))
+	       (lambda () (call-with-continuation-barrier (lambda () protected-expr)))
+	       (lambda () (values) cleanup-expr ...))]
+	[_ (syntax-violation who "invalid syntax" stx)])))
+
   ;; Continuation marks
 
   (define-syntax/who with-continuation-mark
@@ -918,42 +960,42 @@
 
   (define/who call-with-immediate-continuation-mark
     (case-lambda
-      [(key proc)
-       (call-with-immediate-continuation-mark key proc #f)]
-      [(key proc default)
-       (unless (procedure? proc)
-	 (assertion-violation
-	  'who "not a procedure" proc))
-       (call-in-empty-continuation
-	(lambda ()
-	  (proc (ref-mark key default))))]))
+     [(key proc)
+      (call-with-immediate-continuation-mark key proc #f)]
+     [(key proc default)
+      (unless (procedure? proc)
+	(assertion-violation
+	 'who "not a procedure" proc))
+      (call-in-empty-continuation
+       (lambda ()
+	 (proc (ref-mark key default))))]))
 
   (define/who continuation-marks
     (case-lambda
-      [(k) (continuation-marks k (default-continuation-prompt-tag))]
-      [(k prompt-tag)
-       (unless (continuation-prompt-tag? prompt-tag)
-	 (assertion-violation
-	  who "not a continuation prompt tag" prompt-tag))
-       (let ([frames (take-mark-set-frames (continuation-metacontinuation who k) prompt-tag)])
-	 (unless (or frames (eq? (continuation-prompt-tag who k) prompt-tag))
-	   (assertion-violation who "prompt tag not found in continuation" prompt-tag))
-	 (make-continuation-mark-set (or frames '())))]))
+     [(k) (continuation-marks k (default-continuation-prompt-tag))]
+     [(k prompt-tag)
+      (unless (continuation-prompt-tag? prompt-tag)
+	(assertion-violation
+	 who "not a continuation prompt tag" prompt-tag))
+      (let ([frames (take-mark-set-frames (continuation-metacontinuation who k) prompt-tag)])
+	(unless (or frames (eq? (continuation-prompt-tag who k) prompt-tag))
+	  (assertion-violation who "prompt tag not found in continuation" prompt-tag))
+	(make-continuation-mark-set (or frames '())))]))
 
   (define/who current-continuation-marks
     (case-lambda
-      [()
-       (current-continuation-marks (default-continuation-prompt-tag))]
-      [(prompt-tag)
-       (unless (continuation-prompt-tag? prompt-tag)
-	 (assertion-violation
-	  who "not a continuation prompt tag" prompt-tag))
-       (let ([frames (or (take-mark-set-frames (current-metacontinuation) prompt-tag)
-			 '())])
-	 (make-continuation-mark-set
-	  (if (empty-marks?)
-	      frames
-	      (cons (make-mark-set-frame #f (current-marks)) frames))))]))
+     [()
+      (current-continuation-marks (default-continuation-prompt-tag))]
+     [(prompt-tag)
+      (unless (continuation-prompt-tag? prompt-tag)
+	(assertion-violation
+	 who "not a continuation prompt tag" prompt-tag))
+      (let ([frames (or (take-mark-set-frames (current-metacontinuation) prompt-tag)
+			'())])
+	(make-continuation-mark-set
+	 (if (empty-marks?)
+	     frames
+	     (cons (make-mark-set-frame #f (current-marks)) frames))))]))
 
   (define call-with-continuation-mark-set
     (lambda (who set tag proc)
@@ -968,92 +1010,92 @@
 
   (define/who continuation-mark-set->list
     (case-lambda
-      [(set key)
-       (continuation-mark-set->list set key (default-continuation-prompt-tag))]
-      [(set key tag)
-       (call-with-continuation-mark-set
-	who set tag
-	(lambda (set)
-	  (let f ([frames (continuation-mark-set-frames set)])
-	    (if (null? frames)
-		'()
-		(let ([frame (car frames)] [frames (cdr frames)])
-		  (if (eq? (mark-set-frame-tag frame) tag)
-		      '()
-		      (marks-ref
-		       (mark-set-frame-marks frame)
-		       key
-		       (lambda ()
-			 (f frames))
-		       (lambda (val)
-			 (cons val (f frames))))))))))]))
+     [(set key)
+      (continuation-mark-set->list set key (default-continuation-prompt-tag))]
+     [(set key tag)
+      (call-with-continuation-mark-set
+       who set tag
+       (lambda (set)
+	 (let f ([frames (continuation-mark-set-frames set)])
+	   (if (null? frames)
+	       '()
+	       (let ([frame (car frames)] [frames (cdr frames)])
+		 (if (eq? (mark-set-frame-tag frame) tag)
+		     '()
+		     (marks-ref
+		      (mark-set-frame-marks frame)
+		      key
+		      (lambda ()
+			(f frames))
+		      (lambda (val)
+			(cons val (f frames))))))))))]))
 
   (define/who continuation-mark-set->list*
     (case-lambda
-      [(set keys)
-       (continuation-mark-set->list* set keys #f)]
-      [(set keys default)
-       (continuation-mark-set->list* set keys default (default-continuation-prompt-tag))]
-      [(set keys default tag)
-       (unless (list? keys)
-	 (assertion-violation who "not a key list keys"))
-       (let f ([iter (continuation-mark-set->iterator set keys default tag)])
-	 (let-values ([(vec iter) (iter)])
-	   (if vec
-	       (cons vec (f iter))
-	       '())))]))
+     [(set keys)
+      (continuation-mark-set->list* set keys #f)]
+     [(set keys default)
+      (continuation-mark-set->list* set keys default (default-continuation-prompt-tag))]
+     [(set keys default tag)
+      (unless (list? keys)
+	(assertion-violation who "not a key list keys"))
+      (let f ([iter (continuation-mark-set->iterator set keys default tag)])
+	(let-values ([(vec iter) (iter)])
+	  (if vec
+	      (cons vec (f iter))
+	      '())))]))
 
   (define/who continuation-mark-set->iterator
     (case-lambda
-      [(set keys)
-       (continuation-mark-set->iterator set keys #f)]
-      [(set keys default)
-       (continuation-mark-set->iterator set keys default (default-continuation-prompt-tag))]
-      [(set keys default tag)
-       (unless (list? keys)
-	 (assertion-violation who "not a key list" keys))
-       (call-with-continuation-mark-set
-	who set tag
-	(lambda (set)
-	  (let make-iterator ([frames (continuation-mark-set-frames set)])
-	    (lambda ()
-	      (let f ([frames frames])
-		(if (null? frames)
-		    (values #f (make-iterator '()))
-		    (let ([frame (car frames)] [frames (cdr frames)])
-		      (if (eq? (mark-set-frame-tag frame) tag)
-			  (values #f (make-iterator '()))
-			  (let ([val-vec
-				 (marks-ref*
-				  (mark-set-frame-marks frame)
-				  keys
-				  default)])
-			    (if val-vec
-				(values val-vec (make-iterator frames))
-				(f frames)))))))))))]))
+     [(set keys)
+      (continuation-mark-set->iterator set keys #f)]
+     [(set keys default)
+      (continuation-mark-set->iterator set keys default (default-continuation-prompt-tag))]
+     [(set keys default tag)
+      (unless (list? keys)
+	(assertion-violation who "not a key list" keys))
+      (call-with-continuation-mark-set
+       who set tag
+       (lambda (set)
+	 (let make-iterator ([frames (continuation-mark-set-frames set)])
+	   (lambda ()
+	     (let f ([frames frames])
+	       (if (null? frames)
+		   (values #f (make-iterator '()))
+		   (let ([frame (car frames)] [frames (cdr frames)])
+		     (if (eq? (mark-set-frame-tag frame) tag)
+			 (values #f (make-iterator '()))
+			 (let ([val-vec
+				(marks-ref*
+				 (mark-set-frame-marks frame)
+				 keys
+				 default)])
+			   (if val-vec
+			       (values val-vec (make-iterator frames))
+			       (f frames)))))))))))]))
 
   (define/who continuation-mark-set-first
     (case-lambda
-      [(set key)
-       (continuation-mark-set-first set key #f)]
-      [(set key default)
-       (continuation-mark-set-first set key default (default-continuation-prompt-tag))]
-      [(set key default tag)
-       (call-with-continuation-mark-set
-	who set tag
-	(lambda (set)
-	  (let f ([frames (continuation-mark-set-frames set)])
-	    (if (null? frames)
-		default
-		(let ([frame (car frames)])
-		  (if (eq? (mark-set-frame-tag frame) tag)
-		      default
-		      (marks-ref
-		       (mark-set-frame-marks frame)
-		       key
-		       (lambda ()
-			 (f (cdr frames)))
-		       values)))))))]))
+     [(set key)
+      (continuation-mark-set-first set key #f)]
+     [(set key default)
+      (continuation-mark-set-first set key default (default-continuation-prompt-tag))]
+     [(set key default tag)
+      (call-with-continuation-mark-set
+       who set tag
+       (lambda (set)
+	 (let f ([frames (continuation-mark-set-frames set)])
+	   (if (null? frames)
+	       default
+	       (let ([frame (car frames)])
+		 (if (eq? (mark-set-frame-tag frame) tag)
+		     default
+		     (marks-ref
+		      (mark-set-frame-marks frame)
+		      key
+		      (lambda ()
+			(f (cdr frames)))
+		      values)))))))]))
 
   ;; Parameter objects
 
@@ -1063,8 +1105,8 @@
     (protocol
      (lambda (p)
        (case-lambda
-	 [() (p	'())]
-	 [(cells) (p cells)]))))
+	[() (p	'())]
+	[(cells) (p cells)]))))
 
   (define parameterization-extend
     (lambda (parameterization key+value*)
@@ -1087,8 +1129,8 @@
     (protocol
      (lambda (p)
        (case-lambda
-	 [() (p #f)]
-	 [(name) (assert (symbol? name)) (p name)]))))
+	[() (p #f)]
+	[(name) (assert (symbol? name)) (p name)]))))
 
   (define parameterization-continuation-mark-key
     (let ([mark-key (make-continuation-mark-key 'parameterization)])
@@ -1115,22 +1157,22 @@
 
   (define/who make-parameter
     (case-lambda
-      [(init)
-       (make-parameter init values)]
-      [(init converter)
-       (unless (procedure? converter)
-	 (assertion-violation who "not a procedure" converter))
-       (let ([key (make-parameter-key)]
-	     [val (converter init)])
-	 (%case-lambda-box (make-parameter-info converter key)
-	   [()
-	    (let ([cell (parameter-cell key)])
-	      (if cell (cdr cell) val))]
-	   [(init)
-	    (let ([cell (parameter-cell key)])
-	      (if cell
-		  (set-cdr! cell (converter init))
-		  (set! val (converter init))))]))]))
+     [(init)
+      (make-parameter init values)]
+     [(init converter)
+      (unless (procedure? converter)
+	(assertion-violation who "not a procedure" converter))
+      (let ([key (make-parameter-key)]
+	    [val (converter init)])
+	(%case-lambda-box (make-parameter-info converter key)
+	  [()
+	   (let ([cell (parameter-cell key)])
+	     (if cell (cdr cell) val))]
+	  [(init)
+	   (let ([cell (parameter-cell key)])
+	     (if cell
+		 (set-cdr! cell (converter init))
+		 (set! val (converter init))))]))]))
 
   (define parameter->parameter-info
     (lambda (who param)
@@ -1210,52 +1252,52 @@
 
   (define read-char
     (case-lambda
-      [()
-       (rnrs:read-char (current-input-port))]
-      [(port)
-       (rnrs:read-char port)]))
+     [()
+      (rnrs:read-char (current-input-port))]
+     [(port)
+      (rnrs:read-char port)]))
 
   (define peek-char
     (case-lambda
-      [()
-       (rnrs:peek-char (current-input-port))]
-      [(port)
-       (rnrs:peek-char port)]))
+     [()
+      (rnrs:peek-char (current-input-port))]
+     [(port)
+      (rnrs:peek-char port)]))
 
   (define read
     (case-lambda
-      [()
-       (rnrs:read (current-input-port))]
-      [(port)
-       (rnrs:read port)]))
+     [()
+      (rnrs:read (current-input-port))]
+     [(port)
+      (rnrs:read port)]))
 
   (define write-char
     (case-lambda
-      [(char)
-       (rnrs:write-char char (current-output-port))]
-      [(char port)
-       (rnrs:write-char char port)]))
+     [(char)
+      (rnrs:write-char char (current-output-port))]
+     [(char port)
+      (rnrs:write-char char port)]))
 
   (define newline
     (case-lambda
-      [()
-       (rnrs:newline (current-output-port))]
-      [(port)
-       (rnrs:newline port)]))
+     [()
+      (rnrs:newline (current-output-port))]
+     [(port)
+      (rnrs:newline port)]))
 
   (define display
     (case-lambda
-      [(obj)
-       (rnrs:display obj (current-output-port))]
-      [(obj port)
-       (rnrs:display obj port)]))
+     [(obj)
+      (rnrs:display obj (current-output-port))]
+     [(obj port)
+      (rnrs:display obj port)]))
 
   (define write
     (case-lambda
-      [(obj)
-       (rnrs:write obj (current-output-port))]
-      [(obj port)
-       (rnrs:write obj port)]))
+     [(obj)
+      (rnrs:write obj (current-output-port))]
+     [(obj port)
+      (rnrs:write obj port)]))
 
   ;; Exceptions
 
@@ -1290,42 +1332,42 @@
 	 #`(call-with-current-continuation
 	    (lambda (guard-k)
 	      (with-exception-handler
-		  (lambda (c)
-		    (call-with-current-continuation
-		     (lambda (handler-k)
-		       (call-in-continuation guard-k
-			 (lambda ()
-			   (let ([id c])
-			     #,(let f ([c1 #'c1] [c2* #'(c2 ...)])
-				 (syntax-case c2* ()
-				   [()
-				    (with-syntax
-					([rest
-					  #'(call-in-continuation handler-k
-					      (lambda ()
-						(raise-continuable c)))])
-				      (syntax-case c1 (else =>)
-					[(else e1 e2 ...)
-					 #'(begin e1 e2 ...)]
-					[(e0) #'e0]
-					[(e0 => e1)
-					 #'(let ([t e0]) (if t (e1 t) rest))]
-					[(e0 e1 e2 ...)
-					 #'(if e0
-					       (begin e1 e2 ...)
-					       rest)]))]
-				   [(c2 c3 ...)
-				    (with-syntax ([rest (f #'c2 #'(c3 ...))])
-				      (syntax-case c1 (=>)
-					[(e0) #'(let ([t e0]) (if t t rest))]
-					[(e0 => e1)
-					 #'(let ([t e0]) (if t (e1 t) rest))]
-					[(e0 e1 e2 ...)
-					 #'(if e0
-					       (begin e1 e2 ...)
-					       rest)]))]))))))))
-		  (lambda ()
-		    e1 e2 ...))))]
+	       (lambda (c)
+		 (call-with-current-continuation
+		  (lambda (handler-k)
+		    (call-in-continuation guard-k
+		      (lambda ()
+			(let ([id c])
+			  #,(let f ([c1 #'c1] [c2* #'(c2 ...)])
+			      (syntax-case c2* ()
+				[()
+				 (with-syntax
+				     ([rest
+				       #'(call-in-continuation handler-k
+					   (lambda ()
+					     (raise-continuable c)))])
+				   (syntax-case c1 (else =>)
+				     [(else e1 e2 ...)
+				      #'(begin e1 e2 ...)]
+				     [(e0) #'e0]
+				     [(e0 => e1)
+				      #'(let ([t e0]) (if t (e1 t) rest))]
+				     [(e0 e1 e2 ...)
+				      #'(if e0
+					    (begin e1 e2 ...)
+					    rest)]))]
+				[(c2 c3 ...)
+				 (with-syntax ([rest (f #'c2 #'(c3 ...))])
+				   (syntax-case c1 (=>)
+				     [(e0) #'(let ([t e0]) (if t t rest))]
+				     [(e0 => e1)
+				      #'(let ([t e0]) (if t (e1 t) rest))]
+				     [(e0 e1 e2 ...)
+				      #'(if e0
+					    (begin e1 e2 ...)
+					    rest)]))]))))))))
+	       (lambda ()
+		 e1 e2 ...))))]
 	[_
 	 (syntax-violation who "invalid syntax" stx)])))
 
@@ -1461,11 +1503,11 @@
 	    (%mutex-lock! mtx)
 	    (let ([s (thread-current-state thread)])
 	      (unless (symbol=? s (thread-state terminated))
-		 (thread-current-state-set! thread (thread-state terminated))
-		 (thread-end-exception-set! thread (make-thread-already-terminated-error))
-		 (if (symbol=? s (thread-state new))
-		     (%condition-variable-broadcast! cv)
-		     (%thread-terminate! (thread-%thread thread))))
+		(thread-current-state-set! thread (thread-state terminated))
+		(thread-end-exception-set! thread (make-thread-already-terminated-condition))
+		(if (symbol=? s (thread-state new))
+		    (%condition-variable-broadcast! cv)
+		    (%thread-terminate! (thread-%thread thread))))
 	      (%mutex-unlock! mtx))))))))
 
   (define/who thread-join!
@@ -1550,23 +1592,23 @@
 
   (define call-in-initial-continuation
     (lambda (thunk)
-      (let* ([saved-env (%current-dynamic-environment)])
-	(let ([thunk
-	       (%call-with-current-continuation
-		(lambda (end-k)
-		  (thunkify
-		   (%call-with-current-continuation
-		    (lambda (k)
-		      (%current-dynamic-environment
-		       (make-initial-dynamic-environment
-			k (current-parameterization)
-			(lambda (con)
-			  (end-k (lambda ()
-				   (raise (make-uncaught-exception-error con)))))
-			(current-thread)))
-		      (abort thunk))))))])
-	  (%current-dynamic-environment saved-env)
-	  (thunk)))))
+      (let* ([saved-env (%current-dynamic-environment)]
+	     [thunk
+	      (%call-with-current-continuation
+	       (lambda (end-k)
+	         (thunkify
+	          (%call-with-current-continuation
+	           (lambda (k)
+		     (%current-dynamic-environment
+		      (make-initial-dynamic-environment
+		       k (current-parameterization)
+		       (lambda (con)
+		         (end-k (lambda ()
+			          (raise-continuable (make-uncaught-exception-condition con)))))
+		       (current-thread)))
+		     (abort thunk))))))])
+	(%current-dynamic-environment saved-env)
+	(thunk))))
 
   (define/who force
     (lambda (p)
@@ -1581,7 +1623,7 @@
 		    (c p)
 		    (let* ([q #f]
 			   [thunk
-			    (guard (exc [else (lambda () (raise exc))])
+			    (guard (exc [else (lambda () (raise-continuable exc))])
 			      (thunkify
 			       (call-in-initial-continuation
 				(lambda ()
