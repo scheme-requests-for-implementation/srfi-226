@@ -26,7 +26,7 @@
   (export call-with-continuation-prompt abort-current-continuation
 	  call-with-current-continuation call-with-composable-continuation
 	  call-with-non-composable-continuation
-	  continuation?
+	  continuation? non-composable-continuation?
 	  call-in-continuation continuation-prompt-available?
 	  call-with-continuation-barrier dynamic-wind
 	  unwind-protect
@@ -208,6 +208,10 @@
        (continuation->continuation-info who k))))
 
   (define continuation?
+    (lambda (obj)
+      (continuation-info? (%case-lambda-box-ref obj #f))))
+
+  (define non-composable-continuation?
     (lambda (obj)
       (cond
        [(%case-lambda-box-ref obj #f) => continuation-info-non-composable?]

@@ -134,9 +134,19 @@
 
 (test #t (call-with-current-continuation
            (lambda (k)
-             (continuation? k))))
+             (non-composable-continuation? k))))
 
 (test #f (call-with-composable-continuation
+           (lambda (k)
+             (non-composable-continuation? k))))
+
+(test #f (non-composable-continuation? values))
+
+(test #t (call-with-current-continuation
+           (lambda (k)
+             (continuation? k))))
+
+(test #t (call-with-composable-continuation
            (lambda (k)
              (continuation? k))))
 
@@ -684,7 +694,9 @@
          (prompt (+ 12 (prompt (+ 5 (prompt (+ 2 (control k1 (control k2 (control k3 (k3 6)))))))))))))
 
 (test #t (continuation? (call/cc values)))
-(test #f (continuation? (call-with-composable-continuation values)))
+(test #t (continuation? (call-with-composable-continuation values)))
+(test #t (non-composable-continuation? (call/cc values)))
+(test #f (non-composable-continuation? (call-with-composable-continuation values)))
 
 (test 'exception
       (guard (c
