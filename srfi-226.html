@@ -1033,12 +1033,19 @@
       <dt class="procedure"><code>(continuation? <var>obj</var>)</code></dt>
       <dd>
 	<p>Returns <code>#t</code> if <code><var>obj</var></code> is a
-	  continuation procedure, and <code>#f</code> otherwise.</p>
+	  non-composable continuation procedure, and <code>#f</code>
+	  otherwise.</p>
+        <p><i>Note:</i> The reason why <code>continuation?</code> only
+          test for non-composable continuations is that composable
+          continuations act like ordinary procedures.  Non-composable
+          continuation procedures, on the other hand, do not return
+          when called.</p>
       </dd>
     </dl>
 
     <pre class="example">(continuation? (call/cc values))<span class="result">#t</span>
-(continuation? (call-with-composable-continuation values))<span class="result">#t</span></pre>
+(continuation? (call-with-composable-continuation values))<span class="result">#f</span>
+(continuation? values)<span class="result">#f</span></pre>
 
     <dl class="entries">
       <dt class="procedure"><code>(call-in-continuation <var>cont</var> <var>thunk</var>)</code></dt>

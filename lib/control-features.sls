@@ -209,7 +209,9 @@
 
   (define continuation?
     (lambda (obj)
-      (continuation-info? (%case-lambda-box-ref obj #f))))
+      (cond
+       [(%case-lambda-box-ref obj #f) => continuation-info-non-composable?]
+       [else #f])))
 
   ;; Dynamic environment
 

@@ -136,9 +136,11 @@
            (lambda (k)
              (continuation? k))))
 
-(test #t (call-with-composable-continuation
+(test #f (call-with-composable-continuation
            (lambda (k)
              (continuation? k))))
+
+(test #f (continuation? values))
 
 (test #f (continuation-prompt-available? tag))
 
@@ -682,7 +684,7 @@
          (prompt (+ 12 (prompt (+ 5 (prompt (+ 2 (control k1 (control k2 (control k3 (k3 6)))))))))))))
 
 (test #t (continuation? (call/cc values)))
-(test #t (continuation? (call-with-composable-continuation values)))
+(test #f (continuation? (call-with-composable-continuation values)))
 
 (test 'exception
       (guard (c
