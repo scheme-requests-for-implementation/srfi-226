@@ -1,3 +1,4 @@
+
 * SRFI 226: Control Features
 
 ** by Marc Nieper-Wißkirchen
@@ -9,14 +10,11 @@ keywords: [[https://srfi.schemers.org/?keywords=continuations][Continuations]], 
 This repository hosts [[https://srfi.schemers.org/srfi-226/][SRFI 226]]: Control Features, a [[https://srfi.schemers.org/][Scheme Request for Implementation]].
 
 This SRFI is in /draft/ status.
-
-See also [[https://srfi.schemers.org/srfi-18/][SRFI 18: Multithreading support]], [[https://srfi.schemers.org/srfi-34/][SRFI 34: Exception Handling for Programs]], [[https://srfi.schemers.org/srfi-39/][SRFI 39: Parameter objects]], [[https://srfi.schemers.org/srfi-45/][SRFI 45: Primitives for Expressing Iterative Lazy Algorithms]], [[https://srfi.schemers.org/srfi-97/][SRFI 97: SRFI Libraries]], [[https://srfi.schemers.org/srfi-154/][SRFI 154: First-class dynamic extents]], [[https://srfi.schemers.org/srfi-155/][SRFI 155: Promises]], [[https://srfi.schemers.org/srfi-157/][SRFI 157: Continuation marks]], and [[https://srfi.schemers.org/srfi-158/][SRFI 158: Generators and Accumulators]].
-
+See also [[/srfi-18/][SRFI 18: Multithreading support]], [[/srfi-34/][SRFI 34: Exception Handling for Programs]], [[/srfi-39/][SRFI 39: Parameter objects]], [[/srfi-45/][SRFI 45: Primitives for Expressing Iterative Lazy Algorithms]], [[/srfi-97/][SRFI 97: SRFI Libraries]], [[/srfi-154/][SRFI 154: First-class dynamic extents]], [[/srfi-155/][SRFI 155: Promises]], [[/srfi-157/][SRFI 157: Continuation marks]], and [[/srfi-158/][SRFI 158: Generators and Accumulators]].
 The full documentation for this SRFI can be found in the [[https://srfi.schemers.org/srfi-226/srfi-226.html][SRFI Document]].
 
 If you'd like to participate in the discussion of this SRFI, or report issues with it, please [[https://srfi.schemers.org/srfi-226/][join the SRFI-226 mailing list]] and send your message there.
 
 Thank you.
-
 
 [[mailto:srfi-editors@srfi.schemers.org][The SRFI Editors]]
