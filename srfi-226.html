@@ -2170,16 +2170,27 @@
       compatible with existing and future Scheme time APIs.</p>
 
     <p><dfn>Time objects</dfn> or simply <dfn>times</dfn> represent an
-      absolute time (in the process' proper time).</p>
+       absolute time (in the process' proper time).</p>
+
+    <p><i>Note:</i> Specifying a minimal temporal resolution of time
+      objects is outside the scope of this minimal library.  For the
+      purpose of their use as timeout arguments, it is recommended
+      that the minimal resolution of time objects is at least a millisecond.</p>
 
     <dl class="entries">
       <dt class="procedure"><code>(time? <var>obj</var>)</code></dt>
-      <dd><p>Returns <code>#t</code> if <code><var>obj</var></code> is a time object, <code>#f</code> otherwise.</p></dd>
+      <dd><p>Returns <code>#t</code> if <code><var>obj</var></code> is a time object, <code>#f</code> otherwise.</p>
+      </dd>
       <dt class="procedure"><code>(current-time)</code></dt>
       <dd><p>Returns the absolute time at the call to <code>current-time</code> as a time object.</p></dd>
-      <dt class="procedure"><code>(seconds+ time x)</code></dt>
+      <dt class="procedure"><code>(seconds+ <var>time</var> <var>x</var>)</code></dt>
       <dd><p>Returns <code><var>x</var></code> seconds in the future of <code>time</code> as a time object.</p>
 	<p><i>Note:</i> If <code><var>x</var></code> is a negative real number, the returned time is actually in the past of <code><var>time</var></code>.</p>
+	<p><i>Note:</i> Future SRFIs detailing time objects may want
+	  to add a
+	  procedure <code>(nanoseconds+ <var>time</var> <var>n</var>)</code>
+	  where the time offset is not a real number measuring seconds
+	  but an integer measuring nanoseconds.</p>
       </dd>
     </dl>
 
