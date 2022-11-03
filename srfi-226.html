@@ -184,8 +184,8 @@
     and <cite>R7RS</cite> is reinterpreted with respect to the
     concepts introduced in this SRFI.  Procedures to retrieve the
     current parameterization and to reinstall it later are
-    provided. Moreover, the parameterize syntax gains an additional
-    tail context guarantee.</p>
+      provided. Moreover, the <code>parameterize</code> syntax gains an additional
+      tail context guarantee.</p>
 
     <p><i>Delayed evaluation:</i> The syntax and procedures on delayed
       evaluation of <cite>R7RS</cite> are revisited and redefined to handle the
@@ -198,10 +198,12 @@
       expression being forced is defined in a way that makes it interchangeably
       with the initial continuation of a thread.</p>
 
-    <p><i>Threads:</i> The thread mechanism of <a href="#feeley1"><cite>SRFI
-      18</cite></a> is detailed with respect to the concepts introduced in this
-      SRFI.  In particular, mutation of parameter objects in multi-threaded
-      applications is specified..</p>
+    <p><i>Threads:</i> The thread mechanism
+      of <a href="#feeley1"><cite>SRFI 18</cite></a> is detailed with
+      respect to the concepts introduced in this SRFI.  In particular,
+      mutation of parameter objects in multi-threaded applications is
+      specified.  In order to support timeout arguments in a type-safe
+      way, a minimal API on time objects is included as well.</p>
 
     <p>Large parts of this SRFI have been inspired by the control operators
       provided by <a href="#racket"><cite>Racket</cite></a>.
