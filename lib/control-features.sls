@@ -27,7 +27,9 @@
 	  call-with-current-continuation call-with-composable-continuation
 	  call-with-non-composable-continuation
 	  continuation? non-composable-continuation?
-	  call-in-continuation continuation-prompt-available?
+	  call-in-continuation
+          call-in return-to
+          continuation-prompt-available?
 	  call-with-continuation-barrier dynamic-wind
 	  unwind-protect
 	  with-continuation-mark with-continuation-marks
@@ -800,6 +802,20 @@
       (unless (procedure? proc)
         (assertion-violation who "not a procedure" proc))
       ((continuation-resume-k 'call-in-continuation k) (lambda () (apply proc args)))))
+
+  (define/who call-in
+    (lambda (k proc . args)
+      (unless (non-composable-continuation? k)
+        (assertion-violation who "not a non-composable continuation object" k))
+      (unless (procedure? proc)
+        (assertion-violation who "not a procedure" proc))
+      ((continuation-resume-k 'call-in-continuation k) (lambda () (apply proc args)))))
+
+  (define/who return-to
+    (lambda (k args)
+      (unless (non-composable-continuation? k)
+        (assertion-violation who "not a non-composable continuation object" k))
+      ((continuation-resume-k 'call-in-continuation k) (lambda () (apply values args)))))
 
   (define/who continuation-prompt-available?
     (case-lambda

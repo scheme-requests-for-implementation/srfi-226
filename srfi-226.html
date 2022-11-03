@@ -1136,6 +1136,34 @@
       reasons.)</p>
 
     <dl class="entries">
+      <dt class="procedure"><code>(call-in <var>cont</var> <var>proc</var> <var>obj</var> &hellip;)</code></dt>
+      <dd><p>As <code>call-in-continuation</code> but <code><var>cont</var></code> must be a non-continuable continuation (procedure).</p></dd>
+      <dt class="procedure"><code>(return-to <var>cont</var> <var>obj</var> &hellip;)</code></dt>
+      <dd><p>Equivalent to <code>(call-in <var>cont</var> <var>values</var> <var>obj</var> &hellip;)</code>.</p></dd>
+    </dl>
+
+    <p><i>Remark:</i> In <a href="#feeley3"><cite>A better API for
+      first-class continuations</cite></a> it is argued that
+      (non-composable) continuations should form a type disjoint of
+      that of procedures.  This has, at least, didactic advantages.
+      While this SRFI does not take the radical step of not requiring
+      that non-composable continuation objects are callable, the
+      procedures <code>call-in</code> and <code>return-to</code>
+      (corresponding to <code>continuation-graft</code>
+      and <code>continuation-return</code> in the cited paper) can be
+      used to write code that works without the assumption that
+      non-composable continuation objects <code><var>k</var></code>
+      are callable: Instead
+      of <code>(<var>k</var> <var>obj</var>)</code> one
+      writes <code>(return-to <var>k</var> <var>obj</var>)</code>,
+      which has the obvious advantage that it becomes clear that the
+      call does not return to its continuation.  This allows a
+      possible future SRFI to deprecate or remove the callability of
+      non-composable continuation objects, at least those returned
+      by <code>call-with-non-composable-continuation</code>.
+    </p>
+
+    <dl class="entries">
       <dt class="procedure"><code>(call-with-continuation-barrier <var>thunk</var>)</code></dt>
       <dd>
 	<p>The <code>call-with-continuation-barrier</code> procedure
