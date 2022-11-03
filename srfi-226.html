@@ -160,7 +160,7 @@
     continuations allow one to implement the various proposed sets of
     control operators for delimited continuations. Finally, a
     primitive (<code>call-in-continuation</code>) is provided that
-    allows calling a thunk in a given continuation instead of just
+    allows calling a procedure in a given continuation instead of just
     delivering values to it.</p>
 
     <p><i>Continuation Marks:</i> Continuation marks are a provided feature
@@ -1048,14 +1048,15 @@
 (continuation? values)<span class="result">#f</span></pre>
 
     <dl class="entries">
-      <dt class="procedure"><code>(call-in-continuation <var>cont</var> <var>thunk</var>)</code></dt>
+      <dt class="procedure"><code>(call-in-continuation <var>cont</var> <var>proc</var> <var>obj</var> &hellip;)</code></dt>
       <dd>
 	<p>
 	  Aborts and reinstates active procedure calls as if the
 	  continuation procedure <code><var>cont</var></code> were
 	  applied, but instead of delivering values to then-current
-	  continuation, the procedure <code><var>thunk</var></code> is
-	  called with no arguments in this continuation.</p>
+	  continuation, the procedure <code><var>proc</var></code> is
+	  called with the <code><var>objs</var></code> as arguments in
+	  this continuation.</p>
       </dd>
     </dl>
 
@@ -1114,7 +1115,7 @@
       in terms of <code>call-in-continuation</code>:</p>
 
     <pre class="example">(let ([<var>tmp</var> <var>obj</var>] &hellip;)
-  (call-in-continuation k (lambda () (values <var>tmp</var> &hellip;))))</pre>
+  (call-in-continuation k values <var>tmp</var> &hellip;))</pre>
 
     <p>On the other hand, it is not possible to
       define <code>call-in-continuation</code> in terms of invoking a

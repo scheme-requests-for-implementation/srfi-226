@@ -130,7 +130,7 @@
 
 (test 13 (+ 3 (call-with-current-continuation
                 (lambda (k)
-                  (+ 1 (call-in-continuation k (lambda () 10)))))))
+                  (+ 1 (call-in-continuation k (lambda (x) x) 10))))))
 
 (test #t (call-with-current-continuation
            (lambda (k)
