@@ -338,10 +338,10 @@
       form is in tail position.  Similarly, it becomes possible to
       implement <code>with-exception-handler</code> in a way so that
       its thunk is called in tail context if the call
-      to <code>with-exception-handler</code> is in tail context.</p>
+      to <code>with-exception-handler</code> is in tail context.
       The latter is not guaranteed by <cite>R<sup>6</sup>RS</cite>
       and <cite>R<sup>7</sup>RS</cite> (but should have according to
-      the author of this SRFI).
+      the author of this SRFI).</p>
 
     <p>In fact, with continuation marks, the concept of tail calls becomes
       operationally observable.</p>
@@ -601,7 +601,7 @@
       <dt><code><var>tl</var></code></dt>
       <dd>thread local</dd>
       <dt><code><var>time</var></code></dt>
-      <dd>time object</code></dd>
+      <dd><code>time object</code></dd>
       <dt><code><var>timeout</var></code></dt>
       <dd>time object or <code>#f</code></dd>
       <dt><code><var>thread</var></code></dt>
@@ -2179,13 +2179,18 @@
 
     <dl class="entries">
       <dt class="procedure"><code>(time? <var>obj</var>)</code></dt>
-      <dd><p>Returns <code>#t</code> if <code><var>obj</var></code> is a time object, <code>#f</code> otherwise.</p>
+      <dd><p>Returns <code>#t</code> if <code><var>obj</var></code> is
+      a time object, <code>#f</code> otherwise.</p>
       </dd>
       <dt class="procedure"><code>(current-time)</code></dt>
-      <dd><p>Returns the absolute time at the call to <code>current-time</code> as a time object.</p></dd>
+      <dd><p>Returns the absolute time at the call
+      to <code>current-time</code> as a time object.</p></dd>
       <dt class="procedure"><code>(seconds+ <var>time</var> <var>x</var>)</code></dt>
-      <dd><p>Returns <code><var>x</var></code> seconds in the future of <code>time</code> as a time object.</p>
-	<p><i>Note:</i> If <code><var>x</var></code> is a negative real number, the returned time is actually in the past of <code><var>time</var></code>.</p>
+      <dd><p>Returns <code><var>x</var></code> seconds in the future
+      of <code><var>time</var></code> as a time object.</p>
+	<p><i>Note:</i> If <code><var>x</var></code> is a negative
+	real number, the returned time is actually in the past
+	of <code><var>time</var></code>.</p>
 	<p><i>Note:</i> Future SRFIs detailing time objects may want
 	  to add a
 	  procedure <code>(nanoseconds+ <var>time</var> <var>n</var>)</code>
