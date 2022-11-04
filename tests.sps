@@ -337,20 +337,22 @@
             (set! l (cons x l))))
         (thread-join!
          (thread-start!
-          (thread
-           (dynamic-wind
-               (lambda ()
-                 (out! 'in))
-               (lambda ()
-                 (call/cc
-                  (lambda (k)
-                    (thread-join!
-                     (thread-start!
-                      (thread
-                       (out! 'thread)
-                       (k)))))))
-               (lambda ()
-                 (out! 'out))))))
+          (make-thread
+           (lambda ()
+             (dynamic-wind
+                 (lambda ()
+                   (out! 'in))
+                 (lambda ()
+                   (call/cc
+                    (lambda (k)
+                      (thread-join!
+                       (thread-start!
+                        (make-thread
+                         (lambda ()
+                           (out! 'thread)
+                           (k))))))))
+                 (lambda ()
+                   (out! 'out)))))))
         (reverse l)))
 
 ;;; Parameters
@@ -428,11 +430,11 @@
 ;;; Threads
 
 (test 98 (let ([t (thread-start!
-                   (thread 98))])
+                   (make-thread (lambda () 98)))])
            (thread-join! t)))
 
 (test 96 (let ([t (thread-start!
-                   (thread (raise 97)))])
+                   (make-thread (lambda () (raise 97))))])
            (guard (c
                    [(uncaught-exception-condition? c)
                     (fx+ -1 (uncaught-exception-condition-reason c))])
@@ -441,15 +443,16 @@
 (test 10 (let ([p (make-parameter 9)])
            (parameterize ([p 10])
              (let ([t (thread-start!
-                       (thread (p)))])
+                       (make-thread (lambda () (p))))])
                (thread-join! t)))))
 
 (test #t (let* ([signal? #f]
                 [t (thread-start!
-                    (thread
-                     (set! signal? #t)
-                     (do () (#f)
-                       (thread-yield!))))])
+                    (make-thread
+                     (lambda ()
+                       (set! signal? #t)
+                       (do () (#f)
+                         (thread-yield!)))))])
            (do () (signal?)
              (thread-yield!))
            (thread-terminate! t)
@@ -459,17 +462,18 @@
              #f)))
 
 (test 734 (let* ([p (make-parameter 734)]
-                 [t (thread (p))])
+                 [t (make-thread (lambda () (p)))])
             (parameterize ([p 735])
               (thread-join! (thread-start! t)))))
 
 (test '(12 13) (let* ([k #f]
                       [t (thread-start!
-                          (thread
-                           (call-with-current-continuation
-                            (lambda (c)
-                              (set! k c)
-                              12))))]
+                          (make-thread
+                           (lambda ()
+                             (call-with-current-continuation
+                              (lambda (c)
+                                (set! k c)
+                                12)))))]
                       [x (thread-join! t)])
                  (k (list x 13))
                  14))
@@ -879,10 +883,11 @@
 	  (let ([y
 		 (thread-join!
 		  (thread-start!
-		   (thread
-		    (let ([x (p)])
-		      (p 2)
-		      x))))])
+		   (make-thread
+                    (lambda ()
+		      (let ([x (p)])
+		        (p 2)
+		        x)))))])
 	    (list y (p))))))
 
 (test 'default (tlref (make-thread-local 'default)))
@@ -893,9 +898,10 @@
       (let* ([tl (make-thread-local 1)]
 	     [x (thread-join!
 		 (thread-start!
-		  (thread
-		   (tlset! tl 2)
-		   (tlref tl))))])
+		  (make-thread
+                   (lambda ()
+		     (tlset! tl 2)
+		     (tlref tl)))))])
 	(list (tlref tl) x)))
 
 ;;; See <https://srfi-email.schemers.org/srfi-226/msg/20946964/>.

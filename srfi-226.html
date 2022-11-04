@@ -2457,17 +2457,6 @@
 	<p>When a thread is finally terminated, all mutexes it owns are abandoned.</p>
 	<p>This extends the semantics of <code>raise</code>.</p>
       </dd>
-      <dt class="entry"><code>(thread <span class="token">body</span>)</code><span class="type">syntax</span></dt>
-      <dd>
-	<p><i>Syntax:</i>
-	  <code><span class="token">Body</span></code> is a body.</p>
-	<p><i>Semantics:</i> Operationally equivalent to
-	  evaluating <code>(make-thread (lambda () <span class="token">body</span>))</code>.</p>
-	<p><i>Note:</i> As threads inherit the parameterization of
-	  when they are created, a <code>thread</code> expression
-	  conveys the meaning better than a call
-	  to <code>make-thread</code>.</p>
-      </dd>
       <dt class="entry"><code>(thread? <var>obj</var>)</code><span class="type">procedure</span></dt>
       <dd><p>Returns <code>#t</code> if <code><var>obj</var></code> is
       a thread, and <code>#f</code> otherwise.</p>

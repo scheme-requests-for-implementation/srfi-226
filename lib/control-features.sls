@@ -67,7 +67,6 @@
 	  delay make-promise promise? force
 	  run
 	  (rename (call-with-current-continuation call/cc))
-	  (rename (%thread thread))
 	  make-thread-local thread-local? tlref tlset!)
   (import (rename (except (rnrs (6))
 			  call/cc
@@ -1398,14 +1397,6 @@
       (thread-storage (current-thread))))
 
   ;; Threads
-
-  (define-syntax %thread
-    (lambda (stx)
-      (syntax-case stx ()
-	[(_ e1 e2 ...)
-	 #'(make-thread (lambda () e1 e2 ...))]
-	[_
-	 (syntax-violation 'thread "invalid syntax" stx)])))
 
   (define-enumeration thread-state
     (new runnable terminated)
