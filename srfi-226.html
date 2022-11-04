@@ -227,7 +227,6 @@
           following <a href="https://srfi-email.schemers.org/srfi-226/msg/21050714/">Shiro's
             suggestion</a>.  These may look like Chez Scheme's thread
           parameters.</p></li>
-      <li><p>Replace <code>thread-terminate!</code> with <code>thread-exit!</code>.</p></li>
       <li><p>Discuss thread interrupts, signals, and exceptions as in
           the <a href="https://srfi-email.schemers.org/srfi-226/msg/21122962/">discussion
             with John and Marc</a>.</p></li>
@@ -2550,6 +2549,30 @@
 	  because the mutex is unlocked/abandoned.  This helps avoid
 	  observing an inconsistent state.</p>
       </dd>
+      <dt class="procedure"><code>(thread-exit! <var>thread</var>)</code></dt>
+      <dd>
+        <p>As <code>thread-terminate!</code> but returns immediately
+          so that the current thread does not wait until the termination
+          of <code><var>thread</var></code> has occurred.</p>
+      </dd>
+    </dl>
+
+    <p>The procedure <code>thread-terminate!</code> can be defined in
+      terms of <code>thread-exit!</code> and <code>thread-join!</code>
+      as follows:</p>
+
+    <pre>(define thread-terminate!
+  (lambda (thread)
+    (thread-exit! thread)
+    (with-exception-handler
+        (lambda (exc)
+          (if (thread-condition? exc)
+              (values)
+              (raise exc)))
+      (lambda ()
+        (thread-join! thread)))))</pre>
+
+    <dl class="entry">
       <dt class="entry"><code>(thread-join! <var>thread</var> <var>timeout</var>)</code><span class="type">procedure</span></dt>
       <dt class="entry"><code>(thread-join! <var>thread</var>)</code><span class="type">procedure</span></dt>
       <dd><p>The current thread waits

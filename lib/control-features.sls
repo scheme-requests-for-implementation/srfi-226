@@ -53,7 +53,7 @@
 	  call-in-initial-continuation
 	  thread current-thread thread? make-thread thread-name
 	  thread-start! thread-yield!
-	  thread-terminate! thread-join!
+	  thread-exit! thread-terminate! thread-join!
 	  &thread make-thread-condition thread-condition?
 	  &uncaught-exception
 	  make-uncaught-exception-condition uncaught-exception-condition?
@@ -1597,26 +1597,43 @@
     (lambda ()
       (%thread-yield!)))
 
+  ;; TODO: Schedule exit before terminated thread becomes unblocked.
+
+  (define/who thread-exit!
+    (lambda (thread)
+      (unless (thread? thread)
+        (assertion-violation who "not a thread" thread))
+      ;; We have to start a helper thread to be able to do some
+      ;; clean-up as we may terminate the current thread.
+      (let ([helper-thread
+             (%thread-start!
+	      (lambda ()
+	        (let ([mtx (thread-%mutex thread)]
+		      [cv (thread-%condition-variable thread)])
+	          (%mutex-lock! mtx)
+	          (let ([s (thread-current-state thread)])
+	            (unless (symbol=? s (thread-state terminated))
+		      (thread-current-state-set! thread (thread-state terminated))
+		      (thread-end-exception-set! thread (make-thread-already-terminated-condition))
+		      (if (symbol=? s (thread-state new))
+		          (%condition-variable-broadcast! cv)
+		          (%thread-terminate! (thread-%thread thread))))
+	            (%mutex-unlock! mtx)))))])
+        (when (eqv? thread (current-thread))
+          (%thread-join! thread (current-thread))))))
+
   (define/who thread-terminate!
     (lambda (thread)
       (unless (thread? thread)
 	(assertion-violation who "not a thread" thread))
-      ;; We have to start a helper thread to be able to do some
-      ;; clean-up as we may terminate the current thread.
-      (%thread-join!
-       (%thread-start!
-	(lambda ()
-	  (let ([mtx (thread-%mutex thread)]
-		[cv (thread-%condition-variable thread)])
-	    (%mutex-lock! mtx)
-	    (let ([s (thread-current-state thread)])
-	      (unless (symbol=? s (thread-state terminated))
-		(thread-current-state-set! thread (thread-state terminated))
-		(thread-end-exception-set! thread (make-thread-already-terminated-condition))
-		(if (symbol=? s (thread-state new))
-		    (%condition-variable-broadcast! cv)
-		    (%thread-terminate! (thread-%thread thread))))
-	      (%mutex-unlock! mtx))))))))
+      (thread-exit! thread)
+      (with-exception-handler
+       (lambda (exc)
+         (if (thread-condition? exc)
+             (values)
+             (raise exc)))
+       (lambda ()
+         (thread-join! thread)))))
 
   (define/who thread-join!
     (lambda (thread)
@@ -1633,7 +1650,7 @@
 	(%mutex-unlock! mtx)
 	(%thread-join! (thread-%thread thread))
 	(if (thread-end-exception thread)
-	    (raise (thread-end-exception thread))
+	    (raise-continuable (thread-end-exception thread))
 	    (apply values (thread-end-result thread))))))
 
   ;; Promises
