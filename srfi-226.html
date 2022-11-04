@@ -58,22 +58,22 @@
       dl.entries > dt.condition-type::after
       {
 	  float: right;
-	  content: "condition type"
+	  content: "condition type";
       }
       dl.entries > dt.record-type::after
       {
 	  float: right;
-	  content: "record type"
+	  content: "record type";
       }
       dl.entries > dt.procedure::after
       {
 	  float: right;
-	  content: "procedure"
+	  content: "procedure";
       }
       dl.entries > dt.syntax::after
       {
 	  float: right;
-	  content: "syntax"
+	  content: "syntax";
       }
       dt.entry > span.type
       {
@@ -222,14 +222,12 @@
       <li><p>Add library names to each entry.</p></li>
       <li><p>Add a thread runner facility
           following <a href="https://srfi-email.schemers.org/srfi-226/msg/20884100/">John's
-            suggestion.</a>.</p></li>
+            suggestion</a>.</p></li>
       <li><p>Add inheritable thread locals
           following <a href="https://srfi-email.schemers.org/srfi-226/msg/21050714/">Shiro's
-            suggestion.</a></p></li>
+            suggestion</a>.  These may look like Chez Scheme's thread
+          parameters.</p></li>
       <li><p>Replace <code>thread-terminate!</code> with <code>thread-exit!</code>.</p></li>
-      <li><p>Repair the <code>mutex-state</code> interface
-          following <a href="https://srfi-email.schemers.org/srfi-226/msg/21118678/">Marc's
-            suggestion</a>.</p></li>
       <li><p>Discuss thread interrupts, signals, and exceptions as in
           the <a href="https://srfi-email.schemers.org/srfi-226/msg/21122962/">discussion
             with John and Marc</a>.</p></li>
@@ -2310,10 +2308,7 @@
 	  replaced by equivalent condition objects following the hierarchy
 	  of standard condition types of <cite>R<sup>6</sup>RS</cite>.</p></li>
       <li><p>The procedure <code>thread-join!</code> does not have the
-      optional <code><var>timeout-val</var></code> argument.  The
-      procedure <code>mutex-state</code> never delivers the owner
-      thread; instead a procedure <code>mutex-owner</code> is provided
-      for this purpose.</p></li>
+          optional <code><var>timeout-val</var></code> argument.</p></li>
     </ul>
 
     <p>A <dfn>timeout</dfn> is either represented by a time object
@@ -2676,22 +2671,15 @@
 	<p>Returns <code>#t</code> if <code><var>obj</var></code> is a
 	  mutex, and <code>#f</code> otherwise.</p>
       </dd>
-      <dt class="entry"><code>(mutex-owner <var>mutex</var>)</code><span class="type">procedure</span></dt>
-      <dd><p>Returns the owner thread of <code><var>mutex</var></code>
-	  if <code><var>mutex</var></code> is in the locked/owned state,
-	  and <code>#f</code> otherwise.</p>
-      </dd>
       <dt class="entry"><code>(mutex-state <var>mutex</var>)</code><span class="type">procedure</span></dt>
       <dd>
 	<p>
 	  Returns one of the
-	  symbols <code>owned</code>, <code>not-owned</code>, <code>abandoned</code>, <code>not-abandoned</code>,
-	  reflecting the state of <code><var>mutex</var></code>.</p>
+	  symbols <code>not-owned</code>, <code>abandoned</code>, <code>not-abandoned</code>
+	  or a thread object, reflecting the state
+	  of <code><var>mutex</var></code>, where a thread object
+	  represents the <i>owned</i> state and the owner.</p>
 	<p>
-	<p><i>Note:</i> To simplify the type
-	  of <code>mutex-state</code>, this procedure differs from the
-	  procedure with the same name in <cite>SRFI 18</cite>.
-	  Use <code>mutex-owner</code> to access a mutex's owner.</p>
       </dd>
       <dt class="entry"><code>(mutex-lock! <var>mutex</var> <var>timeout</var> <var>owner-thread</var>)</code><span class="type">procedure</span></dt>
       <dt class="entry"><code>(mutex-lock! <var>mutex</var> <var>timeout</var>)</code><span class="type">procedure</span></dt>
