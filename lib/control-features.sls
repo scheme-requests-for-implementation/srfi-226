@@ -51,7 +51,7 @@
 	  read-char peek-char read
 	  write-char newline display write
 	  call-in-initial-continuation
-	  current-thread thread? make-thread thread-name
+	  thread current-thread thread? make-thread thread-name
 	  thread-start! thread-yield!
 	  thread-terminate! thread-join!
 	  &thread make-thread-condition thread-condition?
@@ -1406,7 +1406,7 @@
     (lambda ()
       (dynamic-environment-thread (%current-dynamic-environment))))
 
-  (define-record-type (thread %make-thread thread?)
+  (define-record-type thread-impl
     (nongenerative) (sealed #t) (opaque #t)
     (fields (mutable thunk)
 	    (mutable end-continuation)
@@ -1418,6 +1418,127 @@
 	    (mutable %mutex)
 	    (mutable %condition-variable)
 	    storage))
+
+  (define-record-type (thread make-thread maybe-thread?)
+    (nongenerative thread-9a516626-3b09-42eb-8160-e6ff1984f1d7)
+    (fields %impl)
+    (protocol
+     (lambda (p)
+       (define/who make-thread
+         (case-lambda
+          [(thunk) (make-thread thunk #f)]
+          [(thunk name)
+           (unless (procedure? thunk)
+	     (assertion-violation who "not a procedure" thunk))
+           (let ([thread
+                  (p
+	           (make-thread-impl #f #f #f name (thread-state new) '() #f (make-%mutex) (make-%condition-variable) (make-storage)))])
+	     (thread-thunk-set! thread (make-thread-thunk thread (current-parameterization) thunk))
+	     thread)]))
+       make-thread)))
+
+  (define make-primordial-thread
+    (let ([p (record-constructor
+              (make-record-constructor-descriptor (record-type-descriptor thread) #f #f))])
+      (lambda ()
+        (p (make-thread-impl
+            #f #f (%current-thread) 'primordial (thread-state runnable) '() #f (make-%mutex) (make-%condition-variable)
+	    (make-storage))))))
+
+  (define thread?
+    (lambda (obj)
+      (and (maybe-thread? obj)
+           (thread-impl? (thread-%impl obj)))))
+
+  (define thread-thunk
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-thunk (thread-%impl thread))))
+
+  (define thread-thunk-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-thunk-set! (thread-%impl thread) obj)))
+
+  (define thread-end-continuation
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-end-continuation (thread-%impl thread))))
+
+  (define thread-end-continuation-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-end-continuation-set! (thread-%impl thread) obj)))
+
+  (define thread-%thread
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-%thread (thread-%impl thread))))
+
+  (define thread-%thread-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-%thread-set! (thread-%impl thread) obj)))
+
+  (define thread-name
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-name (thread-%impl thread))))
+
+  (define thread-current-state
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-current-state (thread-%impl thread))))
+
+  (define thread-current-state-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-current-state-set! (thread-%impl thread) obj)))
+
+  (define thread-end-result
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-end-result (thread-%impl thread))))
+
+  (define thread-end-result-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-end-result-set! (thread-%impl thread) obj)))
+
+  (define thread-end-exception
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-end-exception (thread-%impl thread))))
+
+  (define thread-end-exception-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-end-exception-set! (thread-%impl thread) obj)))
+
+  (define thread-%mutex
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-%mutex (thread-%impl thread))))
+
+  (define thread-%mutex-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-%mutex-set! (thread-%impl thread) obj)))
+
+  (define thread-%condition-variable
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-%condition-variable (thread-%impl thread))))
+
+  (define thread-%condition-variable-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-%condition-variable-set! (thread-%impl thread) obj)))
+
+  (define thread-storage
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-storage (thread-%impl thread))))
 
   (define make-thread-thunk
     (lambda (thread ps thunk)
@@ -1443,6 +1564,7 @@
 	  (thread-current-state-set! thread (thread-state terminated))
 	  (%mutex-unlock! mtx)))))
 
+  #;
   (define/who make-thread
     (case-lambda
      [(thunk) (make-thread thunk #f)]
@@ -1453,11 +1575,6 @@
 	     (%make-thread #f #f #f name (thread-state new) '() #f (make-%mutex) (make-%condition-variable) (make-storage))])
 	(thread-thunk-set! thread (make-thread-thunk thread (current-parameterization) thunk))
 	thread)]))
-
-  (define make-primordial-thread
-    (lambda ()
-      (%make-thread #f #f (%current-thread) 'primordial (thread-state runnable) '() #f (make-%mutex) (make-%condition-variable)
-		    (make-storage))))
 
   (define/who thread-start!
     (lambda (thread)

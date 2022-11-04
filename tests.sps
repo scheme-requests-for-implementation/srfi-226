@@ -930,6 +930,27 @@
                           (lambda () (put! 5)))))))))))
         (cons (result) val)))
 
+;;; Subtypes of thread
+
+(test 'specific
+      (let* ()
+        (define-record-type mythread
+          (parent thread)
+          (fields specific)
+          (protocol
+           (lambda (n)
+             (lambda (thunk obj)
+               ((n thunk) obj)))))
+        (thread-join!
+         (thread-start!
+          (make-mythread
+           (lambda ()
+             (define t (current-thread))
+             (assert (mythread? t))
+             (assert (thread? t))
+             (mythread-specific t))
+           'specific)))))
+
 ;;; Test End
 
 (test-end)

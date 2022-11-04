@@ -60,6 +60,11 @@
 	  float: right;
 	  content: "condition type"
       }
+      dl.entries > dt.record-type::after
+      {
+	  float: right;
+	  content: "record type"
+      }
       dl.entries > dt.procedure::after
       {
 	  float: right;
@@ -2277,12 +2282,17 @@
 
     <ul>
       <li><p>Neither threads, mutexes, nor condition variables possess
-	  a <code>name</code> field.  If such information is needed for
-	  debugging purposes, a weak hash table should be used
-	  instead.</p></li>
-      <li><p>Neither threads, mutexes, not condition variables
-	  possess <code>specific</code> fields.  If these are needed,
-	  weak hash tables could be used instead.  Moreover, this SRFI
+	  a <code>name</code> field.  If such information is needed
+	  for debugging purposes, a weak hash table can be used
+	  instead for mutexes or condition variables.  For threads,
+	  the thread type can be extended by arbitrary
+	  fields.</p></li>
+      <li><p>Neither threads, mutexes, nor condition variables
+	  possess <code>specific</code> fields.  If these are needed
+	  for mutexes or condition variables, weak hash tables can be
+	  used instead.  For threads, the thread type can be extended
+	  by arbitrary fields.</p>
+        <p>Moreover, this SRFI
 	  describes thread locals as a mechanism to associate data
 	  with threads.  In fact, thread locals allow library-specific
 	  and not only application-specific data as the
@@ -2432,6 +2442,40 @@
       new to runnable, between runnable and blocked, and from any
       state to terminated.  Any attempt to cause an invalid transition
       raises an assertion violation.</p>
+
+    <dl class="entries">
+      <dt class="record-type"><code>thread</code></dt>
+      <dd><p>Non-opaque and non-sealed record type representing
+          threads.  Its constructor descriptor specifies a non-default
+          constructor equivalent to <code>make-thread</code> below.
+      </p></dd>
+    </dl>
+
+    <p>By extending the default thread type, application-specific
+      fields can be added transparently to each object representing a thread.</p>
+
+    <pre class="example">(define-record-type mythread
+  (parent thread)
+  (fields specific)
+  (protocol
+  (lambda (n)
+    (lambda (thunk obj)
+      ((n thunk) obj))))
+
+(thread-join!
+  (thread-start!
+    (make-mythread
+      (lambda ()
+        (define t (current-thread))
+        (assert (mythread? t))
+        (assert (thread? t))
+        (mythread-specific t))
+      'specific)))<span class="example">specific</span></pre>
+
+    <p><i>Remark:</i> The above assumes an implementation that
+      supports the <cite>R6RS</cite> record mechanism.  For
+      implementations supporting a different record mechanism with
+      single inheritance, the above applies <i>mutatis mutandis</i>.</p>
 
     <dl class="entries">
       <dt class="entry"><code>(make-thread <var>thunk</var>)</code><span class="type">procedure</span></dt>
