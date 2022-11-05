@@ -1738,6 +1738,11 @@
 	  is then replaced with the new value.  The result of the
 	  invocation is unspecified.</p>
       </dd>
+      <dt class="procedure"><code>(parameter? <var>obj</var>)</code></dt>
+      <dd>
+	<p>Returns <code>#t</code> if <code><var>obj</var></code> is a
+	  parameter, <code>#f</code> otherwise.</p>
+      </dd>
 
       <dt class="syntax"><code>(parameterize ([<span class="token">param-expr</span> <span class="token">expression</span>] &hellip;) <span class="token">body</span>)</code></dt>
       <dd>
@@ -1815,6 +1820,7 @@
   (p))<span class="result">20736</span>
 (p)<span class="result">144</span>
 
+(parameter? p)<span class="result">#t</span>
 (parameterization? ps)<span class="result">#t</span>
 
 (call-with-parameterization ps

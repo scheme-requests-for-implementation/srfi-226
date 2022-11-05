@@ -44,7 +44,7 @@
 	  continuation-violation-prompt-tag
 	  raise raise-continuable
 	  exception-handler-stack current-exception-handler with-exception-handler guard else =>
-	  make-parameter parameterize
+	  make-parameter parameter? parameterize
 	  parameterization? current-parameterization call-with-parameterization
 	  current-input-port current-output-port current-error-port
 	  with-input-from-file with-output-to-file
@@ -1172,6 +1172,11 @@
 	     (if cell
 		 (set-cdr! cell (converter init))
 		 (set! val (converter init))))]))]))
+
+  (define parameter?
+    (lambda (obj)
+      (and (procedure? obj)
+	   (parameter-info? (%case-lambda-box-ref obj #f)))))
 
   (define parameter->parameter-info
     (lambda (who param)

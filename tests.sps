@@ -359,6 +359,8 @@
 
 (define param (make-parameter 10 (lambda (x) (* x x))))
 
+(test #t (parameter? param))
+
 (test 100 (param))
 
 (param 12)
