@@ -1395,11 +1395,31 @@
 
   (define-record-type thread-local
     (nongenerative) (sealed #t) (opaque #t)
-    (fields (mutable default)))
+    (fields (mutable default) inheritable?)
+    (protocol
+     (lambda (new)
+       (define make-thread-local
+	 (case-lambda
+	   [(default)
+	    (make-thread-local default #f)]
+	   [(default inheritable?)
+	    (new default inheritable?)]))
+       make-thread-local)))
 
   (define make-storage
-    (lambda ()
-      (make-ephemeron-eq-hashtable)))
+    (case-lambda
+      [()
+       (make-ephemeron-eq-hashtable)]
+      [(storage)
+       (let ([new-storage (make-storage)])
+	 (let-values ([(tls vals)
+		       (hashtable-entries storage)])
+	   (vector-for-each
+	    (lambda (tl val)
+	      (when (thread-local-inheritable? tl)
+		(hashtable-set! new-storage tl val)))
+	    tls vals))
+	 new-storage)]))
 
   (define/who tlref
     (lambda (tl)
@@ -1453,7 +1473,7 @@
 	     (assertion-violation who "not a procedure" thunk))
            (let ([thread
                   (p
-	           (make-thread-impl #f #f #f name (thread-state new) '() #f (make-%mutex) (make-%condition-variable) (make-storage)))])
+	           (make-thread-impl #f #f #f name (thread-state new) '() #f (make-%mutex) (make-%condition-variable) (make-storage (current-thread-storage))))])
 	     (thread-thunk-set! thread (make-thread-thunk thread (current-parameterization) thunk))
 	     thread)]))
        make-thread)))
@@ -1584,18 +1604,6 @@
 	  (assert (eqv? (current-thread) thread))
 	  (thread-current-state-set! thread (thread-state terminated))
 	  (%mutex-unlock! mtx)))))
-
-  #;
-  (define/who make-thread
-    (case-lambda
-     [(thunk) (make-thread thunk #f)]
-     [(thunk name)
-      (unless (procedure? thunk)
-	(assertion-violation who "not a procedure" thunk))
-      (let ([thread
-	     (%make-thread #f #f #f name (thread-state new) '() #f (make-%mutex) (make-%condition-variable) (make-storage))])
-	(thread-thunk-set! thread (make-thread-thunk thread (current-parameterization) thunk))
-	thread)]))
 
   (define/who thread-start!
     (lambda (thread)

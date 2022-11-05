@@ -906,6 +906,24 @@
 		     (tlref tl)))))])
 	(list (tlref tl) x)))
 
+(test '1
+      (let ([tl (make-thread-local 1)])
+	(tlset! tl 2)
+	(thread-join!
+	 (thread-start!
+	  (make-thread
+	   (lambda ()
+	     (tlref tl)))))))
+
+(test '2
+      (let ([tl (make-thread-local 1 #t)])
+	(tlset! tl 2)
+	(thread-join!
+	 (thread-start!
+	  (make-thread
+	   (lambda ()
+	     (tlref tl)))))))
+
 ;;; See <https://srfi-email.schemers.org/srfi-226/msg/20946964/>.
 
 (test '((1 3 5) . 11)

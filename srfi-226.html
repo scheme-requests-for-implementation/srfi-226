@@ -226,10 +226,6 @@
       <li><p>Add a thread runner facility
           following <a href="https://srfi-email.schemers.org/srfi-226/msg/20884100/">John's
             suggestion</a>.</p></li>
-      <li><p>Add inheritable thread locals
-          following <a href="https://srfi-email.schemers.org/srfi-226/msg/21050714/">Shiro's
-            suggestion</a>.  These may look like Chez Scheme's thread
-          parameters.</p></li>
       <li><p>Discuss thread interrupts, signals, and exceptions as in
           the <a href="https://srfi-email.schemers.org/srfi-226/msg/21122962/">discussion
             with John and Marc</a>.</p></li>
@@ -419,8 +415,11 @@
     <p>Instead, this specification defines first-class thread locals
       akin to thread-specific storage in the <a href="c17"><cite>C
       programming language</cite></a> and to thread-specific data keys
-      in <cite>POSIX</cite>.  In particular, the former can be efficiently
-      implemented in terms of the latter.</p>
+      in <cite>POSIX</cite>.  In particular, the former can be
+      efficiently implemented in terms of the latter.  Thread locals
+      can be <i>inheritable</i> or not (called <i>preserved</i> in
+      Racket).  Inheritable thread locals take their initial values
+      from the creator thread.</p>
 
     <h4>Promises</h4>
 
@@ -2911,14 +2910,19 @@
       each thread local a cell that holds a value.</p>
 
     <dl class="entries">
+      <dt class="entry"><code>(make-thread-local <var>obj</var> <var>inheritable?</var>)</code><span class="type">procedure</span></dt>
       <dt class="entry"><code>(make-thread-local <var>obj</var>)</code><span class="type">procedure</span></dt>
       <dd>
 	<p>Returns a thread local that is not <code>equal?</code> to
-	any prior or future results
-	from <code>make-thread-local</code>.  The
-	object <code><var>obj</var></code> is stored the cells
-	associated to the thread local in the thread-specific
-	storage.</p>
+	  any prior or future results
+	  from <code>make-thread-local</code>.  The
+	  object <code><var>obj</var></code> is stored in the cells
+	  associated to the thread local in the thread-specific
+	  storage.  The thread local is <dfn>inheritable</dfn>
+	  if <code><var>inheritable?</var></code> is
+	  not <code>#f</code>.</p>
+	<p>If <code><var>inheritable?</var></code> is not given, it
+	  defaults to <code>#f</code>.
       </dd>
       <dt class="entry"><code>(thread-local? <var>obj</var>)</code><span class="type">procedure</span></dt>
       <dd>
@@ -2927,14 +2931,18 @@
       <dt class="entry"><code>(tlref <var>tl</var>)</code><span class="type">procedure</span></dt>
       <dd>
 	<p>Returns the value of the cell associated to the current
-	thread and to <code><var>tl</var></code> in the
-	thread-specific storage.</p>
+	  thread and to <code><var>tl</var></code> in the
+	  thread-specific storage.</p>
       </dd>
       <dt class="entry"><code>(tlset! <var>tl</var> <var>obj</var>)</code><span class="type">procedure</span></dt>
       <dd>
 	<p>Sets the value of the cell associated to the current
 	  thread and to <code><var>tl</var></code> in the
 	  thread-specific storage to <code><var>obj</var></code>.</p>
+	<p>If <code><var>tl</var></code> is inheritable, set also the
+	  values of the corresponding cells in the thread-specific
+	  storages of the future threads that will be created by the
+	  current thread to <code><var>obj</var></code>.</p>
       </dd>
     </dl>
 
