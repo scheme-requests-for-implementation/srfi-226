@@ -46,6 +46,7 @@
 	  exception-handler-stack current-exception-handler with-exception-handler guard else =>
 	  make-parameter parameter? parameterize
 	  parameterization? current-parameterization call-with-parameterization
+          with
 	  current-input-port current-output-port current-error-port
 	  with-input-from-file with-output-to-file
 	  read-char peek-char read
@@ -1204,6 +1205,21 @@
 	       e1 e2 ...))]
 	[_
 	 (syntax-violation who "invalid syntax" stx)])))
+
+  ;; The with syntax
+
+  (define-syntax/who with
+    (lambda (x)
+      (syntax-case x ()
+        [(_ () b1 b2 ...) #'(begin b1 b2 ...)]
+        [(_ ([x e] ...) b1 b2 ...)
+         (with-syntax ([(p ...) (generate-temporaries #'(x ...))]
+                       [(y ...) (generate-temporaries #'(x ...))])
+           #'(let ([p x] ... [y e] ...)
+               (let ([swap (lambda ()
+                             (let ([t (p)]) (p y) (set! y t))
+                             ...)])
+                 (dynamic-wind swap (lambda () b1 b2 ...) swap))))])))
 
   ;; Current input/output/error port
 

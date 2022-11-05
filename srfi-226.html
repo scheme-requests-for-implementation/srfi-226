@@ -190,8 +190,11 @@
     and <cite>R7RS</cite> is reinterpreted with respect to the
     concepts introduced in this SRFI.  Procedures to retrieve the
     current parameterization and to reinstall it later are
-      provided. Moreover, the <code>parameterize</code> syntax gains an additional
-      tail context guarantee.</p>
+    provided. Moreover, the <code>parameterize</code> syntax gains an
+    additional tail context guarantee.  To support an alternative
+    model of parameters that is linked to the dynamic extent and not
+    to the current parameterization, the notion of a parameter-like
+    object and the <code>with</code> syntax are introduced.</p>
 
     <p><i>Delayed evaluation:</i> The syntax and procedures on delayed
       evaluation of <cite>R7RS</cite> are revisited and redefined to handle the
@@ -230,9 +233,6 @@
       <li><p>Discuss thread interrupts, signals, and exceptions as in
           the <a href="https://srfi-email.schemers.org/srfi-226/msg/21122962/">discussion
             with John and Marc</a>.</p></li>
-      <li><p>Maybe replace the current parameter objects with the more
-          powerful Chez Scheme variant and introduce fluids in place
-          of the current parameter objects.</p></li>
       <li><p>Revisit Racket's parameter model with thread-local cells;
       see
       this <a href="https://srfi-email.schemers.org/srfi-226/msg/17613078/">discussion
@@ -399,6 +399,13 @@
       is mutated by one of the threads, the mutation will also (eventually) be
       observed by the other thread.  This is a clear semantics because this is
       the same behavior as implemented by lexical variables.</p>
+
+    <p>A different model of parameters exist, the main difference
+      being the scope of the reparameterization.  This SRFI also
+      supports this different model through the notion of
+      parameter-like objects and the <code>with</code> syntax, where
+      the reparameterization is bound to the dynamic extent of
+      the <code>with</code> form's body.</p>
 
     <h4>Thread locals</h4>
 
@@ -1839,22 +1846,82 @@
   (parameterize ([(make-parameter 0) 1])
     (call-with-immediate-continuation-mark 'in-tail-context? values)))<span class="result">#t</span></pre>
 
-    <p><i>Note:</i> The parameter objects defined in this specification are
-      fully compatible with the parameter objects
+    <p><i>Note:</i> The parameter objects defined in this
+      specification are fully compatible with the parameter objects
       of <a href="#feeley2"><cite>SRFI 39</cite></a>
-      and <cite>R<sup>7</sup>RS</cite> but add the requirement that the last
-      expression in the body of a <code>parameterize</code> expression in tail
-      context is in tail context as well.  With respect to multiple threads,
-      this specification differs from <cite>Racket</cite> in that the cells
-      associated with parameter objects are not “thread-local” in this
-      specification.  As has already been observed by Marc Feeley during the
-      discussion period of <cite>SRFI 39</cite>, this is the cleaner, faster,
-      and more expressive semantics.  Finally, the parameter objects defined
-      here are not fully compatible with the parameters of <cite>Chez
-      Scheme</cite>.  While these offer some features over the parameter
-      objects in <cite>SRFI 39</cite> and <cite>R<sup>7</sup>RS</cite>, they
-      would be incompatible with the tail-context guarantee of
-      the <code>parameterize</code> form.</p>
+      and <cite>R<sup>7</sup>RS</cite> but add the requirement that
+      the last expression in the body of a <code>parameterize</code>
+      expression in tail context is in tail context as well.  With
+      respect to multiple threads, this specification differs
+      from <cite>Racket</cite> in that the cells associated with
+      parameter objects are not “thread-local” in this specification.
+      As has already been observed by Marc Feeley during the
+      discussion period of <cite>SRFI 39</cite>, this is the cleaner,
+      faster, and more expressive semantics.  Finally, the parameter
+      objects defined here are not fully compatible with the
+      parameters of <cite>Chez Scheme</cite>.  While these offer some
+      features over the parameter objects in <cite>SRFI 39</cite>
+      and <cite>R<sup>7</sup>RS</cite>, they would be incompatible
+      with the tail-context guarantee of the <code>parameterize</code>
+      form and with the parameterization as a first-class
+      object.  <cite>Chez Scheme's</cite> <code>parameterize</code>
+      mechanism is implemented by the <code>with</code>syntax
+      below.</p>
+
+    <p>A <dfn>parameter-like object</dfn> is a procedure <var>p</var>
+      that can be invoked on zero and on one argument.  Calling it
+      with zero arguments should return the parameter value associated
+      with it; calling it with one argument should set the parameter
+      value associated with it to the argument value.</p>
+
+    <p>Each parameter object is a parameter-like object.</p>
+
+    <dl class="entries">
+      <dt class="syntax"><code>(with ([<span class="token">param-expr</span> <span class="token">expression</span>] &hellip;) <span class="token">body</span>)</code></dt>
+      <dd>
+	<p><i>Syntax:</i>
+	  The <code><span class="token">param-exprs</span></code> and
+	  the <code><span class="token">expressions</span></code> are
+	  expressions, and <code><span class="token">body</span></code> is
+	  a body.</p>
+	<p><i>Semantics:</i> Evaluates
+	  the <code><span class="token">param-exprs</span></code>
+	  and <code><span class="token">expressions</span></code> in
+	  an arbitrary order to obtain parameter-like objects and
+	  arbitrary objects, the new values, respectively.  The body
+	  is evaluated and the values of its last expression are
+	  returned.</p>
+        <p>Whenever the dynamic extent of <code>body</code> is entered
+	  or left, the parameter-like objects are called with zero
+	  arguments in an unspecified order to yield values, the old
+	  values.  Each parameter-like object is then called with its
+	  respective new value.  Finally, the set of new values is
+	  replaced by the set of old values.</p>
+      </dd>
+    </dl>
+
+    <p>The following examples show how the <code>with</code> syntax
+      differs from the <code>parameterize</code> syntax:</p>
+
+    <pre>(let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
+  (with ([p 4]) (values))
+  (p))<span class=result>3</span>
+
+(let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
+  (parameterize ([p 4]) (values))
+  (p))<span class=result>2</span>
+
+(let ([p (make-parameter 1)])
+  (define t
+    (with ([p 2])
+      (make-thread (lambda () (p)))))
+  (thread-join! (thread-start! t)))<span class=result>1</span>
+
+(let ([p (make-parameter 1)])
+  (define t
+    (parameterize ([p 2])
+      (make-thread (lambda () (p)))))
+    (thread-join! (thread-start! t)))<span class=result>2</span></pre>
 
     <h3>Initial Continuations</h3>
 
