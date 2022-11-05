@@ -924,6 +924,34 @@
 	   (lambda ()
 	     (tlref tl)))))))
 
+;;; Thread parameters
+
+(test '(3 4)
+      (let* ([p (make-thread-parameter 3)]
+	     [x (p)])
+	(p 4)
+	(list x (p))))
+
+(test '((3) (2))
+      (let* ([p (make-thread-parameter 2 list)]
+	     [x (parameterize ([p 3])
+		  (p))])
+	(list x (p))))
+
+(test '(0 20 10)
+      (let* ([p (make-thread-parameter 0)])
+	(define x
+	  (parameterize ([p 10])
+	    (define t
+	      (make-thread
+	       (lambda ()
+		 (p))))
+	    (p 20)
+	    (list (p) (thread-join!
+		       (thread-start!
+			t)))))
+	(cons (p) x)))
+
 ;;; See <https://srfi-email.schemers.org/srfi-226/msg/20946964/>.
 
 (test '((1 3 5) . 11)

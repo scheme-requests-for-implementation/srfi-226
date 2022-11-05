@@ -229,10 +229,6 @@
       <li><p>Discuss thread interrupts, signals, and exceptions as in
           the <a href="https://srfi-email.schemers.org/srfi-226/msg/21122962/">discussion
             with John and Marc</a>.</p></li>
-      <li><p>Revisit Racket's parameter model with thread-local cells;
-      see
-      this <a href="https://srfi-email.schemers.org/srfi-226/msg/17613078/">discussion
-      with John and Shiro</a>.</p></li>
     </ul>
 
     <h2 id="rationale">Rationale</h2>
@@ -389,12 +385,15 @@
       terms of them allows rich operations like capturing the current
       parameterization to later reinstall it, this SRFI provides both.</p>
 
-    <p>Moreover, this specification makes a decision on the behavior of mutable
-      parameter objects with respect to multiple threads.  If a parameter that
-      is inherited by a newly created thread and has not been re-parameterized
-      is mutated by one of the threads, the mutation will also (eventually) be
-      observed by the other thread.  This is a clear semantics because this is
-      the same behavior as implemented by lexical variables.</p>
+    <p>Moreover, this specification makes a decision on the behavior
+      of mutable ordinary parameter objects with respect to multiple
+      threads.  If a parameter that is inherited by a newly created
+      thread and has not been re-parameterized is mutated by one of
+      the threads, the mutation will also (eventually) be observed by
+      the other thread.  This is a clear semantics because this is the
+      same behavior as implemented by lexical variables.  If this is
+      not the desired behavior for some application, thread parameter
+      objects, that are also provided, can be used instead.</p>
 
     <p>A different model of parameters exist, the main difference
       being the scope of the reparameterization.  This SRFI also
@@ -1744,10 +1743,20 @@
 	  is then replaced with the new value.  The result of the
 	  invocation is unspecified.</p>
       </dd>
+      <dt class="procedure"><code>(make-thread-parameter <var>obj</var>)</code></dt>
+      <dt class="procedure"><code>(make-thread-parameter <var>obj</var> <var>proc</var>)</code></dt>
+      <dd>
+	<p>As <code>make-parameter</code> except that the parameter
+	  object's cells are inheritable thread locals (see below).
+	</p>
+	<p><i>Note:</i> This means that any change of value through
+	  calling the thread parameter object with one argument won't
+	  be observable by other threads than the current.</p>
+      </dd>
       <dt class="procedure"><code>(parameter? <var>obj</var>)</code></dt>
       <dd>
 	<p>Returns <code>#t</code> if <code><var>obj</var></code> is a
-	  parameter, <code>#f</code> otherwise.</p>
+	  parameter object, <code>#f</code> otherwise.</p>
       </dd>
 
       <dt class="syntax"><code>(parameterize ([<span class="token">param-expr</span> <span class="token">expression</span>] &hellip;) <span class="token">body</span>)</code></dt>

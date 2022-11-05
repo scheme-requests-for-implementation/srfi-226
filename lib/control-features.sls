@@ -46,7 +46,7 @@
 	  exception-handler-stack current-exception-handler with-exception-handler guard else =>
 	  make-parameter parameter? parameterize
 	  parameterization? current-parameterization call-with-parameterization
-          with
+          make-thread-parameter with
 	  current-input-port current-output-port current-error-port
 	  with-input-from-file with-output-to-file
 	  read-char peek-char read
@@ -1153,7 +1153,7 @@
 
   (define-record-type parameter-info
     (nongenerative) (sealed #t) (opaque #t)
-    (fields converter key))
+    (fields converter key thread-local?))
 
   (define/who make-parameter
     (case-lambda
@@ -1164,7 +1164,7 @@
 	(assertion-violation who "not a procedure" converter))
       (let ([key (make-parameter-key)]
 	    [val (converter init)])
-	(%case-lambda-box (make-parameter-info converter key)
+	(%case-lambda-box (make-parameter-info converter key #f)
 	  [()
 	   (let ([cell (parameter-cell key)])
 	     (if cell (cdr cell) val))]
@@ -1173,6 +1173,25 @@
 	     (if cell
 		 (set-cdr! cell (converter init))
 		 (set! val (converter init))))]))]))
+
+  (define/who make-thread-parameter
+    (case-lambda
+     [(init)
+      (make-thread-parameter init values)]
+     [(init converter)
+      (unless (procedure? converter)
+	(assertion-violation who "not a procedure" converter))
+      (let ([key (make-parameter-key)]
+	    [tl (make-thread-local (converter init) #t)])
+	(%case-lambda-box (make-parameter-info converter key #t)
+	  [()
+	   (let ([cell (parameter-cell key)])
+	     (if cell (tlref (cdr cell)) (tlref tl)))]
+	  [(init)
+	   (let ([cell (parameter-cell key)])
+	     (if cell
+		 (tlset! (cdr cell) (converter init))
+		 (tlset! tl (converter init))))]))]))
 
   (define parameter?
     (lambda (obj)
@@ -1189,8 +1208,12 @@
   (define parameter-key+value
     (lambda (who param init)
       (let ([info (parameter->parameter-info who param)])
+	(define val
+	  ((parameter-info-converter info) init))
 	(cons (parameter-info-key info)
-	      ((parameter-info-converter info) init)))))
+	      (if (parameter-info-thread-local? info)
+		  (make-thread-local val #t)
+		  val)))))
 
   (define-syntax/who parameterize
     (lambda (stx)
