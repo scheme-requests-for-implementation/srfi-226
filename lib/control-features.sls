@@ -70,7 +70,8 @@
 	  (rename (call-with-current-continuation call/cc))
 	  make-thread-local thread-local? tlref tlset!
           define-fluid define-thread-fluid
-          fluid-let fluid-let*)
+          fluid-let fluid-let*
+          define-fluidified fluid-parameter)
   (import (rename (except (rnrs (6))
 			  call/cc
 			  call-with-current-continuation
@@ -1912,6 +1913,42 @@
               #'(fluid-let ([id init]) body)))
           #'(letrec* () body1 ... body2)
           #'(id ...) #'(init ...))]
+        [_
+         (syntax-violation who "invalid syntax" stx)])))
+
+  (define-syntax/who fluid-parameter
+    (lambda ()
+      (lambda (lookup)
+        (syntax-case stx ()
+          [(_ fluid)
+           (identifier? #'fluid)
+           (or (lookup #'fluid #'fluid-info)
+               (syntax-violation who "not a fluid" stx fluid))]
+          [_
+           (syntax-violation who "invalid syntax" stx)]))))
+
+  (define-syntax/who define-fluidified
+    (lambda (stx)
+      (syntax-case stx ()
+        [(_ fluid param-expr)
+         (identifier? #'fluid)
+         #'(begin
+             (define param (let ([param param-expr])
+                             (unless (parameter? param)
+                               (assertion-violation 'define-fluidified "not a parameter" param))
+                             param))
+             (define-syntax fluid
+               (make-variable-transformer
+                (lambda (stx)
+                  (syntax-case stx (set!)
+                    [id
+                     (identifier? #'id)
+                     #'(param)]
+                    [(set! id e)
+                     (identifier? #'id)
+                     #'(param e)]
+                    [_
+                     (syntax-violation #f "invalid use of thread-fluid" stx)])))))]
         [_
          (syntax-violation who "invalid syntax" stx)])))
 

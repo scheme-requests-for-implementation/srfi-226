@@ -1074,6 +1074,17 @@
 		      t)))))
 	(cons a x)))
 
+(test '10
+      (let ([p (make-parameter 10)])
+        (define-fluidified x p)
+        x))
+
+(test '12
+      (letrec* ()
+        (define-fluid x 11)
+        ((fluid-parameter x) 12)
+        x))
+
 ;;; Test End
 
 (test-end)

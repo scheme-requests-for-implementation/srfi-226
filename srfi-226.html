@@ -1957,10 +1957,11 @@
 
     <p>Each <dfn>fluid</dfn> is an identifier.  To each fluid, a parameter object is associated.</p>
 
-    <p>Like other definitions, the <code>define-fluid</code> and
-    the <code>define-thread-fluid</code> definitions can either appear
-      at the outermost level or in a body where other definitions can
-      appear.</p>
+    <p>Like other definitions, the <code>define-fluid</code>,
+    the <code>define-thread-fluid</code>,
+    and <code>define-fluidified</code> definitions can either appear at
+    the outermost level or in a body where other definitions can
+    appear.</p>
 
     <dl class="entries">
       <dt class="syntax"><code><span class="token">Fluid</span></code></dt>
@@ -1994,14 +1995,16 @@
         </p>
         <p><i>Semantics:</i> The <code>define-fluid</code> form
           defines the <code><span class="token">fluid</span></code>.
-          When it is evaluated, in an unspecified order,
+          When the <code>define-fluid</code> form is evaluated, in an
+          unspecified order,
           the <code><span class="token">expression</span></code> is
           evaluated to yield a value and
           the <code><span class="token">converter-expression</span></code>
           is evaluated to yield a procedure.
           The <code><span class="token">fluid</span></code> is then
           associated with a new parameter object whose initial value
-          is the obtained value and whose converter is the obtained procedure.</p>
+          is the obtained value and whose converter is the obtained
+          procedure.</p>
         <p>If
           the <code><span class="token">converter expression</span></code>
           is missing, it defaults to an expression evaluating to the
@@ -2015,6 +2018,22 @@
           parameter object behaves as if created
           by <code>make-thread-parameter</code> and
           not <code>make-parameter</code>.</p>
+      </dd>
+      <dt class="syntax"><code>(define-fluidified <span class="token">fluid</span> <span class="token">parameter expression</span>)</code></dt>
+      <dd>
+        <p><i>Syntax:</i>
+          <code><span class="token">Fluid</span></code> is an
+          identifier; <code><span class="token">parameter expression</span></code>
+          is an expression that must evaluate to a parameter object.
+        </p>
+        <p><i>Semantics:</i>
+          The <code>define-fluidified</code> form
+          defines the <code><span class="token">fluid</span></code>.
+          When the <code>define-fluidified</code> form is evaluated,
+          the <code><span class="token">parameter expression</span></code> is
+          evaluated to yield a parameter object.
+          The <code><span class="token">fluid</span></code> is then
+          associated with this parameter object.</p>
       </dd>
       <dt class="syntax"><code>(fluid-let ([<span class="token">fluid</span> <span class="token">expression</span>] &hellip;) <span class="token">body</span>)</code></dt>
       <dd>
@@ -2031,6 +2050,11 @@
       <dd>
         <p>Related to <code>fluid-let</code> as <code>let*</code> is related to <code>let</code>.</p>
       </dd>
+      <dt class="syntax"><code>(fluid-parameter <span class="token">fluid</span>)</code></dt>
+      <p><i>Syntax:</i>
+        <code><span class="token">Fluid</span></code> can be an arbitrary fluid.
+      </p>
+      <p><i>Semantics:</i> Evaluates to the parameter object associated with the <code><span class="token">fluid</span></code>.</p>
     </dl>
 
     <p>Thread fluids can be used to mimick (inheritable) thread local
