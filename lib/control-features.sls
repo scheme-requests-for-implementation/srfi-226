@@ -1835,8 +1835,12 @@
     (lambda (stx)
       (syntax-case stx ()
         [(_ id expr)
+         (identifier? #'id)
+         #'(define-fluid id expr values)]
+        [(_ id expr conv-expr)
+         (identifier? #'id)
          #'(begin
-             (define param (make-parameter expr))
+             (define param (make-parameter expr conv-expr))
              (define-syntax id
                (make-variable-transformer
                 (lambda (stx)
@@ -1857,8 +1861,11 @@
     (lambda (stx)
       (syntax-case stx ()
         [(_ id expr)
+         (identifier? #'id)
+         #'(define-thread-fluid id expr values)]
+        [(_ id expr conv-expr)
          #'(begin
-             (define param (make-thread-parameter expr))
+             (define param (make-thread-parameter expr conv-expr))
              (define-syntax id
                (make-variable-transformer
                 (lambda (stx)

@@ -196,6 +196,9 @@
     to the current parameterization, the notion of a parameter-like
     object and the <code>with</code> syntax are introduced.</p>
 
+    <p><i>Fluids:</i> Fluids are a syntactic reinterpretation of parameter
+      objects.</p>
+
     <p><i>Delayed evaluation:</i> The syntax and procedures on delayed
       evaluation of <cite>R7RS</cite> are revisited and redefined to handle the
       following satisfactorily: the parameterization of the delayed expression
@@ -402,6 +405,22 @@
       the reparameterization is bound to the dynamic extent of
       the <code>with</code> form's body.</p>
 
+    <h4>Fluids</h4>
+
+    <p>Parameter objects behave like (dynamic) variables except that
+      they are procedures that have to be called to retrieve the
+      stored value or to replace it.  In some (syntactic) contexts, it
+      may be preferable to have a syntactic entities, the fluids, that
+      behave like parameter objects but whose syntax to reference or
+      assign their values is equivalent to the corresponding syntax
+      for variables.</p>
+
+    <p>Fluids have been proposed by <a href="#hansen"><cite>SRFI
+          15</cite></a>.  That SRFI was withdrawn.  This SRFI addresses all
+      concerns that were raised on the mailing list of <cite>SRFI
+        15</cite> about the behavior of fluids and <code>fluid-let</code>
+      with respect to multi-threaded environments.</p>
+
     <h4>Thread locals</h4>
 
     <p>Although they have been proposed for this application,
@@ -470,7 +489,7 @@
 
     <h3>Relation to Other SRFIs</h3>
 
-    <p>This SRFI supersedes <a href="#kelsey2"><cite>SRFI
+    <p>This SRFI supersedes <cite>SRFI 15</cite>, <a href="#kelsey2"><cite>SRFI
 	  34</cite></a>, <cite>SRFI
 	  39</cite>, <a href="#nieper1"><cite>SRFI
 	  154</cite></a>, <cite>SRFI
@@ -1931,6 +1950,110 @@
       (make-thread (lambda () (p)))))
     (thread-join! (thread-start! t)))<span class=result>2</span></pre>
 
+    <h3>Fluids</h3>
+
+    <p>This section describes the <code>(srfi :226 control
+	fluids)</code> library.</p>
+
+    <p>Each <dfn>fluid</dfn> is an identifier.  To each fluid, a parameter object is associated.</p>
+
+    <p>Like other definitions, the <code>define-fluid</code> and
+    the <code>define-thread-fluid</code> definitions can either appear
+      at the outermost level or in a body where other definitions can
+      appear.</p>
+
+    <dl class="entries">
+      <dt class="syntax"><code><span class="token">Fluid</span></code></dt>
+      <dd>
+        <p><i>Syntax:</i> <code><span class="token">Fluid</span></code> is a fluid.</p>
+        <p><i>Semantics:</i> Evaluates to the content of the cell of
+          the associated parameter object of
+          the <code><span class="token">fluid</span></code> in the current parameterization.</p>
+      </dd>
+      <dt class="syntax"><code>(set! <span class="token">fluid</span> <span class="token">expression</span>)</code></dt>
+      <dd>
+        <p><i>Syntax:</i> <code><span class="token">Fluid</span></code>
+          is a fluid; <code><span class="token">expression</span></code>
+          can be any expression.</p>
+        <p><i>Semantics:</i>
+          Evaluates <code><span class="token">expression</span></code>
+          and stores the resulting value in the content of the cell of
+          the associated parameter object of
+          the <code><span class="token">fluid</span></code> in the
+          current parameterization.  Returns unspecified values.</p>
+      </dd>
+      <dt class="syntax"><code>(define-fluid <span class="token">fluid</span> <span class="token">expression</span> <span class="token">converter
+      expression</span>)</code></dt>
+      <dt class="syntax"><code>(define-fluid <span class="token">fluid</span> <span class="token">expression</span>)</code></dt>
+      <dd>
+        <p><i>Syntax:</i>
+          <code><span class="token">Fluid</span></code> is an
+          identifier; <code><span class="token">expression</span></code>
+          and <code><span class="token">converter expression</span></code>
+          can be any expression.
+        </p>
+        <p><i>Semantics:</i> The <code>define-fluid</code> form
+          defines the <code><span class="token">fluid</span></code>.
+          When it is evaluated, in an unspecified order,
+          the <code><span class="token">expression</span></code> is
+          evaluated to yield a value and
+          the <code><span class="token">converter-expression</span></code>
+          is evaluated to yield a procedure.
+          The <code><span class="token">fluid</span></code> is then
+          associated with a new parameter object whose initial value
+          is the obtained value and whose converter is the obtained procedure.</p>
+        <p>If
+          the <code><span class="token">converter expression</span></code>
+          is missing, it defaults to an expression evaluating to the
+          identity procedure.</p>
+      </dd>
+      <dt class="syntax"><code>(define-thread-fluid <span class="token">fluid</span> <span class="token">expression</span> <span class="token">converter
+      expression</span>)</code></dt>
+      <dt class="syntax"><code>(define-thread-fluid <span class="token">fluid</span> <span class="token">expression</span>)</code></dt>
+      <dd>
+        <p>As <code>define-fluid</code> except that the associated
+          parameter object behaves as if created
+          by <code>make-thread-parameter</code> and
+          not <code>make-parameter</code>.</p>
+      </dd>
+      <dt class="syntax"><code>(fluid-let ([<span class="token">fluid</span> <span class="token">expression</span>] &hellip;) <span class="token">body</span>)</code></dt>
+      <dd>
+        <p><i>Syntax:</i>
+          The <code><span class="token">fluids</span></code> are arbitrary
+          fluids and the <code><span class="token">expressions</span></code> arbitrary expressions.
+        </p>
+        <p><i>Semantics:</i> Equivalent to a <code>parameterize</code>
+          form whose <code><span class="token">param-exprs</span></code>
+          evaluate to the parameter objects associated with
+        the <code><span class="token">fluids</span></code>.</p>
+      </dd>
+      <dt class="syntax"><code>(fluid-let* ([<span class="token">fluid</span> <span class="token">expression</span>] &hellip;) <span class="token">body</span>)</code></dt>
+      <dd>
+        <p>Related to <code>fluid-let</code> as <code>let*</code> is related to <code>let</code>.</p>
+      </dd>
+    </dl>
+
+    <p>Thread fluids can be used to mimick (inheritable) thread local
+      variables of languages like C or C++.  As long as only one
+      thread is involved, they behave like ordinary variables.  With
+      more than one thread, they differ in behavior as an assignment
+      to a fluid in one thread won't be visible in other existing
+      threads:</p>
+
+    <pre class="example">(define-thread-fluid x 1)
+
+x<span class="result">1</span>
+
+(set! x 2)
+x<span class="result">2</span>
+
+(thread-join!
+ (thread-start!
+  (make-thread!
+   (lambda ()
+     (set! x 3)))))
+x<span class="result">2</span></pre>
+
     <h3>Initial Continuations</h3>
 
     <p>This section describes the <code>(srfi :226 control
@@ -3135,6 +3258,11 @@
       <li id="c17">
         <p><a href="https://www.iso.org/standard/74528.html">ISO/IEC 9899:2018 Information technology — Programming languages — C</a></p>
       </li>
+      <li id="hansen">
+	<p>Lars T. Hansen:
+	  <a href="https://srfi.schemers.org/srfi-15/srfi-15.html"><cite>SRFI
+	      15: Syntax for dynamic scoping</cite></a>.</p>
+      </li>
       <li id="kawai">
 	<p>Shiro Kawai, John Cowan, Thomas
 	Gilray: <a href="https://srfi.schemers.org/srfi-158/srfi-158.html"><cite>SRFI
@@ -3208,7 +3336,6 @@
 	<p>André van Tonder: <a href="https://srfi.schemers.org/srfi-45/srfi-45.html"><cite>SRFI
 	45: Primitives for Expressing Iterative Lazy Algorithms</cite></a>.</p>
       </li>
-
     </ol>
 
     <h2 id="copyright">Copyright</h2>
