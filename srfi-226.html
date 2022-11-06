@@ -779,26 +779,26 @@
     <dl class="entries">
       <dt class="procedure"><code>(call-with-continuation-prompt <var>thunk</var>)</code></dt>
       <dt class="procedure"><code>(call-with-continuation-prompt <var>thunk</var> <var>prompt-tag</var>)</code></dt>
-      <dt class="procedure"><code>(call-with-continuation-prompt <var>thunk</var> <var>prompt-tag</var> <var>handler</var>)</code></dt>
+      <dt class="procedure"><code>(call-with-continuation-prompt <var>thunk</var> <var>prompt-tag</var> <var>abort-handler</var>)</code></dt>
       <dd>
 	<p>If not supplied, <code><var>prompt-tag</var></code>
 	  defaults to the default prompt tag,
-	  and <code><var>handler</var></code> defaults
+	  and <code><var>abort-handler</var></code> defaults
 	  to <code>#f</code>.</p>
 
 	<p>The <code>call-with-continuation-prompt</code> procedure
 	  installs a continuation prompt that is tagged
 	  with <code><var>prompt-tag</var></code> and
-	  records <code><var>handler</var></code> in the continuation
+	  records <code><var>abort-handler</var></code> in the continuation
 	  to its call.  Finally, <code><var>thunk</var></code> is
 	  called with no arguments in the resulting continuation.</p>
 
-	<p>If <code><var>handler</var></code> is <code>#f</code>, the
-	  default handler is used instead.  The default handler is a
+	<p>If <code><var>abort-handler</var></code> is <code>#f</code>, the
+	  default abort handler is used instead.  The default abort handler is a
 	  procedure that takes a single
-	  argument <code><var>thunk</var></code>.  When the default
-	  handler is called, it reinstates the continuation prompt and
-	  calls <code><var>thunk</var></code> with no arguments in the
+	  argument <code><var>continuation-thunk</var></code>.  When the default
+	  abort handler is called, it reinstates the continuation prompt and
+	  calls <code><var>continuation-thunk</var></code> with no arguments in the
 	  resulting continuation.</p>
 
 	<p>The calls to the <code><var>thunks</var></code> are never in tail
@@ -812,7 +812,7 @@
 	  aborts all active procedure calls in the current
 	  continuation until a continuation prompt tagged
 	  with <code><var>prompt-tag</var></code> is aborted and
-	  replaces them with a call to the handler recorded with the
+	  replaces them with a call to the abort handler recorded with the
 	  prompt tag with the
 	  arguments <code><var>objs</var></code>.</p>
 	<p>
@@ -843,7 +843,7 @@
     list))<span class="result">(foo bar)</span></pre>
 
    <p>The following example demonstrates that the prompt is
-      reinstalled by the default handler.</p>
+      reinstalled by the default abort handler.</p>
 
     <pre class="example">(let ([tag (make-continuation-prompt-tag)])
   (call-with-continuation-prompt
@@ -2065,15 +2065,15 @@ x<span class="result">2</span></pre>
 
     <p>An <dfn>initial continuation</dfn> is one that consists of a
       single continuation prompt tagged with the default prompt tag
-      and with the default handler.  Moreover, a single initial
+      and with the default abort handler.  Moreover, a single initial
       exception handler is installed in an initial continuation that,
       when invoked on a <code>&amp;serious</code> condition or on a
       non-condition object, aborts to the most recent continuation
-      prompt tagged with the default prompt tag and calls its handler
+      prompt tagged with the default prompt tag and calls its abort handler
       with a thunk that, when evaluated, raises an exception whose
       condition is the object.  When invoked on a
       non-<code>&amp;serious</code> condition object, the initial
-      handler returns with unspecified values instead.</p>
+      abort handler returns with unspecified values instead.</p>
 
     <p><i>Note:</i> There is usually more than one initial
     continuation.  The primordial thread starts in an initial
@@ -2085,7 +2085,7 @@ x<span class="result">2</span></pre>
     <p>Executing a top-level program starts with the initial
       continuation.  When values are delivered in the initial
       continuation, the program exits normally.  When an exception is
-      raised in the dynamic extent of the handler of the initial
+      raised in the dynamic extent of the abort handler of the initial
       continuation prompt, the program may exit or may provide a
       choice of other options.  It is expected that the initial
       exception handler reports that an exception has been raised, and
@@ -2105,7 +2105,7 @@ x<span class="result">2</span></pre>
 	  are delivered to the initial continuation, the values are
 	  delivered to the continuation of the call
 	  to <code>call-in-initial-continuation</code>.  When an
-	  exception is raised in the dynamic extent of the handler of
+	  exception is raised in the dynamic extent of the abort handler of
 	  the continuation prompt of the initial continuation, a
 	  continuable exception of
 	  type <code>&uncaught-exception</code> whose reason is the
@@ -2162,7 +2162,7 @@ x<span class="result">2</span></pre>
 	  promise was forced.  Otherwise, the already delivered values
 	  are delivered again, or the already raised exception is
 	  raised again in the continuation <var>k</var>.  When an
-	  exception is raised in the dynamic extent of the handler of
+	  exception is raised in the dynamic extent of the abort handler of
 	  the continuation prompt of the initial continuation and the
 	  promise still hasn't delivered values or has raised an
 	  exception, a continuable exception of
@@ -2694,7 +2694,7 @@ x<span class="result">2</span></pre>
 	  continuation is the same as the parameterization of the
 	  continuation of the invocation of <code>make-thread</code>.
 	  When an exception <var>e</var> is raised in the dynamic
-	  extent of the handler of the initial continuation prompt,
+	  extent of the abort handler of the initial continuation prompt,
 	  an <code>&amp;uncaught-exception</code> condition object is recorded to be
 	  raised for this thread and the thread finally
 	  terminated.  The <code>reason</code> field of
@@ -2808,7 +2808,7 @@ x<span class="result">2</span></pre>
 	  The parameterization of the initial continuation is the same
 	  as the parameterization of the continuation of
 	  the <code>thread</code> expression.  When an exception is
-	  raised in the dynamic extent of the handler of the initial
+	  raised in the dynamic extent of the abort handler of the initial
 	  continuation prompts, a condition with
 	  type <code>&amp;uncaught-exception</code> and the raised
 	  object as its reason is stored in
