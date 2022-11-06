@@ -68,7 +68,9 @@
 	  delay make-promise promise? force
 	  run
 	  (rename (call-with-current-continuation call/cc))
-	  make-thread-local thread-local? tlref tlset!)
+	  make-thread-local thread-local? tlref tlset!
+          define-fluid define-thread-fluid
+          fluid-let fluid-let*)
   (import (rename (except (rnrs (6))
 			  call/cc
 			  call-with-current-continuation
@@ -89,6 +91,7 @@
 		  (display rnrs:display)
 		  (write rnrs:write))
 	  (rnrs mutable-pairs (6))
+          (control-features define-property)
 	  (control-features define-who)
 	  (control-features make-ephemeron-eq-hashtable)
 	  (control-features primitives)
@@ -1823,6 +1826,87 @@
 			(promise-thunk-set! p thunk)
 			(promise-unlock! p)
 			(thunk)])))))))))
+
+  ;; Fluids
+
+  (define fluid-info)
+
+  (define-syntax/who define-fluid
+    (lambda (stx)
+      (syntax-case stx ()
+        [(_ id expr)
+         #'(begin
+             (define param (make-parameter expr))
+             (define-syntax id
+               (make-variable-transformer
+                (lambda (stx)
+                  (syntax-case stx (set!)
+                    [id
+                     (identifier? #'id)
+                     #'(param)]
+                    [(set! id e)
+                     (identifier? #'id)
+                     #'(param e)]
+                    [_
+                     (syntax-violation #f "invalid use of fluid" stx)]))))
+             (define-property id fluid-info #'param))]
+        [_
+         (syntax-violation who "invalid syntax" stx)])))
+
+  (define-syntax/who define-thread-fluid
+    (lambda (stx)
+      (syntax-case stx ()
+        [(_ id expr)
+         #'(begin
+             (define param (make-thread-parameter expr))
+             (define-syntax id
+               (make-variable-transformer
+                (lambda (stx)
+                  (syntax-case stx (set!)
+                    [id
+                     (identifier? #'id)
+                     #'(param)]
+                    [(set! id e)
+                     (identifier? #'id)
+                     #'(param e)]
+                    [_
+                     (syntax-violation #f "invalid use of thread-fluid" stx)]))))
+             (define-property id fluid-info #'param))]
+        [_
+         (syntax-violation who "invalid syntax" stx)])))
+
+  (define-syntax/who fluid-let
+    (lambda (stx)
+      (syntax-case stx ()
+	[(_ ([id init] ...) body1 ... body2)
+         (for-all identifier? #'(id ...))
+	 (lambda (lookup)
+	   (with-syntax
+	       ([(param ...)
+		 (map
+		  (lambda (id)
+		    (let ((param (lookup id #'fluid-info)))
+		      (unless param
+			(syntax-violation who "not a fluid" stx id))
+		      param))
+		  #'(id ...))])
+	     #'(parameterize ([param init] ...) body1 ... body2)))]
+        [_
+         (syntax-violation who "invalid syntax" stx)])))
+
+  (define-syntax/who fluid-let*
+    (lambda (stx)
+      (syntax-case stx ()
+        [(_ ([id init] ...) body1 ... body2)
+         (for-all identifier? #'(id ...))
+         (fold-right
+          (lambda (id init body)
+            (with-syntax ([id id] [init init] [body body])
+              #'(fluid-let ([id init]) body)))
+          #'(letrec* () body1 ... body2)
+          #'(id ...) #'(init ...))]
+        [_
+         (syntax-violation who "invalid syntax" stx)])))
 
   ;; Helpers
 

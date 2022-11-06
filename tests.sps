@@ -1025,6 +1025,55 @@
             (make-thread (lambda () (p)))))
         (thread-join! (thread-start! t))))
 
+;;; Fluids
+
+(test '(1 2)
+      (letrec* ()
+        (define-fluid x1 1)
+        (define-fluid x2 2)
+        (list x1 x2)))
+
+(test '(3 2)
+      (letrec* ()
+        (define-fluid x1 1)
+        (define-fluid x2 2)
+        (set! x1 3)
+        (list x1 x2)))
+
+(test '(3 2 4 5 6)
+      (letrec* ()
+        (define-fluid x1 3)
+        (define-fluid x2 2)
+        (define y
+          (fluid-let ([x1 4]
+                      [x2 5])
+            (let ([a x1] [b x2])
+              (set! x1 6)
+              (list a b x1))))
+        (cons* x1 x2 y)))
+
+(test 8
+      (letrec* ()
+        (define-fluid x1 3)
+        (fluid-let* ([x1 7]
+                     [x1 (+ x1 1)])
+          x1)))
+
+(test '(0 20 10)
+      (letrec* ()
+        (define-thread-fluid a 0)
+	(define x
+	  (fluid-let ([a 10])
+	    (define t
+	      (make-thread
+	       (lambda ()
+		 a)))
+	    (set! a 20)
+	    (list a (thread-join!
+		     (thread-start!
+		      t)))))
+	(cons a x)))
+
 ;;; Test End
 
 (test-end)
