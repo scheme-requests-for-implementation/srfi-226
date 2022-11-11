@@ -2781,7 +2781,7 @@ x<span class="result">2</span></pre>
 	  because the mutex is unlocked/abandoned.  This helps avoid
 	  observing an inconsistent state.</p>
       </dd>
-      <dt class="procedure"><code>(thread-exit! <var>thread</var>)</code></dt>
+      <dt class="procedure"><code>(thread-stop! <var>thread</var>)</code></dt>
       <dd>
         <p>As <code>thread-terminate!</code> but returns immediately
           so that the current thread does not wait until the termination
@@ -2790,12 +2790,12 @@ x<span class="result">2</span></pre>
     </dl>
 
     <p>The procedure <code>thread-terminate!</code> can be defined in
-      terms of <code>thread-exit!</code> and <code>thread-join!</code>
+      terms of <code>thread-stop!</code> and <code>thread-join!</code>
       as follows:</p>
 
     <pre>(define thread-terminate!
   (lambda (thread)
-    (thread-exit! thread)
+    (thread-stop! thread)
     (with-exception-handler
         (lambda (exc)
           (if (thread-condition? exc)
