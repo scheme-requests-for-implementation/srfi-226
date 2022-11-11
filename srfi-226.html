@@ -70,6 +70,11 @@
 	  float: right;
 	  content: "procedure";
       }
+      dl.entries > dt.thread-parameter::after
+      {
+	  float: right;
+	  content: "thread parameter";
+      }
       dl.entries > dt.syntax::after
       {
 	  float: right;
@@ -2804,7 +2809,7 @@ x<span class="result">2</span></pre>
       (lambda ()
         (thread-join! thread)))))</pre>
 
-    <dl class="entry">
+    <dl class="entries">
       <dt class="entry"><code>(thread-join! <var>thread</var> <var>timeout</var>)</code><span class="type">procedure</span></dt>
       <dt class="entry"><code>(thread-join! <var>thread</var>)</code><span class="type">procedure</span></dt>
       <dd><p>The current thread waits
@@ -3099,6 +3104,49 @@ x<span class="result">2</span></pre>
 	  values of the corresponding cells in the thread-specific
 	  storages of the future threads that will be created by the
 	  current thread to <code><var>obj</var></code>.</p>
+      </dd>
+    </dl>
+
+    <h4>Interrupts</h4>
+
+    <p>The syntax and procedures in this subsection are also exported by
+      the <code>(srfi :226 control interrupts)</code> library.</p>
+
+    <dl class="entries">
+      <dt class="thread-parameter"><code>current-interrupt-level</code></dt>
+      <dd><p>The <code>current-interrupt-level</code> can be
+	  parameterized to a non-negative exact integer.  It's initial
+	  value is zero.</p>
+      </dd>
+      <dt class="procedure"><code>(disable-interrupts!)</code></dt>
+      <dd>
+	<p>Increases the value the <code>current-interrupt-level</code> by one.</p>
+      </dd>
+      <dt class="procedure"><code>(enable-interrupts!)</code></dt>
+      <dd>
+	<p>Decreases the value the <code>current-interrupt-level</code> by one.</p>
+	<p><i>Note:</i> It is an assertion violation if this would
+	  lower the interrupt level to a negative number.</p>
+      </dd>
+      <dt class="syntax"><code>(with-interrupts-disabled <span class="token">body</span>)</code></dt>
+      <dd><p>Convenience syntax, effectively equivalent to <code>(parameterize ([current-interrupt-level (+ (current-interrupt-level) 1)]) <span class="token">body</span>)</code>.</p>
+	<p>
+	  <i>Note:</i> If the <code>with-interrupts-disabled</code> form is in tail-context,
+	  <code><span class="token">body</span></code> is
+	  a <code><span class="token">tail body</span></code>.</p>
+      </dd>
+      <dt class="procedure"><code>(thread-interrupt! <var>thread</var> <var>thunk</var>)</code></dt>
+      <dd>
+	<p>Schedules an interrupt
+	  for <code><var>thread</var></code> for when
+	  the <code>current-interrupt-level</code>
+	  of <code><var>thread</var></code> is zero.  The current
+	  continuation of <code><var>thread</var></code> is then
+	  replaced by a continuation that records the values it
+	  receives, invokes <code><var>thunk</var></code> with no
+	  arguments, discards its values, and then yields the
+	  recorded values to the original continuation.
+	</p>
       </dd>
     </dl>
 
