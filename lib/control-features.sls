@@ -55,6 +55,7 @@
 	  thread current-thread thread? make-thread thread-name
 	  thread-start! thread-yield!
 	  thread-exit! thread-terminate! thread-join!
+	  thread-interrupt!
 	  &thread make-thread-condition thread-condition?
 	  &uncaught-exception
 	  make-uncaught-exception-condition uncaught-exception-condition?
@@ -1709,6 +1710,17 @@
 	    (raise-continuable (thread-end-exception thread))
 	    (apply values (thread-end-result thread))))))
 
+  ;; TODO: Implement current-interrupt-level.
+  ;; TODO: Implement mutexes and condition-variables.
+  ;; TODO: Handle blocked threads.
+  (define/who thread-interrupt!
+    (lambda (thread thunk)
+      (unless (thread? thread)
+	(assertion-violation who "not a thread" thread))
+      (unless (procedure? thunk)
+	(assertion-violation who "not a thunk" thunk))
+      (%thread-interrupt! (thread-%thread thread) thunk)))
+
   ;; Promises
 
   (define force-continuation-mark-key
@@ -1917,13 +1929,13 @@
          (syntax-violation who "invalid syntax" stx)])))
 
   (define-syntax/who fluid-parameter
-    (lambda ()
+    (lambda (stx)
       (lambda (lookup)
         (syntax-case stx ()
           [(_ fluid)
            (identifier? #'fluid)
            (or (lookup #'fluid #'fluid-info)
-               (syntax-violation who "not a fluid" stx fluid))]
+               (syntax-violation who "not a fluid" stx #'fluid))]
           [_
            (syntax-violation who "invalid syntax" stx)]))))
 

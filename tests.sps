@@ -1085,6 +1085,33 @@
         ((fluid-parameter x) 12)
         x))
 
+#;
+(test '999
+      (let* ([m (make-mutex)]
+	     [cv (make-condition-variable)]
+	     [looping? #f]
+	     [t (make-thread
+		(lambda ()
+		  (guard
+		      (c [(integer? c) c])
+		    (mutex-lock!)
+		    (set! looping #t)
+		    (condition-variable-signal! cv)
+		    (mutex-unlock!)
+		    (let f ()
+		      (f)))))])
+	(mutex-lock! m)
+	(thread-start! t)
+	(let f ()
+	  (if looping?
+	      (mutex-unlock!)
+	      (begin
+		(mutex-unlock! cv)
+		(mutex-lock!)
+		(f))))
+	(thread-interrupt! t (lambda () (raise 999)))
+	(thread-join! t)))
+
 ;;; Test End
 
 (test-end)
