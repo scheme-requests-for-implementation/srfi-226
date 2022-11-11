@@ -2825,47 +2825,16 @@ x<span class="result">2</span></pre>
       </dd>
     </dl>
 
-    <dl class="entries">
-      <dt class="entry"><code>(thread <span class="token">body</span>)</code><span class="type">syntax</span></dt>
-      <dd>
-	<p><i>Syntax:</i>
-	  <code><span class="token">Body</span></code> is a body.</p>
-	<p><i>Semantics:</i> Operationally equivalent to
-	  evaluating <code>(make-thread (lambda
-	  () <span class="token">body</span>))</code>.  The initial
-	  continuation is an initial continuation as defined above.
-	  The parameterization of the initial continuation is the same
-	  as the parameterization of the continuation of
-	  the <code>thread</code> expression.  When an exception is
-	  raised in the dynamic extent of the abort handler of the initial
-	  continuation prompts, a condition with
-	  type <code>&amp;uncaught-exception</code> and the raised
-	  object as its reason is stored in
-	  the <code>end-exception</code> of the thread before the
-	  thread is finally terminated.  When values are delivered to
-	  the initial continuation, the values are stored in
-	  the <code>end-result</code> of the thread before the thread
-	  is finally terminated.</p>
-	<p>This extends the semantics of <code>raise</code>.</p>
-	<p><i>Note:</i> This also defines the initial continuation of
-	  a thread created by invoking the <code>make-thread</code>
-	  procedure in <cite>SRFI 18</cite>.</p>
-	<p><i>Note:</i> As threads inherit the parameterization of
-	  when they are created, a <code>thread</code> expression
-	  conveys the meaning better than a call
-	  to <code>make-thread</code>.</p>
-      </dd>
-    </dl>
-
     <pre class="example">(let ([p (make-parameter 0)])
 (parameterize ([p 1])
   (let ([y
          (thread-join!
           (thread-start!
-           (thread
-             (let ([x (p)])
-               (p 2)
-               x))))])
+            (make-thread
+             (lambda ()
+               (let ([x (p)])
+                 (p 2)
+                 x)))))])
     (list y (p)))))<span class="result">(1 2)</span></pre>
 
     <pre class="example">(let [(l '())]
@@ -2877,20 +2846,22 @@ x<span class="result">2</span></pre>
       (reverse l)))
   (thread-join!
    (thread-start!
-    (thread
-      (dynamic-wind
-          (lambda ()
-            (out! 'in))
-          (lambda ()
-            (call/cc
-             (lambda (k)
-               (thread-join!
-                (thread-start!
-                 (thread
-                   (out! 'thread)
-                   (k)))))))
-          (lambda ()
-            (out! 'out))))))
+    (make-thread
+      (lambda ()
+        (dynamic-wind
+            (lambda ()
+              (out! 'in))
+            (lambda ()
+              (call/cc
+               (lambda (k)
+                 (thread-join!
+                  (thread-start!
+                   (make-thread
+                     (lambda ()
+                       (out! 'thread)
+                       (k))))))))
+            (lambda ()
+              (out! 'out)))))))
   (get))<span class="result">(in thread in out out)</span></pre>
 
     <h4>Mutexes</h4>
