@@ -2984,17 +2984,11 @@ x<span class="result">2</span></pre>
 	  and a mutex that is owned by any thread.</p>
 	<p><i>Note:</i> The reason the thread can unblock at any time
 	  (when <code><var>condition-variable</var></code> is
-	  supplied) is to allow extending this SRFI with primitives
-	  that force a specific blocked thread to become runnable.
-	  For example a primitive to interrupt a thread so that it
-	  performs a certain operation, whether the thread is blocked
-	  or not, may be useful to handle the case where the scheduler
-	  has detected a serious problem (such as a deadlock) and it
-	  must unblock one of the threads (such as the primordial
-	  thread) so that it can perform some appropriate action.
-	  After a thread blocked on a condition-variable has handled
-	  such an interrupt it would be wrong for the scheduler to
-	  return the thread to the blocked state, because any calls
+	  supplied) is the handling of interrupts (see
+	  the <code>thread-interrupt!</code> procedure below).  After a
+	  thread blocked on a condition-variable has handled such an
+	  interrupt it would be wrong for the scheduler to return the
+	  thread to the blocked state, because any calls
 	  to <code>condition-variable-broadcast!</code>  during the
 	  interrupt will have gone unnoticed.  It is necessary for the
 	  thread to remain runnable and return from the call to
@@ -3147,6 +3141,8 @@ x<span class="result">2</span></pre>
 	  arguments, discards its values, and then yields the
 	  recorded values to the original continuation.
 	</p>
+	<p><i>Note:</i> An interrupt can occur while a thread is
+	  blocked waiting on a condition variable.</p>
       </dd>
     </dl>
 
