@@ -674,10 +674,11 @@
     <p>An <dfn>iterator</dfn> for a list in the sense of this
       specification is a zero-argument procedure that returns two
       values on each invocation.  An iterator for the empty list
-      returns <code>#f</code> and an iterator for the empty list.  An
+      returns <code>#f</code> and a thunk that raises an exception of
+      type <code>&amp;assertion-violation</code> when invoked.  An
       iterator for a non-empty list returns the head of the list and
-      an iterator for its tail.  Note that this iterator protocol is
-      unsuitable for lists that potentially
+      an iterator for its tail.  Note that this particular iterator
+      protocol is unsuitable for lists that potentially
       contain <code>#f</code>.</p>
 
     <h3>Safety</h3>
@@ -1600,14 +1601,14 @@
     (call-with-continuation-prompt
       (lambda ()
         (with-continuation-mark key 'mark3
-          (continuation-mark-set->list #f key))))))<span class="result">(mark3 mark2)</span>
+          (continuation-mark-set-&gt;list #f key))))))<span class="result">(mark3 mark2)</span>
 
 (with-continuation-mark key1 'mark1
   (with-continuation-mark key2 'mark2
     (call-with-continuation-prompt
      (lambda ()
        (with-continuation-mark key1 'mark3
-         (continuation-mark-set->list* #f (list key1 key2) 'default)))
+         (continuation-mark-set-&gt;list* #f (list key1 key2) 'default)))
      tag))<span class="result">(#(mark3 default) #(mark1 mark2))</span></pre>
 
     <dl class="entries">
@@ -1649,8 +1650,13 @@
     (let f ([ls (apply continuation-mark-set-&gt;list* arg*)])
       (lambda ()
         (if (null? ls)
-          (values #f (f '()))
-          (values (car ls) (f (cdr ls))))))))</pre>
+            (values #f
+                   (lambda ()
+                     (apply assertion-violation
+                            'continuation-mark-set-&gt;iterator
+                            "attempt to iterate past the end"
+                            arg*)))
+            (values (car ls) (f (cdr ls))))))))</pre>
 
     <dl class="entries">
       <dt class="procedure"><code>(continuation-mark-set-first <var>mark-set</var> <var>key</var>)</code></dt>

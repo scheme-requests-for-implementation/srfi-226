@@ -1069,7 +1069,8 @@
 		   (values #f (make-iterator '()))
 		   (let ([frame (car frames)] [frames (cdr frames)])
 		     (if (eq? (mark-set-frame-tag frame) tag)
-			 (values #f (make-iterator '()))
+			 (values #f (lambda () (assertion-violation who "attempt to iterator past the end"
+                                                                    set keys default tag)))
 			 (let ([val-vec
 				(marks-ref*
 				 (mark-set-frame-marks frame)
