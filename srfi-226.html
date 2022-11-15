@@ -101,7 +101,7 @@
       {
 	  padding-left: 1em;
 	  padding-right: 1em;
-	  content: "⟹"
+	  content: "⟹";
       }
       sup
       {
@@ -1620,7 +1620,7 @@
 	<p>If not supplied, <code><var>prompt-tag</var></code>
 	defaults to the default prompt tag.</p>
 	<p>Returns an iterator for the list that would be
-	  constructed by <code>continuation-mark-set-&gt;list</code>
+	  constructed by <code>continuation-mark-set-&gt;list*</code>
 	  when applied to the same arguments.</p>
 	<p><i>Note:</i> Some recent SRFIs that have been included into
 	  early editions of <a href="#r7rs"><cite>R<sup>7</sup>RS
@@ -1646,7 +1646,7 @@
 
     <pre class="example">(define continuation-mark-set-&gt;iterator
   (lambda arg*
-    (let f ([ls (apply continuation-mark-set-&gt;list arg*)])
+    (let f ([ls (apply continuation-mark-set-&gt;list* arg*)])
       (lambda ()
         (if (null? ls)
           (values #f (f '()))
