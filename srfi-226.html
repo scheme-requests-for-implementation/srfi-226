@@ -415,7 +415,7 @@
     <p>Parameter objects behave like (dynamic) variables except that
       they are procedures that have to be called to retrieve the
       stored value or to replace it.  In some (syntactic) contexts, it
-      may be preferable to have a syntactic entities, the fluids, that
+      may be preferable to have syntactic entities, the fluids, that
       behave like parameter objects but whose syntax to reference or
       assign their values is equivalent to the corresponding syntax
       for variables.</p>
@@ -1943,7 +1943,7 @@
 
     <pre>(let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
   (with ([p 4]) (values))
-  (p))<span class=result>3</span>
+  (p))<span class=result>5</span>
 
 (let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
   (parameterize ([p 4]) (values))
@@ -1966,7 +1966,7 @@
     <p>This section describes the <code>(srfi :226 control
 	fluids)</code> library.</p>
 
-    <p>Each <dfn>fluid</dfn> is an identifier.  To each fluid, a parameter object is associated.</p>
+    <p>Each <dfn>fluid</dfn> is an identifier.  A parameter object is associated with each fluid.</p>
 
     <p>Like other definitions, the <code>define-fluid</code>,
     the <code>define-thread-fluid</code>,
@@ -2691,8 +2691,8 @@ x<span class="result">2</span></pre>
       </p></dd>
     </dl>
 
-    <p>By extending the default thread type, application-specific
-      fields can be added transparently to each object representing a thread.</p>
+    <p>Extending the default thread type allows us to add application-specific
+      fields transparently to each object representing a thread.</p>
 
     <pre class="example">(define-record-type mythread
   (parent thread)
@@ -2964,8 +2964,8 @@ x<span class="result">2</span></pre>
 	  supplied) is the handling of interrupts (see
 	  the <code>thread-interrupt!</code> procedure below).  After a
 	  thread blocked on a condition-variable has handled such an
-	  interrupt it would be wrong for the scheduler to return the
-	  thread to the blocked state, because any calls
+	  interrupt, it would be wrong for the scheduler to return the
+	  thread to the blocked state because any calls
 	  to <code>condition-variable-broadcast!</code>  during the
 	  interrupt will have gone unnoticed.  It is necessary for the
 	  thread to remain runnable and return from the call to
@@ -3049,7 +3049,7 @@ x<span class="result">2</span></pre>
 	  any prior or future results
 	  from <code>make-thread-local</code>.  The
 	  object <code><var>obj</var></code> is stored in the cells
-	  associated to the thread local in the thread-specific
+	  associated with the thread local in the thread-specific
 	  storage.  The thread local is <dfn>inheritable</dfn>
 	  if <code><var>inheritable?</var></code> is
 	  not <code>#f</code>.</p>
@@ -3062,16 +3062,16 @@ x<span class="result">2</span></pre>
       </dd>
       <dt class="entry"><code>(tlref <var>tl</var>)</code><span class="type">procedure</span></dt>
       <dd>
-	<p>Returns the value of the cell associated to the current
+	<p>Returns the value of the cell associated with the current
 	  thread and to <code><var>tl</var></code> in the
 	  thread-specific storage.</p>
       </dd>
       <dt class="entry"><code>(tlset! <var>tl</var> <var>obj</var>)</code><span class="type">procedure</span></dt>
       <dd>
-	<p>Sets the value of the cell associated to the current
+	<p>Sets the value of the cell associated with the current
 	  thread and to <code><var>tl</var></code> in the
 	  thread-specific storage to <code><var>obj</var></code>.</p>
-	<p>If <code><var>tl</var></code> is inheritable, set also the
+	<p>If <code><var>tl</var></code> is inheritable, also sets the
 	  values of the corresponding cells in the thread-specific
 	  storages of the future threads that will be created by the
 	  current thread to <code><var>obj</var></code>.</p>
