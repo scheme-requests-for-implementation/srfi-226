@@ -44,16 +44,18 @@
 	  continuation-violation-prompt-tag
 	  raise raise-continuable
 	  exception-handler-stack current-exception-handler with-exception-handler guard else =>
-	  make-parameter parameterize
+	  make-parameter parameter? parameterize
 	  parameterization? current-parameterization call-with-parameterization
+          make-thread-parameter with
 	  current-input-port current-output-port current-error-port
 	  with-input-from-file with-output-to-file
 	  read-char peek-char read
 	  write-char newline display write
 	  call-in-initial-continuation
-	  current-thread thread? make-thread thread-name
+	  thread current-thread thread? make-thread thread-name
 	  thread-start! thread-yield!
-	  thread-terminate! thread-join!
+	  thread-stop! thread-terminate! thread-join!
+	  thread-interrupt!
 	  &thread make-thread-condition thread-condition?
 	  &uncaught-exception
 	  make-uncaught-exception-condition uncaught-exception-condition?
@@ -67,8 +69,10 @@
 	  delay make-promise promise? force
 	  run
 	  (rename (call-with-current-continuation call/cc))
-	  (rename (%thread thread))
-	  make-thread-local thread-local? tlref tlset!)
+	  make-thread-local thread-local? tlref tlset!
+          define-fluid define-thread-fluid
+          fluid-let fluid-let*
+          define-fluidified fluid-parameter)
   (import (rename (except (rnrs (6))
 			  call/cc
 			  call-with-current-continuation
@@ -89,6 +93,7 @@
 		  (display rnrs:display)
 		  (write rnrs:write))
 	  (rnrs mutable-pairs (6))
+          (control-features define-property)
 	  (control-features define-who)
 	  (control-features make-ephemeron-eq-hashtable)
 	  (control-features primitives)
@@ -1064,7 +1069,8 @@
 		   (values #f (make-iterator '()))
 		   (let ([frame (car frames)] [frames (cdr frames)])
 		     (if (eq? (mark-set-frame-tag frame) tag)
-			 (values #f (make-iterator '()))
+			 (values #f (lambda () (assertion-violation who "attempt to iterator past the end"
+                                                                    set keys default tag)))
 			 (let ([val-vec
 				(marks-ref*
 				 (mark-set-frame-marks frame)
@@ -1153,7 +1159,7 @@
 
   (define-record-type parameter-info
     (nongenerative) (sealed #t) (opaque #t)
-    (fields converter key))
+    (fields converter key thread-local?))
 
   (define/who make-parameter
     (case-lambda
@@ -1164,7 +1170,7 @@
 	(assertion-violation who "not a procedure" converter))
       (let ([key (make-parameter-key)]
 	    [val (converter init)])
-	(%case-lambda-box (make-parameter-info converter key)
+	(%case-lambda-box (make-parameter-info converter key #f)
 	  [()
 	   (let ([cell (parameter-cell key)])
 	     (if cell (cdr cell) val))]
@@ -1173,6 +1179,30 @@
 	     (if cell
 		 (set-cdr! cell (converter init))
 		 (set! val (converter init))))]))]))
+
+  (define/who make-thread-parameter
+    (case-lambda
+     [(init)
+      (make-thread-parameter init values)]
+     [(init converter)
+      (unless (procedure? converter)
+	(assertion-violation who "not a procedure" converter))
+      (let ([key (make-parameter-key)]
+	    [tl (make-thread-local (converter init) #t)])
+	(%case-lambda-box (make-parameter-info converter key #t)
+	  [()
+	   (let ([cell (parameter-cell key)])
+	     (if cell (tlref (cdr cell)) (tlref tl)))]
+	  [(init)
+	   (let ([cell (parameter-cell key)])
+	     (if cell
+		 (tlset! (cdr cell) (converter init))
+		 (tlset! tl (converter init))))]))]))
+
+  (define parameter?
+    (lambda (obj)
+      (and (procedure? obj)
+	   (parameter-info? (%case-lambda-box-ref obj #f)))))
 
   (define parameter->parameter-info
     (lambda (who param)
@@ -1184,8 +1214,12 @@
   (define parameter-key+value
     (lambda (who param init)
       (let ([info (parameter->parameter-info who param)])
+	(define val
+	  ((parameter-info-converter info) init))
 	(cons (parameter-info-key info)
-	      ((parameter-info-converter info) init)))))
+	      (if (parameter-info-thread-local? info)
+		  (make-thread-local val #t)
+		  val)))))
 
   (define-syntax/who parameterize
     (lambda (stx)
@@ -1200,6 +1234,21 @@
 	       e1 e2 ...))]
 	[_
 	 (syntax-violation who "invalid syntax" stx)])))
+
+  ;; The with syntax
+
+  (define-syntax/who with
+    (lambda (x)
+      (syntax-case x ()
+        [(_ () b1 b2 ...) #'(begin b1 b2 ...)]
+        [(_ ([x e] ...) b1 b2 ...)
+         (with-syntax ([(p ...) (generate-temporaries #'(x ...))]
+                       [(y ...) (generate-temporaries #'(x ...))])
+           #'(let ([p x] ... [y e] ...)
+               (let ([swap (lambda ()
+                             (let ([t (p)]) (p y) (set! y t))
+                             ...)])
+                 (dynamic-wind swap (lambda () b1 b2 ...) swap))))])))
 
   ;; Current input/output/error port
 
@@ -1375,11 +1424,31 @@
 
   (define-record-type thread-local
     (nongenerative) (sealed #t) (opaque #t)
-    (fields (mutable default)))
+    (fields (mutable default) inheritable?)
+    (protocol
+     (lambda (new)
+       (define make-thread-local
+	 (case-lambda
+	   [(default)
+	    (make-thread-local default #f)]
+	   [(default inheritable?)
+	    (new default inheritable?)]))
+       make-thread-local)))
 
   (define make-storage
-    (lambda ()
-      (make-ephemeron-eq-hashtable)))
+    (case-lambda
+      [()
+       (make-ephemeron-eq-hashtable)]
+      [(storage)
+       (let ([new-storage (make-storage)])
+	 (let-values ([(tls vals)
+		       (hashtable-entries storage)])
+	   (vector-for-each
+	    (lambda (tl val)
+	      (when (thread-local-inheritable? tl)
+		(hashtable-set! new-storage tl val)))
+	    tls vals))
+	 new-storage)]))
 
   (define/who tlref
     (lambda (tl)
@@ -1399,14 +1468,6 @@
 
   ;; Threads
 
-  (define-syntax %thread
-    (lambda (stx)
-      (syntax-case stx ()
-	[(_ e1 e2 ...)
-	 #'(make-thread (lambda () e1 e2 ...))]
-	[_
-	 (syntax-violation 'thread "invalid syntax" stx)])))
-
   (define-enumeration thread-state
     (new runnable terminated)
     thread-state-set)
@@ -1415,7 +1476,7 @@
     (lambda ()
       (dynamic-environment-thread (%current-dynamic-environment))))
 
-  (define-record-type (thread %make-thread thread?)
+  (define-record-type thread-impl
     (nongenerative) (sealed #t) (opaque #t)
     (fields (mutable thunk)
 	    (mutable end-continuation)
@@ -1427,6 +1488,127 @@
 	    (mutable %mutex)
 	    (mutable %condition-variable)
 	    storage))
+
+  (define-record-type (thread make-thread maybe-thread?)
+    (nongenerative thread-9a516626-3b09-42eb-8160-e6ff1984f1d7)
+    (fields %impl)
+    (protocol
+     (lambda (p)
+       (define/who make-thread
+         (case-lambda
+          [(thunk) (make-thread thunk #f)]
+          [(thunk name)
+           (unless (procedure? thunk)
+	     (assertion-violation who "not a procedure" thunk))
+           (let ([thread
+                  (p
+	           (make-thread-impl #f #f #f name (thread-state new) '() #f (make-%mutex) (make-%condition-variable) (make-storage (current-thread-storage))))])
+	     (thread-thunk-set! thread (make-thread-thunk thread (current-parameterization) thunk))
+	     thread)]))
+       make-thread)))
+
+  (define make-primordial-thread
+    (let ([p (record-constructor
+              (make-record-constructor-descriptor (record-type-descriptor thread) #f #f))])
+      (lambda ()
+        (p (make-thread-impl
+            #f #f (%current-thread) 'primordial (thread-state runnable) '() #f (make-%mutex) (make-%condition-variable)
+	    (make-storage))))))
+
+  (define thread?
+    (lambda (obj)
+      (and (maybe-thread? obj)
+           (thread-impl? (thread-%impl obj)))))
+
+  (define thread-thunk
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-thunk (thread-%impl thread))))
+
+  (define thread-thunk-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-thunk-set! (thread-%impl thread) obj)))
+
+  (define thread-end-continuation
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-end-continuation (thread-%impl thread))))
+
+  (define thread-end-continuation-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-end-continuation-set! (thread-%impl thread) obj)))
+
+  (define thread-%thread
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-%thread (thread-%impl thread))))
+
+  (define thread-%thread-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-%thread-set! (thread-%impl thread) obj)))
+
+  (define thread-name
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-name (thread-%impl thread))))
+
+  (define thread-current-state
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-current-state (thread-%impl thread))))
+
+  (define thread-current-state-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-current-state-set! (thread-%impl thread) obj)))
+
+  (define thread-end-result
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-end-result (thread-%impl thread))))
+
+  (define thread-end-result-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-end-result-set! (thread-%impl thread) obj)))
+
+  (define thread-end-exception
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-end-exception (thread-%impl thread))))
+
+  (define thread-end-exception-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-end-exception-set! (thread-%impl thread) obj)))
+
+  (define thread-%mutex
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-%mutex (thread-%impl thread))))
+
+  (define thread-%mutex-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-%mutex-set! (thread-%impl thread) obj)))
+
+  (define thread-%condition-variable
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-%condition-variable (thread-%impl thread))))
+
+  (define thread-%condition-variable-set!
+    (lambda (thread obj)
+      (assert (thread? thread))
+      (thread-impl-%condition-variable-set! (thread-%impl thread) obj)))
+
+  (define thread-storage
+    (lambda (thread)
+      (assert (thread? thread))
+      (thread-impl-storage (thread-%impl thread))))
 
   (define make-thread-thunk
     (lambda (thread ps thunk)
@@ -1452,22 +1634,6 @@
 	  (thread-current-state-set! thread (thread-state terminated))
 	  (%mutex-unlock! mtx)))))
 
-  (define/who make-thread
-    (case-lambda
-     [(thunk) (make-thread thunk #f)]
-     [(thunk name)
-      (unless (procedure? thunk)
-	(assertion-violation who "not a procedure" thunk))
-      (let ([thread
-	     (%make-thread #f #f #f name (thread-state new) '() #f (make-%mutex) (make-%condition-variable) (make-storage))])
-	(thread-thunk-set! thread (make-thread-thunk thread (current-parameterization) thunk))
-	thread)]))
-
-  (define make-primordial-thread
-    (lambda ()
-      (%make-thread #f #f (%current-thread) 'primordial (thread-state runnable) '() #f (make-%mutex) (make-%condition-variable)
-		    (make-storage))))
-
   (define/who thread-start!
     (lambda (thread)
       (unless (thread? thread)
@@ -1489,26 +1655,43 @@
     (lambda ()
       (%thread-yield!)))
 
+  ;; TODO: Schedule exit before terminated thread becomes unblocked.
+
+  (define/who thread-stop!
+    (lambda (thread)
+      (unless (thread? thread)
+        (assertion-violation who "not a thread" thread))
+      ;; We have to start a helper thread to be able to do some
+      ;; clean-up as we may terminate the current thread.
+      (let ([helper-thread
+             (%thread-start!
+	      (lambda ()
+	        (let ([mtx (thread-%mutex thread)]
+		      [cv (thread-%condition-variable thread)])
+	          (%mutex-lock! mtx)
+	          (let ([s (thread-current-state thread)])
+	            (unless (symbol=? s (thread-state terminated))
+		      (thread-current-state-set! thread (thread-state terminated))
+		      (thread-end-exception-set! thread (make-thread-already-terminated-condition))
+		      (if (symbol=? s (thread-state new))
+		          (%condition-variable-broadcast! cv)
+		          (%thread-terminate! (thread-%thread thread))))
+	            (%mutex-unlock! mtx)))))])
+        (when (eqv? thread (current-thread))
+          (%thread-join! thread (current-thread))))))
+
   (define/who thread-terminate!
     (lambda (thread)
       (unless (thread? thread)
 	(assertion-violation who "not a thread" thread))
-      ;; We have to start a helper thread to be able to do some
-      ;; clean-up as we may terminate the current thread.
-      (%thread-join!
-       (%thread-start!
-	(lambda ()
-	  (let ([mtx (thread-%mutex thread)]
-		[cv (thread-%condition-variable thread)])
-	    (%mutex-lock! mtx)
-	    (let ([s (thread-current-state thread)])
-	      (unless (symbol=? s (thread-state terminated))
-		(thread-current-state-set! thread (thread-state terminated))
-		(thread-end-exception-set! thread (make-thread-already-terminated-condition))
-		(if (symbol=? s (thread-state new))
-		    (%condition-variable-broadcast! cv)
-		    (%thread-terminate! (thread-%thread thread))))
-	      (%mutex-unlock! mtx))))))))
+      (thread-stop! thread)
+      (with-exception-handler
+       (lambda (exc)
+         (if (thread-condition? exc)
+             (values)
+             (raise exc)))
+       (lambda ()
+         (thread-join! thread)))))
 
   (define/who thread-join!
     (lambda (thread)
@@ -1525,8 +1708,19 @@
 	(%mutex-unlock! mtx)
 	(%thread-join! (thread-%thread thread))
 	(if (thread-end-exception thread)
-	    (raise (thread-end-exception thread))
+	    (raise-continuable (thread-end-exception thread))
 	    (apply values (thread-end-result thread))))))
+
+  ;; TODO: Implement current-interrupt-level.
+  ;; TODO: Implement mutexes and condition-variables.
+  ;; TODO: Handle blocked threads.
+  (define/who thread-interrupt!
+    (lambda (thread thunk)
+      (unless (thread? thread)
+	(assertion-violation who "not a thread" thread))
+      (unless (procedure? thunk)
+	(assertion-violation who "not a thunk" thunk))
+      (%thread-interrupt! (thread-%thread thread) thunk)))
 
   ;; Promises
 
@@ -1646,6 +1840,130 @@
 			(promise-thunk-set! p thunk)
 			(promise-unlock! p)
 			(thunk)])))))))))
+
+  ;; Fluids
+
+  (define fluid-info)
+
+  (define-syntax/who define-fluid
+    (lambda (stx)
+      (syntax-case stx ()
+        [(_ id expr)
+         (identifier? #'id)
+         #'(define-fluid id expr values)]
+        [(_ id expr conv-expr)
+         (identifier? #'id)
+         #'(begin
+             (define param (make-parameter expr conv-expr))
+             (define-syntax id
+               (make-variable-transformer
+                (lambda (stx)
+                  (syntax-case stx (set!)
+                    [id
+                     (identifier? #'id)
+                     #'(param)]
+                    [(set! id e)
+                     (identifier? #'id)
+                     #'(param e)]
+                    [_
+                     (syntax-violation #f "invalid use of fluid" stx)]))))
+             (define-property id fluid-info #'param))]
+        [_
+         (syntax-violation who "invalid syntax" stx)])))
+
+  (define-syntax/who define-thread-fluid
+    (lambda (stx)
+      (syntax-case stx ()
+        [(_ id expr)
+         (identifier? #'id)
+         #'(define-thread-fluid id expr values)]
+        [(_ id expr conv-expr)
+         #'(begin
+             (define param (make-thread-parameter expr conv-expr))
+             (define-syntax id
+               (make-variable-transformer
+                (lambda (stx)
+                  (syntax-case stx (set!)
+                    [id
+                     (identifier? #'id)
+                     #'(param)]
+                    [(set! id e)
+                     (identifier? #'id)
+                     #'(param e)]
+                    [_
+                     (syntax-violation #f "invalid use of thread-fluid" stx)]))))
+             (define-property id fluid-info #'param))]
+        [_
+         (syntax-violation who "invalid syntax" stx)])))
+
+  (define-syntax/who fluid-let
+    (lambda (stx)
+      (syntax-case stx ()
+	[(_ ([id init] ...) body1 ... body2)
+         (for-all identifier? #'(id ...))
+	 (lambda (lookup)
+	   (with-syntax
+	       ([(param ...)
+		 (map
+		  (lambda (id)
+		    (let ((param (lookup id #'fluid-info)))
+		      (unless param
+			(syntax-violation who "not a fluid" stx id))
+		      param))
+		  #'(id ...))])
+	     #'(parameterize ([param init] ...) body1 ... body2)))]
+        [_
+         (syntax-violation who "invalid syntax" stx)])))
+
+  (define-syntax/who fluid-let*
+    (lambda (stx)
+      (syntax-case stx ()
+        [(_ ([id init] ...) body1 ... body2)
+         (for-all identifier? #'(id ...))
+         (fold-right
+          (lambda (id init body)
+            (with-syntax ([id id] [init init] [body body])
+              #'(fluid-let ([id init]) body)))
+          #'(letrec* () body1 ... body2)
+          #'(id ...) #'(init ...))]
+        [_
+         (syntax-violation who "invalid syntax" stx)])))
+
+  (define-syntax/who fluid-parameter
+    (lambda (stx)
+      (lambda (lookup)
+        (syntax-case stx ()
+          [(_ fluid)
+           (identifier? #'fluid)
+           (or (lookup #'fluid #'fluid-info)
+               (syntax-violation who "not a fluid" stx #'fluid))]
+          [_
+           (syntax-violation who "invalid syntax" stx)]))))
+
+  (define-syntax/who define-fluidified
+    (lambda (stx)
+      (syntax-case stx ()
+        [(_ fluid param-expr)
+         (identifier? #'fluid)
+         #'(begin
+             (define param (let ([param param-expr])
+                             (unless (parameter? param)
+                               (assertion-violation 'define-fluidified "not a parameter" param))
+                             param))
+             (define-syntax fluid
+               (make-variable-transformer
+                (lambda (stx)
+                  (syntax-case stx (set!)
+                    [id
+                     (identifier? #'id)
+                     #'(param)]
+                    [(set! id e)
+                     (identifier? #'id)
+                     #'(param e)]
+                    [_
+                     (syntax-violation #f "invalid use of thread-fluid" stx)])))))]
+        [_
+         (syntax-violation who "invalid syntax" stx)])))
 
   ;; Helpers
 

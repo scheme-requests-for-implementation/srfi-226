@@ -58,17 +58,27 @@
       dl.entries > dt.condition-type::after
       {
 	  float: right;
-	  content: "condition type"
+	  content: "condition type";
+      }
+      dl.entries > dt.record-type::after
+      {
+	  float: right;
+	  content: "record type";
       }
       dl.entries > dt.procedure::after
       {
 	  float: right;
-	  content: "procedure"
+	  content: "procedure";
+      }
+      dl.entries > dt.thread-parameter::after
+      {
+	  float: right;
+	  content: "thread parameter";
       }
       dl.entries > dt.syntax::after
       {
 	  float: right;
-	  content: "syntax"
+	  content: "syntax";
       }
       dt.entry > span.type
       {
@@ -91,7 +101,7 @@
       {
 	  padding-left: 1em;
 	  padding-right: 1em;
-	  content: "⟹"
+	  content: "⟹";
       }
       sup
       {
@@ -185,8 +195,14 @@
     and <cite>R7RS</cite> is reinterpreted with respect to the
     concepts introduced in this SRFI.  Procedures to retrieve the
     current parameterization and to reinstall it later are
-      provided. Moreover, the <code>parameterize</code> syntax gains an additional
-      tail context guarantee.</p>
+    provided. Moreover, the <code>parameterize</code> syntax gains an
+    additional tail context guarantee.  To support an alternative
+    model of parameters that is linked to the dynamic extent and not
+    to the current parameterization, the notion of a parameter-like
+    object and the <code>with</code> syntax are introduced.</p>
+
+    <p><i>Fluids:</i> Fluids are a syntactic reinterpretation of parameter
+      objects.</p>
 
     <p><i>Delayed evaluation:</i> The syntax and procedures on delayed
       evaluation of <cite>R7RS</cite> are revisited and redefined to handle the
@@ -217,17 +233,10 @@
       <li><p>Add library names to each entry.</p></li>
       <li><p>Add a thread runner facility
           following <a href="https://srfi-email.schemers.org/srfi-226/msg/20884100/">John's
-            suggestion.</a>.</p></li>
-      <li><p>Add inheritable thread locals
-          following <a href="https://srfi-email.schemers.org/srfi-226/msg/21050714/">Shiro's
-            suggestion.</a></p></li>
-      <li><p>Make thread objects extensible records
-          following <a href="https://srfi-email.schemers.org/srfi-226/msg/21119862/">Marc's
-            suggestion.</a></p></li>
-      <li><p>Repair the <code>mutex-state</code> interface
-          following <a href="https://srfi-email.schemers.org/srfi-226/msg/21118678/">Marc's
             suggestion</a>.</p></li>
-      <li><p>Discuss thread interrupts, signals, and exceptions as in the <a href="https://srfi-email.schemers.org/srfi-226/msg/21122962/">discussion with John and Marc</a>.</p></li>
+      <li><p>Discuss thread interrupts, signals, and exceptions as in
+          the <a href="https://srfi-email.schemers.org/srfi-226/msg/21122962/">discussion
+            with John and Marc</a>.</p></li>
     </ul>
 
     <h2 id="rationale">Rationale</h2>
@@ -384,12 +393,38 @@
       terms of them allows rich operations like capturing the current
       parameterization to later reinstall it, this SRFI provides both.</p>
 
-    <p>Moreover, this specification makes a decision on the behavior of mutable
-      parameter objects with respect to multiple threads.  If a parameter that
-      is inherited by a newly created thread and has not been re-parameterized
-      is mutated by one of the threads, the mutation will also (eventually) be
-      observed by the other thread.  This is a clear semantics because this is
-      the same behavior as implemented by lexical variables.</p>
+    <p>Moreover, this specification makes a decision on the behavior
+      of mutable ordinary parameter objects with respect to multiple
+      threads.  If a parameter that is inherited by a newly created
+      thread and has not been re-parameterized is mutated by one of
+      the threads, the mutation will also (eventually) be observed by
+      the other thread.  This is a clear semantics because this is the
+      same behavior as implemented by lexical variables.  If this is
+      not the desired behavior for some application, thread parameter
+      objects, that are also provided, can be used instead.</p>
+
+    <p>A different model of parameters exist, the main difference
+      being the scope of the reparameterization.  This SRFI also
+      supports this different model through the notion of
+      parameter-like objects and the <code>with</code> syntax, where
+      the reparameterization is bound to the dynamic extent of
+      the <code>with</code> form's body.</p>
+
+    <h4>Fluids</h4>
+
+    <p>Parameter objects behave like (dynamic) variables except that
+      they are procedures that have to be called to retrieve the
+      stored value or to replace it.  In some (syntactic) contexts, it
+      may be preferable to have a syntactic entities, the fluids, that
+      behave like parameter objects but whose syntax to reference or
+      assign their values is equivalent to the corresponding syntax
+      for variables.</p>
+
+    <p>Fluids have been proposed by <a href="#hansen"><cite>SRFI
+          15</cite></a>.  That SRFI was withdrawn.  This SRFI addresses all
+      concerns that were raised on the mailing list of <cite>SRFI
+        15</cite> about the behavior of fluids and <code>fluid-let</code>
+      with respect to multi-threaded environments.</p>
 
     <h4>Thread locals</h4>
 
@@ -403,8 +438,11 @@
     <p>Instead, this specification defines first-class thread locals
       akin to thread-specific storage in the <a href="c17"><cite>C
       programming language</cite></a> and to thread-specific data keys
-      in <cite>POSIX</cite>.  In particular, the former can be efficiently
-      implemented in terms of the latter.</p>
+      in <cite>POSIX</cite>.  In particular, the former can be
+      efficiently implemented in terms of the latter.  Thread locals
+      can be <i>inheritable</i> or not (called <i>preserved</i> in
+      Racket).  Inheritable thread locals take their initial values
+      from the creator thread.</p>
 
     <h4>Promises</h4>
 
@@ -456,7 +494,7 @@
 
     <h3>Relation to Other SRFIs</h3>
 
-    <p>This SRFI supersedes <a href="#kelsey2"><cite>SRFI
+    <p>This SRFI supersedes <cite>SRFI 15</cite>, <a href="#kelsey2"><cite>SRFI
 	  34</cite></a>, <cite>SRFI
 	  39</cite>, <a href="#nieper1"><cite>SRFI
 	  154</cite></a>, <cite>SRFI
@@ -636,10 +674,11 @@
     <p>An <dfn>iterator</dfn> for a list in the sense of this
       specification is a zero-argument procedure that returns two
       values on each invocation.  An iterator for the empty list
-      returns <code>#f</code> and an iterator for the empty list.  An
+      returns <code>#f</code> and a thunk that raises an exception of
+      type <code>&amp;assertion-violation</code> when invoked.  An
       iterator for a non-empty list returns the head of the list and
-      an iterator for its tail.  Note that this iterator protocol is
-      unsuitable for lists that potentially
+      an iterator for its tail.  Note that this particular iterator
+      protocol is unsuitable for lists that potentially
       contain <code>#f</code>.</p>
 
     <h3>Safety</h3>
@@ -746,26 +785,26 @@
     <dl class="entries">
       <dt class="procedure"><code>(call-with-continuation-prompt <var>thunk</var>)</code></dt>
       <dt class="procedure"><code>(call-with-continuation-prompt <var>thunk</var> <var>prompt-tag</var>)</code></dt>
-      <dt class="procedure"><code>(call-with-continuation-prompt <var>thunk</var> <var>prompt-tag</var> <var>handler</var>)</code></dt>
+      <dt class="procedure"><code>(call-with-continuation-prompt <var>thunk</var> <var>prompt-tag</var> <var>abort-handler</var>)</code></dt>
       <dd>
 	<p>If not supplied, <code><var>prompt-tag</var></code>
 	  defaults to the default prompt tag,
-	  and <code><var>handler</var></code> defaults
+	  and <code><var>abort-handler</var></code> defaults
 	  to <code>#f</code>.</p>
 
 	<p>The <code>call-with-continuation-prompt</code> procedure
 	  installs a continuation prompt that is tagged
 	  with <code><var>prompt-tag</var></code> and
-	  records <code><var>handler</var></code> in the continuation
+	  records <code><var>abort-handler</var></code> in the continuation
 	  to its call.  Finally, <code><var>thunk</var></code> is
 	  called with no arguments in the resulting continuation.</p>
 
-	<p>If <code><var>handler</var></code> is <code>#f</code>, the
-	  default handler is used instead.  The default handler is a
+	<p>If <code><var>abort-handler</var></code> is <code>#f</code>, the
+	  default abort handler is used instead.  The default abort handler is a
 	  procedure that takes a single
-	  argument <code><var>thunk</var></code>.  When the default
-	  handler is called, it reinstates the continuation prompt and
-	  calls <code><var>thunk</var></code> with no arguments in the
+	  argument <code><var>continuation-thunk</var></code>.  When the default
+	  abort handler is called, it reinstates the continuation prompt and
+	  calls <code><var>continuation-thunk</var></code> with no arguments in the
 	  resulting continuation.</p>
 
 	<p>The calls to the <code><var>thunks</var></code> are never in tail
@@ -779,7 +818,7 @@
 	  aborts all active procedure calls in the current
 	  continuation until a continuation prompt tagged
 	  with <code><var>prompt-tag</var></code> is aborted and
-	  replaces them with a call to the handler recorded with the
+	  replaces them with a call to the abort handler recorded with the
 	  prompt tag with the
 	  arguments <code><var>objs</var></code>.</p>
 	<p>
@@ -810,7 +849,7 @@
     list))<span class="result">(foo bar)</span></pre>
 
    <p>The following example demonstrates that the prompt is
-      reinstalled by the default handler.</p>
+      reinstalled by the default abort handler.</p>
 
     <pre class="example">(let ([tag (make-continuation-prompt-tag)])
   (call-with-continuation-prompt
@@ -1562,14 +1601,14 @@
     (call-with-continuation-prompt
       (lambda ()
         (with-continuation-mark key 'mark3
-          (continuation-mark-set->list #f key))))))<span class="result">(mark3 mark2)</span>
+          (continuation-mark-set-&gt;list #f key))))))<span class="result">(mark3 mark2)</span>
 
 (with-continuation-mark key1 'mark1
   (with-continuation-mark key2 'mark2
     (call-with-continuation-prompt
      (lambda ()
        (with-continuation-mark key1 'mark3
-         (continuation-mark-set->list* #f (list key1 key2) 'default)))
+         (continuation-mark-set-&gt;list* #f (list key1 key2) 'default)))
      tag))<span class="result">(#(mark3 default) #(mark1 mark2))</span></pre>
 
     <dl class="entries">
@@ -1582,7 +1621,7 @@
 	<p>If not supplied, <code><var>prompt-tag</var></code>
 	defaults to the default prompt tag.</p>
 	<p>Returns an iterator for the list that would be
-	  constructed by <code>continuation-mark-set-&gt;list</code>
+	  constructed by <code>continuation-mark-set-&gt;list*</code>
 	  when applied to the same arguments.</p>
 	<p><i>Note:</i> Some recent SRFIs that have been included into
 	  early editions of <a href="#r7rs"><cite>R<sup>7</sup>RS
@@ -1608,11 +1647,16 @@
 
     <pre class="example">(define continuation-mark-set-&gt;iterator
   (lambda arg*
-    (let f ([ls (apply continuation-mark-set-&gt;list arg*)])
+    (let f ([ls (apply continuation-mark-set-&gt;list* arg*)])
       (lambda ()
         (if (null? ls)
-          (values #f (f '()))
-          (values (car ls) (f (cdr ls))))))))</pre>
+            (values #f
+                   (lambda ()
+                     (apply assertion-violation
+                            'continuation-mark-set-&gt;iterator
+                            "attempt to iterate past the end"
+                            arg*)))
+            (values (car ls) (f (cdr ls))))))))</pre>
 
     <dl class="entries">
       <dt class="procedure"><code>(continuation-mark-set-first <var>mark-set</var> <var>key</var>)</code></dt>
@@ -1729,6 +1773,21 @@
 	  is then replaced with the new value.  The result of the
 	  invocation is unspecified.</p>
       </dd>
+      <dt class="procedure"><code>(make-thread-parameter <var>obj</var>)</code></dt>
+      <dt class="procedure"><code>(make-thread-parameter <var>obj</var> <var>proc</var>)</code></dt>
+      <dd>
+	<p>As <code>make-parameter</code> except that the parameter
+	  object's cells are inheritable thread locals (see below).
+	</p>
+	<p><i>Note:</i> This means that any change of value through
+	  calling the thread parameter object with one argument won't
+	  be observable by other threads than the current.</p>
+      </dd>
+      <dt class="procedure"><code>(parameter? <var>obj</var>)</code></dt>
+      <dd>
+	<p>Returns <code>#t</code> if <code><var>obj</var></code> is a
+	  parameter object, <code>#f</code> otherwise.</p>
+      </dd>
 
       <dt class="syntax"><code>(parameterize ([<span class="token">param-expr</span> <span class="token">expression</span>] &hellip;) <span class="token">body</span>)</code></dt>
       <dd>
@@ -1806,6 +1865,7 @@
   (p))<span class="result">20736</span>
 (p)<span class="result">144</span>
 
+(parameter? p)<span class="result">#t</span>
 (parameterization? ps)<span class="result">#t</span>
 
 (call-with-parameterization ps
@@ -1824,22 +1884,210 @@
   (parameterize ([(make-parameter 0) 1])
     (call-with-immediate-continuation-mark 'in-tail-context? values)))<span class="result">#t</span></pre>
 
-    <p><i>Note:</i> The parameter objects defined in this specification are
-      fully compatible with the parameter objects
+    <p><i>Note:</i> The parameter objects defined in this
+      specification are fully compatible with the parameter objects
       of <a href="#feeley2"><cite>SRFI 39</cite></a>
-      and <cite>R<sup>7</sup>RS</cite> but add the requirement that the last
-      expression in the body of a <code>parameterize</code> expression in tail
-      context is in tail context as well.  With respect to multiple threads,
-      this specification differs from <cite>Racket</cite> in that the cells
-      associated with parameter objects are not “thread-local” in this
-      specification.  As has already been observed by Marc Feeley during the
-      discussion period of <cite>SRFI 39</cite>, this is the cleaner, faster,
-      and more expressive semantics.  Finally, the parameter objects defined
-      here are not fully compatible with the parameters of <cite>Chez
-      Scheme</cite>.  While these offer some features over the parameter
-      objects in <cite>SRFI 39</cite> and <cite>R<sup>7</sup>RS</cite>, they
-      would be incompatible with the tail-context guarantee of
-      the <code>parameterize</code> form.</p>
+      and <cite>R<sup>7</sup>RS</cite> but add the requirement that
+      the last expression in the body of a <code>parameterize</code>
+      expression in tail context is in tail context as well.  With
+      respect to multiple threads, this specification differs
+      from <cite>Racket</cite> in that the cells associated with
+      parameter objects are not “thread-local” in this specification.
+      As has already been observed by Marc Feeley during the
+      discussion period of <cite>SRFI 39</cite>, this is the cleaner,
+      faster, and more expressive semantics.  Finally, the parameter
+      objects defined here are not fully compatible with the
+      parameters of <cite>Chez Scheme</cite>.  While these offer some
+      features over the parameter objects in <cite>SRFI 39</cite>
+      and <cite>R<sup>7</sup>RS</cite>, they would be incompatible
+      with the tail-context guarantee of the <code>parameterize</code>
+      form and with the parameterization as a first-class
+      object.  <cite>Chez Scheme's</cite> <code>parameterize</code>
+      mechanism is implemented by the <code>with</code>syntax
+      below.</p>
+
+    <p>A <dfn>parameter-like object</dfn> is a procedure <var>p</var>
+      that can be invoked on zero and on one argument.  Calling it
+      with zero arguments should return the parameter value associated
+      with it; calling it with one argument should set the parameter
+      value associated with it to the argument value.</p>
+
+    <p>Each parameter object is a parameter-like object.</p>
+
+    <dl class="entries">
+      <dt class="syntax"><code>(with ([<span class="token">param-expr</span> <span class="token">expression</span>] &hellip;) <span class="token">body</span>)</code></dt>
+      <dd>
+	<p><i>Syntax:</i>
+	  The <code><span class="token">param-exprs</span></code> and
+	  the <code><span class="token">expressions</span></code> are
+	  expressions, and <code><span class="token">body</span></code> is
+	  a body.</p>
+	<p><i>Semantics:</i> Evaluates
+	  the <code><span class="token">param-exprs</span></code>
+	  and <code><span class="token">expressions</span></code> in
+	  an arbitrary order to obtain parameter-like objects and
+	  arbitrary objects, the new values, respectively.  The body
+	  is evaluated and the values of its last expression are
+	  returned.</p>
+        <p>Whenever the dynamic extent of <code>body</code> is entered
+	  or left, the parameter-like objects are called with zero
+	  arguments in an unspecified order to yield values, the old
+	  values.  Each parameter-like object is then called with its
+	  respective new value.  Finally, the set of new values is
+	  replaced by the set of old values.</p>
+      </dd>
+    </dl>
+
+    <p>The following examples show how the <code>with</code> syntax
+      differs from the <code>parameterize</code> syntax:</p>
+
+    <pre>(let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
+  (with ([p 4]) (values))
+  (p))<span class=result>3</span>
+
+(let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
+  (parameterize ([p 4]) (values))
+  (p))<span class=result>2</span>
+
+(let ([p (make-parameter 1)])
+  (define t
+    (with ([p 2])
+      (make-thread (lambda () (p)))))
+  (thread-join! (thread-start! t)))<span class=result>1</span>
+
+(let ([p (make-parameter 1)])
+  (define t
+    (parameterize ([p 2])
+      (make-thread (lambda () (p)))))
+    (thread-join! (thread-start! t)))<span class=result>2</span></pre>
+
+    <h3>Fluids</h3>
+
+    <p>This section describes the <code>(srfi :226 control
+	fluids)</code> library.</p>
+
+    <p>Each <dfn>fluid</dfn> is an identifier.  To each fluid, a parameter object is associated.</p>
+
+    <p>Like other definitions, the <code>define-fluid</code>,
+    the <code>define-thread-fluid</code>,
+    and <code>define-fluidified</code> definitions can either appear at
+    the outermost level or in a body where other definitions can
+    appear.</p>
+
+    <dl class="entries">
+      <dt class="syntax"><code><span class="token">Fluid</span></code></dt>
+      <dd>
+        <p><i>Syntax:</i> <code><span class="token">Fluid</span></code> is a fluid.</p>
+        <p><i>Semantics:</i> Evaluates to the content of the cell of
+          the associated parameter object of
+          the <code><span class="token">fluid</span></code> in the current parameterization.</p>
+      </dd>
+      <dt class="syntax"><code>(set! <span class="token">fluid</span> <span class="token">expression</span>)</code></dt>
+      <dd>
+        <p><i>Syntax:</i> <code><span class="token">Fluid</span></code>
+          is a fluid; <code><span class="token">expression</span></code>
+          can be any expression.</p>
+        <p><i>Semantics:</i>
+          Evaluates <code><span class="token">expression</span></code>
+          and stores the resulting value in the content of the cell of
+          the associated parameter object of
+          the <code><span class="token">fluid</span></code> in the
+          current parameterization.  Returns unspecified values.</p>
+      </dd>
+      <dt class="syntax"><code>(define-fluid <span class="token">fluid</span> <span class="token">expression</span> <span class="token">converter
+      expression</span>)</code></dt>
+      <dt class="syntax"><code>(define-fluid <span class="token">fluid</span> <span class="token">expression</span>)</code></dt>
+      <dd>
+        <p><i>Syntax:</i>
+          <code><span class="token">Fluid</span></code> is an
+          identifier; <code><span class="token">expression</span></code>
+          and <code><span class="token">converter expression</span></code>
+          can be any expression.
+        </p>
+        <p><i>Semantics:</i> The <code>define-fluid</code> form
+          defines the <code><span class="token">fluid</span></code>.
+          When the <code>define-fluid</code> form is evaluated, in an
+          unspecified order,
+          the <code><span class="token">expression</span></code> is
+          evaluated to yield a value and
+          the <code><span class="token">converter-expression</span></code>
+          is evaluated to yield a procedure.
+          The <code><span class="token">fluid</span></code> is then
+          associated with a new parameter object whose initial value
+          is the obtained value and whose converter is the obtained
+          procedure.</p>
+        <p>If
+          the <code><span class="token">converter expression</span></code>
+          is missing, it defaults to an expression evaluating to the
+          identity procedure.</p>
+      </dd>
+      <dt class="syntax"><code>(define-thread-fluid <span class="token">fluid</span> <span class="token">expression</span> <span class="token">converter
+      expression</span>)</code></dt>
+      <dt class="syntax"><code>(define-thread-fluid <span class="token">fluid</span> <span class="token">expression</span>)</code></dt>
+      <dd>
+        <p>As <code>define-fluid</code> except that the associated
+          parameter object behaves as if created
+          by <code>make-thread-parameter</code> and
+          not <code>make-parameter</code>.</p>
+      </dd>
+      <dt class="syntax"><code>(define-fluidified <span class="token">fluid</span> <span class="token">parameter expression</span>)</code></dt>
+      <dd>
+        <p><i>Syntax:</i>
+          <code><span class="token">Fluid</span></code> is an
+          identifier; <code><span class="token">parameter expression</span></code>
+          is an expression that must evaluate to a parameter object.
+        </p>
+        <p><i>Semantics:</i>
+          The <code>define-fluidified</code> form
+          defines the <code><span class="token">fluid</span></code>.
+          When the <code>define-fluidified</code> form is evaluated,
+          the <code><span class="token">parameter expression</span></code> is
+          evaluated to yield a parameter object.
+          The <code><span class="token">fluid</span></code> is then
+          associated with this parameter object.</p>
+      </dd>
+      <dt class="syntax"><code>(fluid-let ([<span class="token">fluid</span> <span class="token">expression</span>] &hellip;) <span class="token">body</span>)</code></dt>
+      <dd>
+        <p><i>Syntax:</i>
+          The <code><span class="token">fluids</span></code> are arbitrary
+          fluids and the <code><span class="token">expressions</span></code> arbitrary expressions.
+        </p>
+        <p><i>Semantics:</i> Equivalent to a <code>parameterize</code>
+          form whose <code><span class="token">param-exprs</span></code>
+          evaluate to the parameter objects associated with
+        the <code><span class="token">fluids</span></code>.</p>
+      </dd>
+      <dt class="syntax"><code>(fluid-let* ([<span class="token">fluid</span> <span class="token">expression</span>] &hellip;) <span class="token">body</span>)</code></dt>
+      <dd>
+        <p>Related to <code>fluid-let</code> as <code>let*</code> is related to <code>let</code>.</p>
+      </dd>
+      <dt class="syntax"><code>(fluid-parameter <span class="token">fluid</span>)</code></dt>
+      <p><i>Syntax:</i>
+        <code><span class="token">Fluid</span></code> can be an arbitrary fluid.
+      </p>
+      <p><i>Semantics:</i> Evaluates to the parameter object associated with the <code><span class="token">fluid</span></code>.</p>
+    </dl>
+
+    <p>Thread fluids can be used to mimick (inheritable) thread local
+      variables of languages like C or C++.  As long as only one
+      thread is involved, they behave like ordinary variables.  With
+      more than one thread, they differ in behavior as an assignment
+      to a fluid in one thread won't be visible in other existing
+      threads:</p>
+
+    <pre class="example">(define-thread-fluid x 1)
+
+x<span class="result">1</span>
+
+(set! x 2)
+x<span class="result">2</span>
+
+(thread-join!
+ (thread-start!
+  (make-thread!
+   (lambda ()
+     (set! x 3)))))
+x<span class="result">2</span></pre>
 
     <h3>Initial Continuations</h3>
 
@@ -1852,15 +2100,15 @@
 
     <p>An <dfn>initial continuation</dfn> is one that consists of a
       single continuation prompt tagged with the default prompt tag
-      and with the default handler.  Moreover, a single initial
+      and with the default abort handler.  Moreover, a single initial
       exception handler is installed in an initial continuation that,
       when invoked on a <code>&amp;serious</code> condition or on a
       non-condition object, aborts to the most recent continuation
-      prompt tagged with the default prompt tag and calls its handler
+      prompt tagged with the default prompt tag and calls its abort handler
       with a thunk that, when evaluated, raises an exception whose
       condition is the object.  When invoked on a
       non-<code>&amp;serious</code> condition object, the initial
-      handler returns with unspecified values instead.</p>
+      abort handler returns with unspecified values instead.</p>
 
     <p><i>Note:</i> There is usually more than one initial
     continuation.  The primordial thread starts in an initial
@@ -1872,7 +2120,7 @@
     <p>Executing a top-level program starts with the initial
       continuation.  When values are delivered in the initial
       continuation, the program exits normally.  When an exception is
-      raised in the dynamic extent of the handler of the initial
+      raised in the dynamic extent of the abort handler of the initial
       continuation prompt, the program may exit or may provide a
       choice of other options.  It is expected that the initial
       exception handler reports that an exception has been raised, and
@@ -1892,7 +2140,7 @@
 	  are delivered to the initial continuation, the values are
 	  delivered to the continuation of the call
 	  to <code>call-in-initial-continuation</code>.  When an
-	  exception is raised in the dynamic extent of the handler of
+	  exception is raised in the dynamic extent of the abort handler of
 	  the continuation prompt of the initial continuation, a
 	  continuable exception of
 	  type <code>&uncaught-exception</code> whose reason is the
@@ -1949,7 +2197,7 @@
 	  promise was forced.  Otherwise, the already delivered values
 	  are delivered again, or the already raised exception is
 	  raised again in the continuation <var>k</var>.  When an
-	  exception is raised in the dynamic extent of the handler of
+	  exception is raised in the dynamic extent of the abort handler of
 	  the continuation prompt of the initial continuation and the
 	  promise still hasn't delivered values or has raised an
 	  exception, a continuable exception of
@@ -2277,12 +2525,17 @@
 
     <ul>
       <li><p>Neither threads, mutexes, nor condition variables possess
-	  a <code>name</code> field.  If such information is needed for
-	  debugging purposes, a weak hash table should be used
-	  instead.</p></li>
-      <li><p>Neither threads, mutexes, not condition variables
-	  possess <code>specific</code> fields.  If these are needed,
-	  weak hash tables could be used instead.  Moreover, this SRFI
+	  a <code>name</code> field.  If such information is needed
+	  for debugging purposes, a weak hash table can be used
+	  instead for mutexes or condition variables.  For threads,
+	  the thread type can be extended by arbitrary
+	  fields.</p></li>
+      <li><p>Neither threads, mutexes, nor condition variables
+	  possess <code>specific</code> fields.  If these are needed
+	  for mutexes or condition variables, weak hash tables can be
+	  used instead.  For threads, the thread type can be extended
+	  by arbitrary fields.</p>
+        <p>Moreover, this SRFI
 	  describes thread locals as a mechanism to associate data
 	  with threads.  In fact, thread locals allow library-specific
 	  and not only application-specific data as the
@@ -2297,10 +2550,7 @@
 	  replaced by equivalent condition objects following the hierarchy
 	  of standard condition types of <cite>R<sup>6</sup>RS</cite>.</p></li>
       <li><p>The procedure <code>thread-join!</code> does not have the
-      optional <code><var>timeout-val</var></code> argument.  The
-      procedure <code>mutex-state</code> never delivers the owner
-      thread; instead a procedure <code>mutex-owner</code> is provided
-      for this purpose.</p></li>
+          optional <code><var>timeout-val</var></code> argument.</p></li>
     </ul>
 
     <p>A <dfn>timeout</dfn> is either represented by a time object
@@ -2434,6 +2684,40 @@
       raises an assertion violation.</p>
 
     <dl class="entries">
+      <dt class="record-type"><code>thread</code></dt>
+      <dd><p>Non-opaque and non-sealed record type representing
+          threads.  Its constructor descriptor specifies a non-default
+          constructor equivalent to <code>make-thread</code> below.
+      </p></dd>
+    </dl>
+
+    <p>By extending the default thread type, application-specific
+      fields can be added transparently to each object representing a thread.</p>
+
+    <pre class="example">(define-record-type mythread
+  (parent thread)
+  (fields specific)
+  (protocol
+  (lambda (n)
+    (lambda (thunk obj)
+      ((n thunk) obj))))
+
+(thread-join!
+  (thread-start!
+    (make-mythread
+      (lambda ()
+        (define t (current-thread))
+        (assert (mythread? t))
+        (assert (thread? t))
+        (mythread-specific t))
+      'specific)))<span class="example">specific</span></pre>
+
+    <p><i>Remark:</i> The above assumes an implementation that
+      supports the <cite>R6RS</cite> record mechanism.  For
+      implementations supporting a different record mechanism with
+      single inheritance, the above applies <i>mutatis mutandis</i>.</p>
+
+    <dl class="entries">
       <dt class="entry"><code>(make-thread <var>thunk</var>)</code><span class="type">procedure</span></dt>
       <dd>
 	<p>Returns a new thread.  This thread is not automatically
@@ -2445,7 +2729,7 @@
 	  continuation is the same as the parameterization of the
 	  continuation of the invocation of <code>make-thread</code>.
 	  When an exception <var>e</var> is raised in the dynamic
-	  extent of the handler of the initial continuation prompt,
+	  extent of the abort handler of the initial continuation prompt,
 	  an <code>&amp;uncaught-exception</code> condition object is recorded to be
 	  raised for this thread and the thread finally
 	  terminated.  The <code>reason</code> field of
@@ -2456,17 +2740,6 @@
 	  is finally terminated.</p>
 	<p>When a thread is finally terminated, all mutexes it owns are abandoned.</p>
 	<p>This extends the semantics of <code>raise</code>.</p>
-      </dd>
-      <dt class="entry"><code>(thread <span class="token">body</span>)</code><span class="type">syntax</span></dt>
-      <dd>
-	<p><i>Syntax:</i>
-	  <code><span class="token">Body</span></code> is a body.</p>
-	<p><i>Semantics:</i> Operationally equivalent to
-	  evaluating <code>(make-thread (lambda () <span class="token">body</span>))</code>.</p>
-	<p><i>Note:</i> As threads inherit the parameterization of
-	  when they are created, a <code>thread</code> expression
-	  conveys the meaning better than a call
-	  to <code>make-thread</code>.</p>
       </dd>
       <dt class="entry"><code>(thread? <var>obj</var>)</code><span class="type">procedure</span></dt>
       <dd><p>Returns <code>#t</code> if <code><var>obj</var></code> is
@@ -2519,6 +2792,30 @@
 	  because the mutex is unlocked/abandoned.  This helps avoid
 	  observing an inconsistent state.</p>
       </dd>
+      <dt class="procedure"><code>(thread-stop! <var>thread</var>)</code></dt>
+      <dd>
+        <p>As <code>thread-terminate!</code> but returns immediately
+          so that the current thread does not wait until the termination
+          of <code><var>thread</var></code> has occurred.</p>
+      </dd>
+    </dl>
+
+    <p>The procedure <code>thread-terminate!</code> can be defined in
+      terms of <code>thread-stop!</code> and <code>thread-join!</code>
+      as follows:</p>
+
+    <pre>(define thread-terminate!
+  (lambda (thread)
+    (thread-stop! thread)
+    (with-exception-handler
+        (lambda (exc)
+          (if (thread-condition? exc)
+              (values)
+              (raise exc)))
+      (lambda ()
+        (thread-join! thread)))))</pre>
+
+    <dl class="entries">
       <dt class="entry"><code>(thread-join! <var>thread</var> <var>timeout</var>)</code><span class="type">procedure</span></dt>
       <dt class="entry"><code>(thread-join! <var>thread</var>)</code><span class="type">procedure</span></dt>
       <dd><p>The current thread waits
@@ -2534,47 +2831,16 @@
       </dd>
     </dl>
 
-    <dl class="entries">
-      <dt class="entry"><code>(thread <span class="token">body</span>)</code><span class="type">syntax</span></dt>
-      <dd>
-	<p><i>Syntax:</i>
-	  <code><span class="token">Body</span></code> is a body.</p>
-	<p><i>Semantics:</i> Operationally equivalent to
-	  evaluating <code>(make-thread (lambda
-	  () <span class="token">body</span>))</code>.  The initial
-	  continuation is an initial continuation as defined above.
-	  The parameterization of the initial continuation is the same
-	  as the parameterization of the continuation of
-	  the <code>thread</code> expression.  When an exception is
-	  raised in the dynamic extent of the handler of the initial
-	  continuation prompts, a condition with
-	  type <code>&amp;uncaught-exception</code> and the raised
-	  object as its reason is stored in
-	  the <code>end-exception</code> of the thread before the
-	  thread is finally terminated.  When values are delivered to
-	  the initial continuation, the values are stored in
-	  the <code>end-result</code> of the thread before the thread
-	  is finally terminated.</p>
-	<p>This extends the semantics of <code>raise</code>.</p>
-	<p><i>Note:</i> This also defines the initial continuation of
-	  a thread created by invoking the <code>make-thread</code>
-	  procedure in <cite>SRFI 18</cite>.</p>
-	<p><i>Note:</i> As threads inherit the parameterization of
-	  when they are created, a <code>thread</code> expression
-	  conveys the meaning better than a call
-	  to <code>make-thread</code>.</p>
-      </dd>
-    </dl>
-
     <pre class="example">(let ([p (make-parameter 0)])
 (parameterize ([p 1])
   (let ([y
          (thread-join!
           (thread-start!
-           (thread
-             (let ([x (p)])
-               (p 2)
-               x))))])
+            (make-thread
+             (lambda ()
+               (let ([x (p)])
+                 (p 2)
+                 x)))))])
     (list y (p)))))<span class="result">(1 2)</span></pre>
 
     <pre class="example">(let [(l '())]
@@ -2586,20 +2852,22 @@
       (reverse l)))
   (thread-join!
    (thread-start!
-    (thread
-      (dynamic-wind
-          (lambda ()
-            (out! 'in))
-          (lambda ()
-            (call/cc
-             (lambda (k)
-               (thread-join!
-                (thread-start!
-                 (thread
-                   (out! 'thread)
-                   (k)))))))
-          (lambda ()
-            (out! 'out))))))
+    (make-thread
+      (lambda ()
+        (dynamic-wind
+            (lambda ()
+              (out! 'in))
+            (lambda ()
+              (call/cc
+               (lambda (k)
+                 (thread-join!
+                  (thread-start!
+                   (make-thread
+                     (lambda ()
+                       (out! 'thread)
+                       (k))))))))
+            (lambda ()
+              (out! 'out)))))))
   (get))<span class="result">(in thread in out out)</span></pre>
 
     <h4>Mutexes</h4>
@@ -2640,22 +2908,15 @@
 	<p>Returns <code>#t</code> if <code><var>obj</var></code> is a
 	  mutex, and <code>#f</code> otherwise.</p>
       </dd>
-      <dt class="entry"><code>(mutex-owner <var>mutex</var>)</code><span class="type">procedure</span></dt>
-      <dd><p>Returns the owner thread of <code><var>mutex</var></code>
-	  if <code><var>mutex</var></code> is in the locked/owned state,
-	  and <code>#f</code> otherwise.</p>
-      </dd>
       <dt class="entry"><code>(mutex-state <var>mutex</var>)</code><span class="type">procedure</span></dt>
       <dd>
 	<p>
 	  Returns one of the
-	  symbols <code>owned</code>, <code>not-owned</code>, <code>abandoned</code>, <code>not-abandoned</code>,
-	  reflecting the state of <code><var>mutex</var></code>.</p>
+	  symbols <code>not-owned</code>, <code>abandoned</code>, <code>not-abandoned</code>
+	  or a thread object, reflecting the state
+	  of <code><var>mutex</var></code>, where a thread object
+	  represents the <i>owned</i> state and the owner.</p>
 	<p>
-	<p><i>Note:</i> To simplify the type
-	  of <code>mutex-state</code>, this procedure differs from the
-	  procedure with the same name in <cite>SRFI 18</cite>.
-	  Use <code>mutex-owner</code> to access a mutex's owner.</p>
       </dd>
       <dt class="entry"><code>(mutex-lock! <var>mutex</var> <var>timeout</var> <var>owner-thread</var>)</code><span class="type">procedure</span></dt>
       <dt class="entry"><code>(mutex-lock! <var>mutex</var> <var>timeout</var>)</code><span class="type">procedure</span></dt>
@@ -2700,17 +2961,11 @@
 	  and a mutex that is owned by any thread.</p>
 	<p><i>Note:</i> The reason the thread can unblock at any time
 	  (when <code><var>condition-variable</var></code> is
-	  supplied) is to allow extending this SRFI with primitives
-	  that force a specific blocked thread to become runnable.
-	  For example a primitive to interrupt a thread so that it
-	  performs a certain operation, whether the thread is blocked
-	  or not, may be useful to handle the case where the scheduler
-	  has detected a serious problem (such as a deadlock) and it
-	  must unblock one of the threads (such as the primordial
-	  thread) so that it can perform some appropriate action.
-	  After a thread blocked on a condition-variable has handled
-	  such an interrupt it would be wrong for the scheduler to
-	  return the thread to the blocked state, because any calls
+	  supplied) is the handling of interrupts (see
+	  the <code>thread-interrupt!</code> procedure below).  After a
+	  thread blocked on a condition-variable has handled such an
+	  interrupt it would be wrong for the scheduler to return the
+	  thread to the blocked state, because any calls
 	  to <code>condition-variable-broadcast!</code>  during the
 	  interrupt will have gone unnoticed.  It is necessary for the
 	  thread to remain runnable and return from the call to
@@ -2787,14 +3042,19 @@
       each thread local a cell that holds a value.</p>
 
     <dl class="entries">
+      <dt class="entry"><code>(make-thread-local <var>obj</var> <var>inheritable?</var>)</code><span class="type">procedure</span></dt>
       <dt class="entry"><code>(make-thread-local <var>obj</var>)</code><span class="type">procedure</span></dt>
       <dd>
 	<p>Returns a thread local that is not <code>equal?</code> to
-	any prior or future results
-	from <code>make-thread-local</code>.  The
-	object <code><var>obj</var></code> is stored the cells
-	associated to the thread local in the thread-specific
-	storage.</p>
+	  any prior or future results
+	  from <code>make-thread-local</code>.  The
+	  object <code><var>obj</var></code> is stored in the cells
+	  associated to the thread local in the thread-specific
+	  storage.  The thread local is <dfn>inheritable</dfn>
+	  if <code><var>inheritable?</var></code> is
+	  not <code>#f</code>.</p>
+	<p>If <code><var>inheritable?</var></code> is not given, it
+	  defaults to <code>#f</code>.
       </dd>
       <dt class="entry"><code>(thread-local? <var>obj</var>)</code><span class="type">procedure</span></dt>
       <dd>
@@ -2803,14 +3063,63 @@
       <dt class="entry"><code>(tlref <var>tl</var>)</code><span class="type">procedure</span></dt>
       <dd>
 	<p>Returns the value of the cell associated to the current
-	thread and to <code><var>tl</var></code> in the
-	thread-specific storage.</p>
+	  thread and to <code><var>tl</var></code> in the
+	  thread-specific storage.</p>
       </dd>
       <dt class="entry"><code>(tlset! <var>tl</var> <var>obj</var>)</code><span class="type">procedure</span></dt>
       <dd>
 	<p>Sets the value of the cell associated to the current
 	  thread and to <code><var>tl</var></code> in the
 	  thread-specific storage to <code><var>obj</var></code>.</p>
+	<p>If <code><var>tl</var></code> is inheritable, set also the
+	  values of the corresponding cells in the thread-specific
+	  storages of the future threads that will be created by the
+	  current thread to <code><var>obj</var></code>.</p>
+      </dd>
+    </dl>
+
+    <h4>Interrupts</h4>
+
+    <p>The syntax and procedures in this subsection are also exported by
+      the <code>(srfi :226 control interrupts)</code> library.</p>
+
+    <dl class="entries">
+      <dt class="thread-parameter"><code>current-interrupt-level</code></dt>
+      <dd><p>The <code>current-interrupt-level</code> can be
+	  parameterized to a non-negative exact integer.  It's initial
+	  value is zero.</p>
+      </dd>
+      <dt class="procedure"><code>(disable-interrupts!)</code></dt>
+      <dd>
+	<p>Increases the value the <code>current-interrupt-level</code> by one.</p>
+      </dd>
+      <dt class="procedure"><code>(enable-interrupts!)</code></dt>
+      <dd>
+	<p>Decreases the value the <code>current-interrupt-level</code> by one.</p>
+	<p><i>Note:</i> It is an assertion violation if this would
+	  lower the interrupt level to a negative number.</p>
+      </dd>
+      <dt class="syntax"><code>(with-interrupts-disabled <span class="token">body</span>)</code></dt>
+      <dd><p>Convenience syntax, effectively equivalent to <code>(parameterize ([current-interrupt-level (+ (current-interrupt-level) 1)]) <span class="token">body</span>)</code>.</p>
+	<p>
+	  <i>Note:</i> If the <code>with-interrupts-disabled</code> form is in tail-context,
+	  <code><span class="token">body</span></code> is
+	  a <code><span class="token">tail body</span></code>.</p>
+      </dd>
+      <dt class="procedure"><code>(thread-interrupt! <var>thread</var> <var>thunk</var>)</code></dt>
+      <dd>
+	<p>Schedules an interrupt
+	  for <code><var>thread</var></code> for when
+	  the <code>current-interrupt-level</code>
+	  of <code><var>thread</var></code> is zero.  The current
+	  continuation of <code><var>thread</var></code> is then
+	  replaced by a continuation that records the values it
+	  receives, invokes <code><var>thunk</var></code> with no
+	  arguments, discards its values, and then yields the
+	  recorded values to the original continuation.
+	</p>
+	<p><i>Note:</i> An interrupt can occur while a thread is
+	  blocked waiting on a condition variable.</p>
       </dd>
     </dl>
 
@@ -2994,6 +3303,11 @@
       <li id="c17">
         <p><a href="https://www.iso.org/standard/74528.html">ISO/IEC 9899:2018 Information technology — Programming languages — C</a></p>
       </li>
+      <li id="hansen">
+	<p>Lars T. Hansen:
+	  <a href="https://srfi.schemers.org/srfi-15/srfi-15.html"><cite>SRFI
+	      15: Syntax for dynamic scoping</cite></a>.</p>
+      </li>
       <li id="kawai">
 	<p>Shiro Kawai, John Cowan, Thomas
 	Gilray: <a href="https://srfi.schemers.org/srfi-158/srfi-158.html"><cite>SRFI
@@ -3067,7 +3381,6 @@
 	<p>André van Tonder: <a href="https://srfi.schemers.org/srfi-45/srfi-45.html"><cite>SRFI
 	45: Primitives for Expressing Iterative Lazy Algorithms</cite></a>.</p>
       </li>
-
     </ol>
 
     <h2 id="copyright">Copyright</h2>

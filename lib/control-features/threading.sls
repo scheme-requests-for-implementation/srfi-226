@@ -25,7 +25,7 @@
 (library (control-features threading)
   (export %current-dynamic-environment
 	  %current-thread %thread? %thread-start! %thread-yield! %thread-terminate!
-	  %thread-join!
+	  %thread-join! %thread-interrupt!
 	  make-%mutex %mutex-lock! %mutex-unlock!
 	  make-%condition-variable %condition-variable-broadcast!
 	  %run)
@@ -198,6 +198,21 @@
 		 (abort-to-thread nt)))
 	      (%current-dynamic-environment env)
 	      (unlock!))))))
+
+  (define %thread-interrupt!
+    (lambda (thread thunk)
+      (lock!)
+      (if (eq? (%current-thread) thread)
+	  (begin
+	    (unlock!)
+	    (thunk)
+	    (values))
+	  (let ([k (%thread-continuation thread)])
+	    (%thread-continuation-set! thread
+				       (lambda ()
+					 (thunk)
+					 (k)))
+	    (unlock!)))))
 
   (define %thread-terminate!
     (lambda (thread)

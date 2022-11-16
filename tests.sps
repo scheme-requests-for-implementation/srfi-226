@@ -337,25 +337,29 @@
             (set! l (cons x l))))
         (thread-join!
          (thread-start!
-          (thread
-           (dynamic-wind
-               (lambda ()
-                 (out! 'in))
-               (lambda ()
-                 (call/cc
-                  (lambda (k)
-                    (thread-join!
-                     (thread-start!
-                      (thread
-                       (out! 'thread)
-                       (k)))))))
-               (lambda ()
-                 (out! 'out))))))
+          (make-thread
+           (lambda ()
+             (dynamic-wind
+                 (lambda ()
+                   (out! 'in))
+                 (lambda ()
+                   (call/cc
+                    (lambda (k)
+                      (thread-join!
+                       (thread-start!
+                        (make-thread
+                         (lambda ()
+                           (out! 'thread)
+                           (k))))))))
+                 (lambda ()
+                   (out! 'out)))))))
         (reverse l)))
 
 ;;; Parameters
 
 (define param (make-parameter 10 (lambda (x) (* x x))))
+
+(test #t (parameter? param))
 
 (test 100 (param))
 
@@ -428,11 +432,11 @@
 ;;; Threads
 
 (test 98 (let ([t (thread-start!
-                   (thread 98))])
+                   (make-thread (lambda () 98)))])
            (thread-join! t)))
 
 (test 96 (let ([t (thread-start!
-                   (thread (raise 97)))])
+                   (make-thread (lambda () (raise 97))))])
            (guard (c
                    [(uncaught-exception-condition? c)
                     (fx+ -1 (uncaught-exception-condition-reason c))])
@@ -441,15 +445,16 @@
 (test 10 (let ([p (make-parameter 9)])
            (parameterize ([p 10])
              (let ([t (thread-start!
-                       (thread (p)))])
+                       (make-thread (lambda () (p))))])
                (thread-join! t)))))
 
 (test #t (let* ([signal? #f]
                 [t (thread-start!
-                    (thread
-                     (set! signal? #t)
-                     (do () (#f)
-                       (thread-yield!))))])
+                    (make-thread
+                     (lambda ()
+                       (set! signal? #t)
+                       (do () (#f)
+                         (thread-yield!)))))])
            (do () (signal?)
              (thread-yield!))
            (thread-terminate! t)
@@ -459,17 +464,18 @@
              #f)))
 
 (test 734 (let* ([p (make-parameter 734)]
-                 [t (thread (p))])
+                 [t (make-thread (lambda () (p)))])
             (parameterize ([p 735])
               (thread-join! (thread-start! t)))))
 
 (test '(12 13) (let* ([k #f]
                       [t (thread-start!
-                          (thread
-                           (call-with-current-continuation
-                            (lambda (c)
-                              (set! k c)
-                              12))))]
+                          (make-thread
+                           (lambda ()
+                             (call-with-current-continuation
+                              (lambda (c)
+                                (set! k c)
+                                12)))))]
                       [x (thread-join! t)])
                  (k (list x 13))
                  14))
@@ -879,10 +885,11 @@
 	  (let ([y
 		 (thread-join!
 		  (thread-start!
-		   (thread
-		    (let ([x (p)])
-		      (p 2)
-		      x))))])
+		   (make-thread
+                    (lambda ()
+		      (let ([x (p)])
+		        (p 2)
+		        x)))))])
 	    (list y (p))))))
 
 (test 'default (tlref (make-thread-local 'default)))
@@ -893,10 +900,57 @@
       (let* ([tl (make-thread-local 1)]
 	     [x (thread-join!
 		 (thread-start!
-		  (thread
-		   (tlset! tl 2)
-		   (tlref tl))))])
+		  (make-thread
+                   (lambda ()
+		     (tlset! tl 2)
+		     (tlref tl)))))])
 	(list (tlref tl) x)))
+
+(test '1
+      (let ([tl (make-thread-local 1)])
+	(tlset! tl 2)
+	(thread-join!
+	 (thread-start!
+	  (make-thread
+	   (lambda ()
+	     (tlref tl)))))))
+
+(test '2
+      (let ([tl (make-thread-local 1 #t)])
+	(tlset! tl 2)
+	(thread-join!
+	 (thread-start!
+	  (make-thread
+	   (lambda ()
+	     (tlref tl)))))))
+
+;;; Thread parameters
+
+(test '(3 4)
+      (let* ([p (make-thread-parameter 3)]
+	     [x (p)])
+	(p 4)
+	(list x (p))))
+
+(test '((3) (2))
+      (let* ([p (make-thread-parameter 2 list)]
+	     [x (parameterize ([p 3])
+		  (p))])
+	(list x (p))))
+
+(test '(0 20 10)
+      (let* ([p (make-thread-parameter 0)])
+	(define x
+	  (parameterize ([p 10])
+	    (define t
+	      (make-thread
+	       (lambda ()
+		 (p))))
+	    (p 20)
+	    (list (p) (thread-join!
+		       (thread-start!
+			t)))))
+	(cons (p) x)))
 
 ;;; See <https://srfi-email.schemers.org/srfi-226/msg/20946964/>.
 
@@ -923,6 +977,140 @@
                             10)
                           (lambda () (put! 5)))))))))))
         (cons (result) val)))
+
+;;; Subtypes of thread
+
+(test 'specific
+      (let* ()
+        (define-record-type mythread
+          (parent thread)
+          (fields specific)
+          (protocol
+           (lambda (n)
+             (lambda (thunk obj)
+               ((n thunk) obj)))))
+        (thread-join!
+         (thread-start!
+          (make-mythread
+           (lambda ()
+             (define t (current-thread))
+             (assert (mythread? t))
+             (assert (thread? t))
+             (mythread-specific t))
+           'specific)))))
+
+;;; The with syntax
+
+(test 3
+      (let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
+        (with ([p 4]) (values))
+        (p)))
+
+(test 2
+      (let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
+        (parameterize ([p 4]) (values))
+        (p)))
+
+(test 1
+      (let ([p (make-parameter 1)])
+        (define t
+          (with ([p 2])
+            (make-thread (lambda () (p)))))
+        (thread-join! (thread-start! t))))
+
+(test 2
+      (let ([p (make-parameter 1)])
+        (define t
+          (parameterize ([p 2])
+            (make-thread (lambda () (p)))))
+        (thread-join! (thread-start! t))))
+
+;;; Fluids
+
+(test '(1 2)
+      (letrec* ()
+        (define-fluid x1 1)
+        (define-fluid x2 2)
+        (list x1 x2)))
+
+(test '(3 2)
+      (letrec* ()
+        (define-fluid x1 1)
+        (define-fluid x2 2)
+        (set! x1 3)
+        (list x1 x2)))
+
+(test '(3 2 4 5 6)
+      (letrec* ()
+        (define-fluid x1 3)
+        (define-fluid x2 2)
+        (define y
+          (fluid-let ([x1 4]
+                      [x2 5])
+            (let ([a x1] [b x2])
+              (set! x1 6)
+              (list a b x1))))
+        (cons* x1 x2 y)))
+
+(test 8
+      (letrec* ()
+        (define-fluid x1 3)
+        (fluid-let* ([x1 7]
+                     [x1 (+ x1 1)])
+          x1)))
+
+(test '(0 20 10)
+      (letrec* ()
+        (define-thread-fluid a 0)
+	(define x
+	  (fluid-let ([a 10])
+	    (define t
+	      (make-thread
+	       (lambda ()
+		 a)))
+	    (set! a 20)
+	    (list a (thread-join!
+		     (thread-start!
+		      t)))))
+	(cons a x)))
+
+(test '10
+      (let ([p (make-parameter 10)])
+        (define-fluidified x p)
+        x))
+
+(test '12
+      (letrec* ()
+        (define-fluid x 11)
+        ((fluid-parameter x) 12)
+        x))
+
+#;
+(test '999
+      (let* ([m (make-mutex)]
+	     [cv (make-condition-variable)]
+	     [looping? #f]
+	     [t (make-thread
+		(lambda ()
+		  (guard
+		      (c [(integer? c) c])
+		    (mutex-lock!)
+		    (set! looping #t)
+		    (condition-variable-signal! cv)
+		    (mutex-unlock!)
+		    (let f ()
+		      (f)))))])
+	(mutex-lock! m)
+	(thread-start! t)
+	(let f ()
+	  (if looping?
+	      (mutex-unlock!)
+	      (begin
+		(mutex-unlock! cv)
+		(mutex-lock!)
+		(f))))
+	(thread-interrupt! t (lambda () (raise 999)))
+	(thread-join! t)))
 
 ;;; Test End
 
