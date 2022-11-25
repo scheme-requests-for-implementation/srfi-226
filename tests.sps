@@ -1085,6 +1085,147 @@
         ((fluid-parameter x) 12)
         x))
 
+;;; Test of reset/shift
+
+(define-syntax reset
+  (syntax-rules ()
+    [(reset e1 e2 ...)
+     (call-with-continuation-prompt
+      (lambda ()
+        e1 e2 ...))]))
+
+(define-syntax shift
+  (syntax-rules ()
+    [(shift k e1 e2 ...)
+     (call-with-composable-continuation
+      (lambda (c)
+	(let ([k (lambda args
+		   (reset (apply c args)))])
+          (abort-current-continuation (default-continuation-prompt-tag)
+            (lambda ()
+	      e1 e2 ...)))))]))
+
+(define-syntax reset-at
+  (syntax-rules ()
+    [(reset-at tag e1 e2 ...)
+     (call-with-continuation-prompt
+      (lambda ()
+        e1 e2 ...)
+      tag)]))
+
+(define-syntax shift-at
+  (syntax-rules ()
+    [(shift-at tag-expr k e1 e2 ...)
+     (let ([tag tag-expr])
+       (call-with-composable-continuation
+	(lambda (c)
+	  (let ([k (lambda args
+		     (reset-at tag (apply c args)))])
+            (abort-current-continuation tag
+              (lambda ()
+		e1 e2 ...))))
+	tag))]))
+
+(define run-with-state
+  (lambda (proc seed)
+    (define tag (make-continuation-prompt-tag))
+    (let f ((val seed)
+            (k (lambda ()
+                 (reset-at
+                  tag
+                  (call-with-values
+                   (lambda ()
+                     (proc (lambda ()
+                             (shift-at
+                              tag
+                              k (lambda (g p f)
+                                  (g k))))
+                           (lambda (v)
+                             (shift-at
+                              tag k (lambda (g p f)
+                                      (p k v))))))
+                   (lambda args
+                     (lambda (g p f)
+                       (apply f args))))))))
+      ((k)
+       (lambda (k)
+         (f val (lambda () (k val))))
+       (lambda (k new-val)
+         (f new-val k))
+       values))))
+
+(test '(a b)
+      (run-with-state
+       (lambda (get put)
+	 (let ([x (get)])
+	   (put 'b)
+	   (list x (get))))
+       'a))
+
+(test '(a b c d)
+      (run-with-state
+       (lambda (get1 put1)
+	 (run-with-state
+	  (lambda (get2 put2)
+	    (let* ((x (get1))
+		   (y (get2)))
+              (put1 'c)
+              (put2 'd)
+              (list x y (get1) (get2))))
+	  'b))
+       'a))
+
+(define stream-null (make-promise '()))
+
+(define stream-null?
+  (lambda (stream)
+    (null? (force stream))))
+
+(define stream-pair?
+  (lambda (stream)
+    (pair? (force stream))))
+
+(define stream-car
+  (lambda (stream)
+    (force (car (force stream)))))
+
+(define stream-cdr
+  (lambda (stream)
+    (cdr (force stream))))
+
+(define-syntax stream-cons
+  (syntax-rules ()
+    [(stream-cons car-expr cdr-expr)
+     (make-promise
+      (cons (delay car-expr)
+	    (delay (force cdr-expr))))]))
+
+(define-syntax stream-lambda
+  (syntax-rules ()
+    [(stream-lambda formals body1 ... body2)
+     (lambda formals
+       (delay (force (letrec* () body1 ... body2))))]))
+
+(define for-each->stream
+  (stream-lambda (for-each seq)
+    (reset
+     (for-each
+      (lambda (el)
+        (shift next
+               (stream-cons el (next))))
+      seq)
+     stream-null)))
+
+(define (stream->list stream)
+  (let f ([stream stream])
+    (if (stream-null? stream)
+	'()
+	(cons (stream-car stream)
+	      (f (stream-cdr stream))))))
+
+(test '(1 2 3)
+      (stream->list (for-each->stream for-each '(1 2 3))))
+
 #;
 (test '999
       (let* ([m (make-mutex)]
