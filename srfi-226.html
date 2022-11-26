@@ -1193,7 +1193,9 @@
 
     <dl class="entries">
       <dt class="procedure"><code>(call-in <var>cont</var> <var>proc</var> <var>obj</var> &hellip;)</code></dt>
-      <dd><p>As <code>call-in-continuation</code> but <code><var>cont</var></code> must be a non-continuable continuation (procedure).</p></dd>
+      <dd><p>As <code>call-in-continuation</code>
+      but <code><var>cont</var></code> must be a non-composable
+      continuation (procedure).</p></dd>
       <dt class="procedure"><code>(return-to <var>cont</var> <var>obj</var> &hellip;)</code></dt>
       <dd><p>Equivalent to <code>(call-in <var>cont</var> <var>values</var> <var>obj</var> &hellip;)</code>.</p></dd>
     </dl>
