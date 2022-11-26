@@ -2463,6 +2463,109 @@ x<span class="result">2</span></pre>
        (lambda ()
          (raise 42)))))<span class="result">43</span></pre>
 
+    <h3>Conditions</h3>
+
+    <p>This section describes the <code>(srfi :226 control
+        conditions)</code> library.</p>
+
+    <p>The condition types described in this section allow condition
+      values to encapsulate information about the current
+      parameterization, the current continuation mark set and the
+      current exception handler stack at the origin of an exception
+      situation.</p>
+
+    <p>The semantics of
+      the <code>assertion-violation</code>, <code>error</code>,
+      and <code>syntax-violation</code> are extended so that they
+      communicate this information of the exception situation.
+    <p>
+
+    <dl class="entries">
+      <dt class="entry"><code>&amp;parameterization</code><span class="type">condition-type</span></dt>
+      <dt class="procedure"><code>(make-parameterization-condition <var>parameterization</var></code>)</dt>
+      <dt class="procedure"><code>(parameterization-condition? <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(condition-parameterization <var>condition</var></code>)</dt>
+      <dd>
+	<p>This condition type could be defined by</p>
+	<pre>(define-condition-type &amp;parameterization &amp;condition
+  make-parameterization-condition parameterization-condition?
+  (parameterization condition-parameterization))</pre>
+        <p><code><var>Parameterization</var></code> should be a
+          parameterization.  This condition provides information about
+          a parameterization, typically at the origin of the condition.</p>
+        <p>The condition object provided with the exception raised by <code>assertion-violation</code>,
+          <code>error</code>, and <code>syntax-violation</code> also
+          has the condition type <code>&amp;parameterization</code>,
+          with the current parameterization as the value of its
+          field.
+        </p>
+        <p>This extends the semantics of <code>assertion-violation</code>,
+          <code>error</code>, and <code>syntax-violation</code>.</p>
+        <p>Whenever the implementation detects an exceptional
+          situation and raises an exception providing a condition
+          object, this condition object should also have the condition
+          type <code>&amp;parameterization</code>, with the current
+          parameterization as the value of its field.</p>
+      </dd>
+
+      <dt class="entry"><code>&amp;continuation-marks</code><span class="type">condition-type</span></dt>
+      <dt class="procedure"><code>(make-continuation-marks-condition <var>continuation-marks</var></code>)</dt>
+      <dt class="procedure"><code>(continuation-marks-condition? <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(condition-continuation-marks <var>condition</var></code>)</dt>
+      <dd>
+	<p>This condition type could be defined by</p>
+	<pre>(define-condition-type &amp;continuation-marks &amp;condition
+  make-continuation-marks-condition continuation-marks-condition?
+  (continuation-marks condition-continuation-marks))</pre>
+        <p><code><var>Continuation-marks</var></code> should be a
+          continuation mark set.  This condition provides information about
+          a continuation mark set, typically of the origin of the condition.</p>
+        <p>The condition object provided with the exception raised by <code>assertion-violation</code>,
+          <code>error</code>, and <code>syntax-violation</code> also
+          has the condition type <code>&amp;continuation-marks</code>,
+          with the current continuation mark set up to the prompt
+          tagged with the default prompt tag as the value of its
+          field.
+        </p>
+        <p>This extends the semantics of <code>assertion-violation</code>,
+          <code>error</code>, and <code>syntax-violation</code>.</p>
+        <p>Whenever the implementation detects an exceptional
+          situation and raises an exception providing a condition
+          object, this condition object should also have the condition
+          type <code>&amp;continuation-marks</code>, with the current
+          continuation mark set up to the prompt tagged with the
+          default prompt tag as the value of its field.</p>
+      </dd>
+
+      <dt class="entry"><code>&amp;exception-handler-stack</code><span class="type">condition-type</span></dt>
+      <dt class="procedure"><code>(make-exception-handler-stack-condition <var>exception-handler-stack</var></code>)</dt>
+      <dt class="procedure"><code>(exception-handler-stack-condition? <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(condition-exception-handler-stack <var>condition</var></code>)</dt>
+      <dd>
+	<p>This condition type could be defined by</p>
+	<pre>(define-condition-type &amp;exception-handler-stack &amp;condition
+  make-exception-handler-stack-condition exception-handler-stack-condition?
+  (exception-handler-stack condition-exception-handler-stack))</pre>
+        <p><code><var>Exception-handler-stack</var></code> should be a
+          list of exception handlers.  This condition provides information about
+          an exception handler stack, typically at the origin of the condition.</p>
+        <p>The condition object provided with the exception raised by <code>assertion-violation</code>,
+          <code>error</code>, and <code>syntax-violation</code> also
+          has the condition
+          type <code>&amp;exception-handler-stack</code>, with the
+          current exception handler stack as a newly allocated list as
+          the value of its field.
+        </p>
+        <p>This extends the semantics of <code>assertion-violation</code>,
+          <code>error</code>, and <code>syntax-violation</code>.</p>
+        <p>Whenever the implementation detects an exceptional
+          situation and raises an exception providing a condition
+          object, this condition object should also have the condition
+          type <code>&amp;exception-handler-stack</code>, with the current
+          exception handler stack as the value of its field.</p>
+      </dd>
+    </dl>
+
     <h3>Time Objects</h3>
 
     <p>This section describes the <code>(srfi :226 control
