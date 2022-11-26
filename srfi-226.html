@@ -3110,6 +3110,15 @@ x<span class="result">2</span></pre>
 	  <code><span class="token">body</span></code> is
 	  a <code><span class="token">tail body</span></code>.</p>
       </dd>
+      <dt class="syntax"><code>(with-interrupts-enabled <span class="token">body</span>)</code></dt>
+      <dd><p>Convenience syntax, effectively equivalent to <code>(parameterize ([current-interrupt-level (- (current-interrupt-level) 1)]) <span class="token">body</span>)</code>.</p>
+	<p>
+	  <i>Note:</i> If the <code>with-interrupts-enabled</code> form is in tail-context,
+	  <code><span class="token">body</span></code> is
+	  a <code><span class="token">tail body</span></code>.</p>
+	<p><i>Note:</i> It is an assertion violation if this would
+	  lower the interrupt level to a negative number.</p>
+      </dd>
       <dt class="procedure"><code>(thread-interrupt! <var>thread</var> <var>thunk</var>)</code></dt>
       <dd>
 	<p>Schedules an interrupt
