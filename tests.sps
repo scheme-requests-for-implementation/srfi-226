@@ -1226,6 +1226,13 @@
 (test '(1 2 3)
       (stream->list (for-each->stream for-each '(1 2 3))))
 
+(test '(1 2)
+      (reset
+       (begin
+         (shift k (cons 1 (k 'void)))
+         (shift k (cons 2 (k 'void)))
+         '())))
+
 #;
 (test '999
       (let* ([m (make-mutex)]
