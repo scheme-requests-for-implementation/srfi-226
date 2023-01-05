@@ -1233,6 +1233,32 @@
          (shift k (cons 2 (k 'void)))
          '())))
 
+(test '(1 0)
+      (let ((m (make-parameter 0))
+	    (n (make-parameter 0)))
+	(define k
+	  (parameterize ((m 1))
+	    (call-with-continuation-prompt
+	     (lambda ()
+               (parameterize ()
+		 ((call-with-composable-continuation
+		   (lambda (k)
+		     (lambda () k)))))))))
+	(k (lambda () (list (m) (n))))))
+
+(test '(1 1)
+      (let ((m (make-parameter 0))
+	    (n (make-parameter 0)))
+	(define k
+	  (parameterize ((m 1))
+	    (call-with-continuation-prompt
+	     (lambda ()
+               (parameterize ((n 1))
+		 ((call-with-composable-continuation
+		   (lambda (k)
+		     (lambda () k)))))))))
+	(k (lambda () (list (m) (n))))))
+
 #;
 (test '999
       (let* ([m (make-mutex)]
