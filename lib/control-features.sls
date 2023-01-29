@@ -817,7 +817,7 @@
       ((continuation-resume-k 'call-in-continuation k) (lambda () (apply proc args)))))
 
   (define/who return-to
-    (lambda (k args)
+    (lambda (k . args)
       (unless (non-composable-continuation? k)
         (assertion-violation who "not a non-composable continuation object" k))
       ((continuation-resume-k 'call-in-continuation k) (lambda () (apply values args)))))
