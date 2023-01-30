@@ -1278,18 +1278,21 @@
       </dd></dl>
 
       <pre class="example">(define tag (make-continuation-prompt-tag))
-(call-with-continuation-prompt-tag
+(call-with-continuation-prompt
   (lambda ()
-    (continuation-prompt-tag-available? tag
-      (call-with-non-composable-continuation values))))<span class="result">#t</span>
-(call-with-continuation-prompt-tag
+    (continuation-prompt-available? tag
+      (call-with-non-composable-continuation values)))
+  tag)<span class="result">#t</span>
+(call-with-continuation-prompt
   (lambda ()
-    (continuation-prompt-tag-available? tag
-      (call-with-non-composable-continuation values tag))))<span class="result">#t</span>
-(call-with-continuation-prompt-tag
+    (continuation-prompt-available? tag
+      (call-with-non-composable-continuation values tag)))
+  tag)<span class="result">#t</span>
+(call-with-continuation-prompt
   (lambda ()
-    (continuation-prompt-tag-available? tag
-      (call-with-composable-continuation values tag))))<span class="result">#f</span></pre>
+    (continuation-prompt-available? tag
+      (call-with-composable-continuation values tag)))
+  tag)<span class="result">#f</span></pre>
       <dl class="entries">
       <dt class="procedure"><code>(dynamic-wind <var>pre-thunk</var> <var>thunk</var> <var>post-thunk</var>)</code></dt>
       <dd>
