@@ -368,17 +368,6 @@
 	 (assert (or (not handler) (procedure? handler)))
 	 (p tag k handler marks winders)))))
 
-  (define push-continuation!
-    (lambda (k marks winders)
-      (when (or (not (empty-continuation? k))
-		(not (marks-empty? marks))
-		(null? winders))
-	(push-metacontinuation-frame!
-	 (make-metacontinuation-frame
-	  #f k #f marks winders)))
-      (clear-marks!)
-      (current-winders '())))
-
   (define push-metacontinuation-frame!
     (lambda (frame)
       (assert (metacontinuation-frame? frame))
