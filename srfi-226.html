@@ -1921,7 +1921,7 @@
     <p>Each parameter object is a parameter-like object.</p>
 
     <dl class="entries">
-      <dt class="syntax"><code>(with ([<span class="token">param-expr</span> <span class="token">expression</span>] &hellip;) <span class="token">body</span>)</code></dt>
+      <dt class="syntax"><code>(temporarily ([<span class="token">param-expr</span> <span class="token">expression</span>] &hellip;) <span class="token">body</span>)</code></dt>
       <dd>
 	<p><i>Syntax:</i>
 	  The <code><span class="token">param-exprs</span></code> and
@@ -1948,7 +1948,7 @@
       differs from the <code>parameterize</code> syntax:</p>
 
     <pre>(let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
-  (with ([p 4]) (values))
+  (temporarily ([p 4]) (values))
   (p))<span class=result>5</span>
 
 (let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
@@ -1957,7 +1957,7 @@
 
 (let ([p (make-parameter 1)])
   (define t
-    (with ([p 2])
+    (temporarily ([p 2])
       (make-thread (lambda () (p)))))
   (thread-join! (thread-start! t)))<span class=result>1</span>
 

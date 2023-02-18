@@ -36,7 +36,7 @@
 	  (put 'rec 'scheme-indent-function 1)
           (put 'fluid-let 'scheme-indent-function 1)
           (put 'fluid-let* 'scheme-indent-function 1)
-	  (put 'with 'scheme-indent-function 1)
+	  (put 'temporarily 'scheme-indent-function 1)
 	  (put 'with-syntax 'scheme-indent-function 1)
           (font-lock-add-keywords
            nil
@@ -51,7 +51,7 @@
 	     ("(\\(with-continuation-mark\\)\\>" 1 font-lock-keyword-face)
 	     ("(\\(with-continuation-marks\\)\\>" 1 font-lock-keyword-face)
              ("(\\(call-with-immediate-continuation-mark\\)\\>" 1 font-lock-keyword-face)
-	     ("(\\(with\\)\\>" 1 font-lock-keyword-face)
+	     ("(\\(temporarily\\)\\>" 1 font-lock-keyword-face)
 	     ("(\\(with-syntax\\)\\>" 1 font-lock-keyword-face)
 	     ("(\\(rec\\)\\>" 1 font-lock-keyword-face)
 	     )))))))

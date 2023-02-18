@@ -999,11 +999,11 @@
              (mythread-specific t))
            'specific)))))
 
-;;; The with syntax
+;;; The temporarily syntax
 
 (test 3
       (let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
-        (with ([p 4]) (values))
+        (temporarily ([p 4]) (values))
         (p)))
 
 (test 2
@@ -1014,7 +1014,7 @@
 (test 1
       (let ([p (make-parameter 1)])
         (define t
-          (with ([p 2])
+          (temporarily ([p 2])
             (make-thread (lambda () (p)))))
         (thread-join! (thread-start! t))))
 

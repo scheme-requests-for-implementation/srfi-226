@@ -46,7 +46,7 @@
 	  exception-handler-stack current-exception-handler with-exception-handler guard else =>
 	  make-parameter parameter? parameterize
 	  parameterization? current-parameterization call-with-parameterization
-          make-thread-parameter with
+          make-thread-parameter temporarily
 	  current-input-port current-output-port current-error-port
 	  with-input-from-file with-output-to-file
 	  read-char peek-char read
@@ -1235,9 +1235,9 @@
 	[_
 	 (syntax-violation who "invalid syntax" stx)])))
 
-  ;; The with syntax
+  ;; The temporarily syntax
 
-  (define-syntax/who with
+  (define-syntax/who temporarily
     (lambda (x)
       (syntax-case x ()
         [(_ () b1 b2 ...) #'(begin b1 b2 ...)]
