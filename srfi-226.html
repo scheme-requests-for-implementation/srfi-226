@@ -2180,7 +2180,7 @@
       with the tail-context guarantee of the <code>parameterize</code>
       form and with the parameterization as a first-class
       object.  <cite>Chez Scheme's</cite> <code>parameterize</code>
-      mechanism is implemented by the <code>with</code> syntax
+      mechanism is implemented by the <code>temporarily</code> syntax
       below.</p>
 
     <p>A <dfn>parameter-like object</dfn> is a procedure <var>p</var>
@@ -2215,7 +2215,7 @@
       </dd>
     </dl>
 
-    <p>The following examples show how the <code>with</code> syntax
+    <p>The following examples show how the <code>temporarily</code> syntax
       differs from the <code>parameterize</code> syntax:</p>
 
     <pre>(let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
