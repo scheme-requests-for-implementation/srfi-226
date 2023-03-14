@@ -54,7 +54,7 @@
 	  call-in-initial-continuation
 	  thread current-thread thread? make-thread thread-name
 	  thread-start! thread-yield!
-	  thread-stop! thread-terminate! thread-join!
+	  thread-schedule-terminate! thread-terminate! thread-join!
 	  thread-interrupt!
 	  &thread make-thread-condition thread-condition?
 	  &uncaught-exception
@@ -1646,7 +1646,7 @@
 
   ;; TODO: Schedule exit before terminated thread becomes unblocked.
 
-  (define/who thread-stop!
+  (define/who thread-schedule-terminate!
     (lambda (thread)
       (unless (thread? thread)
         (assertion-violation who "not a thread" thread))
@@ -1673,7 +1673,7 @@
     (lambda (thread)
       (unless (thread? thread)
 	(assertion-violation who "not a thread" thread))
-      (thread-stop! thread)
+      (thread-schedule-terminate! thread)
       (with-exception-handler
        (lambda (exc)
          (if (thread-condition? exc)
