@@ -1819,8 +1819,8 @@
 			(promise-unlock! p)
 			((promise-thunk p))]
 		       [q
-			(promise-done?-set! p (promise-done? q))
 			(promise-thunk-set! p (promise-thunk q))
+			(promise-done?-set! p (promise-done? q))
 			(promise-set! q (promise-ref p))
 			(promise-unlock! p)
 			(f)]
