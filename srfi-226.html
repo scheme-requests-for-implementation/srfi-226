@@ -3510,6 +3510,9 @@ x<span class="result">2</span></pre>
 	</p>
 	<p><i>Note:</i> An interrupt can occur while a thread is
 	  blocked waiting on a condition variable.</p>
+        <p><i>Note:</i> Pending interrupts need not be handled
+          immediately after the current interrupt level has dropped to
+          zero.  They only need to be handled eventually.</p>
       </dd>
     </dl>
 
