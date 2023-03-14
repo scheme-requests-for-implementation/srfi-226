@@ -202,7 +202,7 @@
     additional tail context guarantee.  To support an alternative
     model of parameters that is linked to the dynamic extent and not
     to the current parameterization, the notion of a parameter-like
-    object and the <code>with</code> syntax are introduced.</p>
+    object and the <code>temporarily</code> syntax are introduced.</p>
 
     <p><i>Fluids:</i> Fluids are a syntactic reinterpretation of parameter
       objects.</p>
@@ -395,9 +395,9 @@
     <p>A different model of parameters exist, the main difference
       being the scope of the reparameterization.  This SRFI also
       supports this different model through the notion of
-      parameter-like objects and the <code>with</code> syntax, where
-      the reparameterization is bound to the dynamic extent of
-      the <code>with</code> form's body.</p>
+      parameter-like objects and the <code>temporarily</code> syntax,
+      where the reparameterization is bound to the dynamic extent of
+      the <code>temporarily</code> form's body.</p>
 
     <h4>Fluids</h4>
 
@@ -804,7 +804,7 @@
           <li><code>thread-start!</code></li>
           <li><code>thread-yield!</code></li>
           <li><code>thread-terminate!</code></li>
-          <li><code>thread-stop!</code></li>
+          <li><code>thread-schedule-terminate!</code></li>
           <li><code>thread-join!</code></li>
           <li><code>make-mutex</code></li>
           <li><code>mutex?</code></li>
@@ -1552,7 +1552,7 @@
   n)<span class="result">7</span></pre>
 
     <dl class="entries">
-      <dt class="syntax"><code>(unwind-protect <span class=token>protected-expr</span> <span class=token>cleanup-expr</span></code></dt>
+      <dt class="syntax"><code>(unwind-protect <span class=token>protected-expr</span> <span class=token>cleanup-expr</span> &hellip;)</code></dt>
       <dd>
 	<p><i>Syntax:</i>
 	  <code><span class="token">Protected-expr</span></code> and the <code><span class="token">cleanup-exprs</span></code>
@@ -2692,7 +2692,7 @@ x<span class="result">2</span></pre>
       <dt class="syntax"><code>(guard
 	  (<span class="token">variable</span> <span class="token">cond
 	  clause<sub>1</sub></span> <span class="token">cond
-	    clause<sub>2</sub></span>) <span class="token">body</span>)</code></dt>
+	    clause<sub>2</sub></span> &hellip;) <span class="token">body</span>)</code></dt>
       <dt class="entry"><code>=&gt;</code><span class="type">auxiliary syntax</span></dt>
       <dt class="entry"><code>else</code><span class="type">auxiliary syntax</span></dt>
       <dd>
@@ -3173,7 +3173,7 @@ x<span class="result">2</span></pre>
 	  because the mutex is unlocked/abandoned.  This helps avoid
 	  observing an inconsistent state.</p>
       </dd>
-      <dt class="procedure"><code>(thread-stop! <var>thread</var>)</code></dt>
+      <dt class="procedure"><code>(thread-schedule-terminate! <var>thread</var>)</code></dt>
       <dd>
         <p>As <code>thread-terminate!</code> but returns immediately
           so that the current thread does not wait until the termination
@@ -3182,12 +3182,12 @@ x<span class="result">2</span></pre>
     </dl>
 
     <p>The procedure <code>thread-terminate!</code> can be defined in
-      terms of <code>thread-stop!</code> and <code>thread-join!</code>
+      terms of <code>thread-schedule-terminate!</code> and <code>thread-join!</code>
       as follows:</p>
 
     <pre>(define thread-terminate!
   (lambda (thread)
-    (thread-stop! thread)
+    (thread-schedule-terminate! thread)
     (with-exception-handler
         (lambda (exc)
           (if (thread-condition? exc)
@@ -3510,6 +3510,9 @@ x<span class="result">2</span></pre>
 	</p>
 	<p><i>Note:</i> An interrupt can occur while a thread is
 	  blocked waiting on a condition variable.</p>
+        <p><i>Note:</i> Pending interrupts need not be handled
+          immediately after the current interrupt level has dropped to
+          zero.  They only need to be handled eventually.</p>
       </dd>
     </dl>
 
@@ -3626,7 +3629,8 @@ x<span class="result">2</span></pre>
       careful readings of the first draft and providing me with a lot
       of helpful comments.  The same specifically applies to Marc
       Feeley, without whose experience and insights I wouldn't want to
-      have missed.</p>
+      have missed.  Then there is Masanori Ogino who carefully read
+      the latest drafts and helped finding last-minute errors.</p>
 
     <p>I am grateful to Shiro Kawai who is working on an alternative
       implementation of SRFI 226 for his Gauche system.  His comments
