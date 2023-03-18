@@ -126,10 +126,93 @@
       <li>Draft #5 published: 2023-02-27</li>
       <li>Draft #6 published: 2023-02-28</li>
       <li>Draft #7 published: 2023-03-14</li>
+      <li>Draft #8 published: 2023-03-18</li>
       <li>60-day deadline: 2021-10-11</li>
       <li>Marc Nieper-Wißkirchen's <a href="https://github.com/mnieper/srfi-226">personal
 	Git repo for this SRFI</a> for reference while the SRFI is in
 	<em>draft</em> status (<a href="https://htmlpreview.github.io/?https://github.com/mnieper/srfi-226/blob/master/srfi-226.html">preview</a>)</li>
+    </ul>
+
+    <h2>Table of contents</h2>
+    <ul>
+      <li>
+        <a href="#rationale">Rationale</a>
+        <ul>
+          <li>
+            <a href="#overview">Overview</a>
+            <ul>
+              <li><a href="#continuations-and-prompts">Continuations and Prompts</a></li>
+              <li><a href="#composable-and-non-composable-continuations">Composable and Non-Composable Continuations</a></li>
+              <li><a href="#continuation-marks">Continuation Marks</a></li>
+              <li><a href="#continuations-and-threads">Continuations and Threads</a></li>
+              <li><a href="#parameter-objects">Parameter Objects</a></li>
+              <li><a href="#fluids">Fluids</a></li>
+              <li><a href="#thread-locals">Thread locals</a></li>
+              <li><a href="#promises">Promises</a></li>
+            </ul>
+          </li>
+          <li><a href="#relation-to-other-standards">Relation to Other Standards</a></li>
+          <li><a href="#relation-to-other-srfis">Relation to Other SRFIs</a></li>
+          <li><a href="#why-this-proposal-should-be-incorporated-as-a-standard-feature-in-scheme-implementations">Why this Proposal should be Incorporated as a Standard Feature
+              in Scheme Implementations</a></li>
+          <li><a href="#implementation">Implementation</a></li>
+        </ul>
+      </li>
+      <li>
+        <a href="#specification">Specification</a>
+        <ul>
+          <li><a href="#libraries">Libraries</a></li>
+          <li><a href="#entry-format">Entry format</a></li>
+          <li><a href="#iterators">Iterators</a></li>
+          <li><a href="#safety">Safety</a></li>
+          <li>
+            <a href="#continuation-prompts">Continuation Prompts</a>
+            <ul>
+              <li><a href="#conditions">Conditions</a></li>
+              <li><a href="#prompt-tags">Prompt Tags</a></li>
+              <li><a href="#continuation-prompts-2">Continuation Prompts</a></li>
+            </ul>
+          </li>
+          <li><a href="#continuations">Continuations</a></li>
+          <li><a href="#shift-and-reset">Shift and Reset</a></li>
+          <li><a href="#inspection">Inspection</a></li>
+          <li>
+            <a href="#continuation-marks-2">Continuation Marks</a>
+            <ul>
+              <li><a href="#continuation-marks-3">Continuation Marks</a></li>
+              <li><a href="#mark-keys">Mark Keys</a></li>
+            </ul>
+          </li>
+          <li><a href="#parameter-objects-2">Parameter Objects</a></li>
+          <li><a href="#fluids-2">Fluids</a></li>
+          <li><a href="#initial-continuations">Initial Continuations</a></li>
+          <li><a href="#promises-2">Promises</a></li>
+          <li><a href="#exceptions">Exceptions</a></li>
+          <li><a href="#conditions-2">Conditions</a></li>
+          <li><a href="#time-objects">Time Objects</a></li>
+          <li>
+            <a href="#threads">Threads</a>
+            <ul>
+              <li><a href="#conditions-3">Conditions</a></li>
+              <li><a href="#threads-2">Threads</a></li>
+              <li><a href="#mutexes">Mutexes</a></li>
+              <li><a href="#condition-variables">Condition variables</a></li>
+              <li><a href="#thread-locals-2">Thread locals</a></li>
+              <li><a href="#interrupts">Interrupts</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <a href="#implementation-2">Implementation</a>
+        <ul>
+          <li><a href="#portability">Portability</a></li>
+          <li><a href="#sample-implementation">Sample Implementation</a></li>
+          <li><a href="#other-implementations">Other Implementations</a></li>
+        </ul>
+      </li>
+      <li><a href="#acknowledgements">Acknowledgements</a></li>
+      <li><a href="#references">References</a></li>
     </ul>
 
     <h2 id="abstract">Abstract</h2>
@@ -255,11 +338,11 @@
       the small language is meant as the large language is still a work in
       progress as the time of writing of this SRFI.</p>
 
-    <h3>Overview</h3>
+    <h3 id="overview">Overview</h3>
 
     <p>In detail, the contributions of this SRFI are the following:</p>
 
-    <h4>Continuations and Prompts</h4>
+    <h4 id="continuations-and-prompts">Continuations and Prompts</h4>
 
     <p>As explained in <cite>R<sup>6</sup>RS</cite> and
       <cite>R<sup>7</sup>RS</cite>, whenever a Scheme expression is evaluated,
@@ -308,7 +391,7 @@
       or some HALT instruction.)  A <i>prompt</i> as defined by this
       document just extends this scenario.</p>
 
-    <h4>Composable and Non-Composable Continuations</h4>
+    <h4 id="composable-and-non-composable-continuations">Composable and Non-Composable Continuations</h4>
 
     <p>When a continuation captured
       with <code>call-with-current-continuation</code> is later
@@ -330,7 +413,7 @@
       continuation of the call to it.  A composable continuation therefore
       behaves like an ordinary procedure.</p>
 
-    <h4>Continuation Marks</h4>
+    <h4 id="continuation-marks">Continuation Marks</h4>
 
     <p><dfn>Continuation marks</dfn> are a feature that allows attaching
       information in the form of key-value pairs to individual continuation
@@ -362,7 +445,7 @@
     <p>In fact, with continuation marks, the concept of tail calls becomes
       operationally observable.</p>
 
-    <h4>Continuations and Threads</h4>
+    <h4 id="continuations-and-threads">Continuations and Threads</h4>
 
     <p>The concept of threads and the semantics of multi-threaded
       programs are deeply linked with the concepts that are involved
@@ -385,7 +468,7 @@
       more graceful termination of the other thread because it has the
       chance of reacting to the raised exception.</p>
 
-    <h4>Parameter Objects</h4>
+    <h4 id="parameter-objects">Parameter Objects</h4>
 
     <p>Parameter objects are a tool to provide dynamically-scoped variables to
       the Scheme language in a clean way.  As a definition of parameter objects
@@ -410,7 +493,7 @@
       where the reparameterization is bound to the dynamic extent of
       the <code>temporarily</code> form's body.</p>
 
-    <h4>Fluids</h4>
+    <h4 id="fluids">Fluids</h4>
 
     <p>Parameter objects behave like (dynamic) variables except that
       they are procedures that have to be called to retrieve the
@@ -426,7 +509,7 @@
         15</cite> about the behavior of fluids and <code>fluid-let</code>
       with respect to multi-threaded environments.</p>
 
-    <h4>Thread locals</h4>
+    <h4 id="thread-locals">Thread locals</h4>
 
     <p>Although they have been proposed for this application,
       parameter objects are unsuited to provide thread-local cells.  The
@@ -444,7 +527,7 @@
       Racket).  Inheritable thread locals take their initial values
       from the creator thread.</p>
 
-    <h4>Promises</h4>
+    <h4 id="promises">Promises</h4>
 
     <p>A naive implementation of <code>delay</code> and <code>force</code> does
       not support iterative lazy algorithms as was observed, for example,
@@ -468,7 +551,7 @@
       clearly specified what happens when an exception is raised during the
       forcing of a promise.</p>
 
-    <h3>Relation to Other Standards</h3>
+    <h3 id="relation-to-other-standards">Relation to Other Standards</h3>
 
     <p>This specification is meant to be applicable to both
       standards, <cite>R<sup>6</sup>RS</cite>
@@ -492,7 +575,7 @@
       syntax should be the same whether exported by the relevant
       standard libraries or one of the libraries described below.</p>
 
-    <h3>Relation to Other SRFIs</h3>
+    <h3 id="relation-to-other-srfis">Relation to Other SRFIs</h3>
 
     <p>This SRFI supersedes <cite>SRFI 15</cite>, <a href="#kelsey2"><cite>SRFI
 	  34</cite></a>, <cite>SRFI
@@ -504,7 +587,7 @@
     <p>The programming model defined by <cite>SRFI 18</cite> is
     extended.</p>
 
-    <h3>Why this Proposal should be Incorporated as a Standard Feature
+    <h3 id="why-this-proposal-should-be-incorporated-as-a-standard-feature-in-scheme-implementations">Why this Proposal should be Incorporated as a Standard Feature
       in Scheme Implementations</h3>
 
     <ul>
@@ -584,7 +667,7 @@
 	  implement <code>call/cc</code> anyway.</p></li>
     </ul>
 
-    <h3>Implementation</h3>
+    <h3 id="implementation">Implementation</h3>
 
     <p>The accompanying sample implementation does not implement the libraries
       defined in this specification, but it demonstrates how they can be as soon
@@ -605,7 +688,7 @@
 
     <h2 id="specification">Specification</h2>
 
-    <h3>Libraries</h3>
+    <h3 id="libraries">Libraries</h3>
 
     <p>The syntax and procedures defined below are provided by
       sublibraries within <code>(srfi :226 control)</code>
@@ -850,7 +933,7 @@
       </dd>
     </dl>
 
-    <h3>Entry format</h3>
+    <h3 id="entry-format">Entry format</h3>
 
     <p>The following naming conventions imply type restrictions:</p>
 
@@ -893,7 +976,7 @@
       <dd>condition variable</dd>
     </dl>
 
-    <h3>Iterators</h3>
+    <h3 id="iterators">Iterators</h3>
 
     <p>An <dfn>iterator</dfn> for a list in the sense of this
       specification is a zero-argument procedure that returns two
@@ -905,7 +988,7 @@
       protocol is unsuitable for lists that potentially
       contain <code>#f</code>.</p>
 
-    <h3>Safety</h3>
+    <h3 id="safety">Safety</h3>
 
     <p>The libraries described by this SRFI are <i>safe libraries</i>
       in the sense of <cite>R<sup>6</sup>RS</cite>.  In particular, in
@@ -916,11 +999,11 @@
       All modifications to single locations in the store must appear
       atomic to each thread.</p>
 
-    <h3>Continuation Prompts</h3>
+    <h3 id="continuation-prompts">Continuation Prompts</h3>
 
     <p>This section describes the <code>(srfi :226 control prompts)</code> library.</p>
 
-    <h4>Conditions</h4>
+    <h4 id="conditions">Conditions</h4>
 
     <p><i>Note:</i> If this SRFI is implemented in a system that does not
       support the condition system of <cite>R6RS</cite>, the respective parts
@@ -945,7 +1028,7 @@
       </dd>
     </dl>
 
-    <h4>Prompt Tags</h4>
+    <h4 id="prompt-tags">Prompt Tags</h4>
 
     <p>Continuation prompts are tagged with <dfn>prompt tags</dfn>,
       which are opaque values.  A distinguished prompt tag is
@@ -984,7 +1067,7 @@
 (equal? (make-continuation-prompt-tag) (default-continuation-prompt-tag))<span class="result">#f</span>
 (equal? (make-continuation-prompt-tag) (make-continuation-prompt-tag))<span class="result">#f</span></pre>
 
-    <h4>Continuation Prompts</h4>
+    <h4 id="continuation-prompts-2">Continuation Prompts</h4>
 
     <p>We identify a <dfn>continuation</dfn> with a sequence of active
       procedure calls, beginning with the most recent call.  A
@@ -1086,7 +1169,7 @@
    tag
    #f))<span class="result">27</span></pre>
 
-    <h3>Continuations</h3>
+    <h3 id="continuations">Continuations</h3>
 
     <p>This section describes the <code>(srfi :226 control
 	continuations)</code> library.  This library, in addition to the
@@ -1599,7 +1682,7 @@
        (lambda () (call-with-continuation-barrier (lambda () protected-expr)))
        (lambda () (values) cleanup-expr ...))]))</pre>
 
-    <h3>Shift and Reset</h3>
+    <h3 id="shift-and-reset">Shift and Reset</h3>
 
     <p>This section describes the <code>(srfi :226 control
 	shift-reset)</code> library.  This library exports the syntax
@@ -1647,7 +1730,7 @@
       </dd>
     </dl>
 
-    <h3>Inspection</h3>
+    <h3 id="inspection">Inspection</h3>
 
     <p>This section describes the <code>(srfi :226 control
 	inspection)</code> library.  This library exports the two
@@ -1675,14 +1758,14 @@
 (non-composable-continuation? (call-with-composable-continuation values))<span class="result">#f</span>
 (non-composable-continuation? values)<span class="result">#f</span></pre>
 
-    <h3>Continuation Marks</h3>
+    <h3 id="continuation-marks-2">Continuation Marks</h3>
 
     <p>This section describes the <code>(srfi :226 control
 	continuation-marks)</code> library.  This library, in addition
 	to the procedures described here, also exports the condition
 	types described in the section on continuation prompts.</p>
 
-    <h4>Continuation Marks</h4>
+    <h4 id="continuation-marks-3">Continuation Marks</h4>
 
     <p>Continuation frames can be annotated with <dfn>continuation
 	marks</dfn>.  Each continuation mark maps a key, which can be
@@ -1976,7 +2059,7 @@
          (continuation-mark-set-first #f key)))
      tag)))<span class="result">mark2</span></pre>
 
-    <h4>Mark Keys</h4>
+    <h4 id="mark-keys">Mark Keys</h4>
 
     <p><dfn>Mark keys</dfn> can be used as opaque keys for
     continuation marks.</p>
@@ -2014,7 +2097,7 @@
     <pre class="example">(continuation-mark-key? (make-continuation-mark-key))<span class="result">#t</span>
 (equal? (make-continuation-mark-key) (make-continuation-mark-key))<span class="result">#f</span></pre>
 
-    <h3>Parameter Objects</h3>
+    <h3 id="parameter-objects-2">Parameter Objects</h3>
 
     <p>This section describes the <code>(srfi :226 control
 	parameters)</code> library.</p>
@@ -2250,7 +2333,7 @@
       (make-thread (lambda () (p)))))
     (thread-join! (thread-start! t)))<span class=result>2</span></pre>
 
-    <h3>Fluids</h3>
+    <h3 id="fluids-2">Fluids</h3>
 
     <p>This section describes the <code>(srfi :226 control
 	fluids)</code> library.</p>
@@ -2378,7 +2461,7 @@ x<span class="result">2</span>
      (set! x 3)))))
 x<span class="result">2</span></pre>
 
-    <h3>Initial Continuations</h3>
+    <h3 id="initial-continuations">Initial Continuations</h3>
 
     <p>This section describes the <code>(srfi :226 control
 	call-in-initial-continuation)</code> library.  The library, in
@@ -2453,7 +2536,7 @@ x<span class="result">2</span></pre>
     (lambda ()
       (raise 42))))<span class="result">42</span></pre>
 
-    <h3>Promises</h3>
+    <h3 id="promises-2">Promises</h3>
 
     <p>This section describes the <code>(srfi :226 control
 	promises)</code> library. The library, in addition to the
@@ -2592,7 +2675,7 @@ x<span class="result">2</span></pre>
     (set! x (+ x 4)))
   x)<span class="result">1</span></pre>
 
-    <h3>Exceptions</h3>
+    <h3 id="exceptions">Exceptions</h3>
 
     <p>This section describes the <code>(srfi :226 control
 	exceptions)</code> library.</p>
@@ -2754,7 +2837,7 @@ x<span class="result">2</span></pre>
        (lambda ()
          (raise 42)))))<span class="result">43</span></pre>
 
-    <h3>Conditions</h3>
+    <h3 id="conditions-2">Conditions</h3>
 
     <p>This section describes the <code>(srfi :226 control
         conditions)</code> library.</p>
@@ -2857,7 +2940,7 @@ x<span class="result">2</span></pre>
       </dd>
     </dl>
 
-    <h3>Time Objects</h3>
+    <h3 id="time-objects">Time Objects</h3>
 
     <p>This section describes the <code>(srfi :226 control
 	times)</code> library.  The time type defined in this library is used in <code>(srfi
@@ -2896,7 +2979,7 @@ x<span class="result">2</span></pre>
       </dd>
     </dl>
 
-    <h3>Threads</h3>
+    <h3 id="threads">Threads</h3>
 
     <p>This section describes the <code>(srfi :226 control
 	threads)</code> library.  The library is compatible and mostly
@@ -2952,7 +3035,7 @@ x<span class="result">2</span></pre>
       defaults to <code>#f</code>.  A timeout that is in the past, is
       automatically reached.</p>
 
-    <h4>Conditions</h4>
+    <h4 id="conditions-3">Conditions</h4>
 
     <dl class="entries">
       <dt class="entry"><code>&amp;thread</code><span class="type">condition-type</span></dt>
@@ -3054,7 +3137,7 @@ x<span class="result">2</span></pre>
           ((fx=? i n) v)
         (vector-set! v i (safe (car ls)))))))</pre>
 
-    <h4>Threads</h4>
+    <h4 id="threads-2">Threads</h4>
 
     <p>A <dfn>thread</dfn> is a Scheme value of a specific type,
       representing a virtual processor which shares object space with all other threads.</p>
@@ -3263,7 +3346,7 @@ x<span class="result">2</span></pre>
               (out! 'out)))))))
   (get))<span class="result">(in thread in out out)</span></pre>
 
-    <h4>Mutexes</h4>
+    <h4 id="mutexes">Mutexes</h4>
 
     <p>A <dfn>mutex</dfn> is a Scheme value of a specific type,
       representing a mutual exclusion device, also known as a lock and
@@ -3376,7 +3459,7 @@ x<span class="result">2</span></pre>
       </dd>
     </dl>
 
-    <h4>Condition variables</h4>
+    <h4 id="condition-variables">Condition variables</h4>
 
     <p>A <dfn>condition variable</dfn> is a Scheme value of a specific type,
       representing a set of blocked threads.</p>
@@ -3424,7 +3507,7 @@ x<span class="result">2</span></pre>
       </dd>
     </dl>
 
-    <h4>Thread locals</h4>
+    <h4 id="thread-locals-2">Thread locals</h4>
 
     <p>The procedures in this subsection are also exported by
       the <code>(srfi :226 control thread-locals)</code> library.</p>
@@ -3473,7 +3556,7 @@ x<span class="result">2</span></pre>
       </dd>
     </dl>
 
-    <h4>Interrupts</h4>
+    <h4 id="interrupts">Interrupts</h4>
 
     <p>The syntax and procedures in this subsection are also exported by
       the <code>(srfi :226 control interrupts)</code> library.</p>
@@ -3530,9 +3613,9 @@ x<span class="result">2</span></pre>
       </dd>
     </dl>
 
-    <h2 id="implementation">Implementation</h2>
+    <h2 id="implementation-2">Implementation</h2>
 
-    <h3>Portability</h3>
+    <h3 id="portability">Portability</h3>
 
     <p>Implementing the control operators presented in this SRFI
       solely in terms of the facilities provided in <cite>R<sup>6</sup>RS</cite> or
@@ -3620,7 +3703,7 @@ x<span class="result">2</span></pre>
 
     </dl>
 
-    <h3>Other Implementations</h3>
+    <h3 id="other-implementations">Other Implementations</h3>
 
     <p>A lot of the control operators of this SRFI are natively
     implemented in Racket.  A high-performance implementation of
