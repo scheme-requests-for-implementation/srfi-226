@@ -375,6 +375,16 @@
       existence of multiple threads, continuations, continuation
       prompts, and parameterizations mutually compatible.</p>
 
+    <p>SRFI 226 can replace SRFI 18 because it also exports the mutex
+      and condition variable interface of SRFI 18.  Beyond SRFI 18,
+      SRFI 226 defines the concept of interrupts.  The only way of
+      asynchronously interacting with another thread that SRFI 18
+      provides is forcefully terminating the other thread.  With
+      interrupts, it now also possible to asynchronously raise
+      exceptions in the other thread.  This allows, for example, for a
+      more graceful termination of the other thread because it has the
+      chance of reacting to the raised exception.</p>
+
     <h4>Parameter Objects</h4>
 
     <p>Parameter objects are a tool to provide dynamically-scoped variables to
@@ -1319,7 +1329,7 @@
     <p>The <code>call-in-continuation</code> procedure can be used to implement
       the <code>guard</code> syntax concisely:</p>
 
-    <pre class="example">(define-syntax/who guard
+    <pre class="example">(define-syntax guard
   (lambda (stx)
     (syntax-case stx ()
       [(_ (id c1 c2 ...) e1 e2 ...)
@@ -1364,7 +1374,7 @@
 		(lambda ()
 		  e1 e2 ...))))]
       [_
-       (syntax-violation who "invalid syntax" stx)])))</pre>
+       (syntax-violation 'guard "invalid syntax" stx)])))</pre>
 
     <p>Invoking a continuation <code>k</code> on
       values <code><var>obj</var></code> &hellip; can be defined
@@ -2396,8 +2406,8 @@ x<span class="result">2</span></pre>
     procedure <code>call-in-initial-continuation</code> is invoked
       (see below).</p>
 
-    <p>Executing a top-level program starts with the initial
-      continuation.  When values are delivered in the initial
+    <p>Executing a top-level program starts with an initial
+      continuation.  When values are delivered in this initial
       continuation, the program exits normally.  When an exception is
       raised in the dynamic extent of the abort handler of the initial
       continuation prompt, the program may exit or may provide a
@@ -2935,11 +2945,12 @@ x<span class="result">2</span></pre>
           optional <code><var>timeout-val</var></code> argument.</p></li>
     </ul>
 
-    <p>A <dfn>timeout</dfn> is either represented by a time object
-      or by <code>#f</code>.  If it is <code>#f</code>,
-      an absolute time lying infinitely far in the future is
-      represented (meaning effectively no timeout).  A missing
-      optional timeout value defaults to <code>#f</code>.</p>
+    <p>A <dfn>timeout</dfn> is either represented by a time object or
+      by <code>#f</code>.  If it is <code>#f</code>, an absolute time
+      lying infinitely far in the future is represented (meaning
+      effectively no timeout).  A missing optional timeout value
+      defaults to <code>#f</code>.  A timeout that is in the past, is
+      automatically reached.</p>
 
     <h4>Conditions</h4>
 
@@ -3340,7 +3351,7 @@ x<span class="result">2</span></pre>
 	  returns <code>#f</code> when the timeout is reached, otherwise it
 	  returns <code>#t</code>.</p>
 	<p><i>Note:</i> It is not an error to unlock an unlocked mutex
-	  and a mutex that is owned by any thread.</p>
+	  or a mutex that is owned by any thread.</p>
 	<p><i>Note:</i> The reason the thread can unblock at any time
 	  (when <code><var>condition-variable</var></code> is
 	  supplied) is the handling of interrupts (see
@@ -3380,7 +3391,9 @@ x<span class="result">2</span></pre>
       mutexes alone.</p>
 
     <p><i>Note:</i> The term <i>condition variable</i>, while
-      well-established, is misleading as it describes not a variable, but an object.</p>
+      well-established, is misleading as it describes not a variable,
+      but an object.  In addition, condition variables are unrelated
+      to conditions</p>
 
     <dl class="entries">
       <dt class="entry"><code>(make-condition-variable)</code><span class="type">procedure</span></dt>
@@ -3601,7 +3614,7 @@ x<span class="result">2</span></pre>
       <dt class="procedure"><code>(%case-lambda-box-ref <var>proc</var> <var>obj</var>)</code></dt>
       <dd>
 	<p>If <var>proc</var> is a procedure tagged with a location,
-	  the <code>%lambda-box-ref</code> procedure returns the value
+	  the <code>%case-lambda-box-ref</code> procedure returns the value
 	  stored in this location, and <code>obj</code> otherwise.</p>
       </dd>
 
