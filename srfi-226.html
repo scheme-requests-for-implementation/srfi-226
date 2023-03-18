@@ -2945,11 +2945,12 @@ x<span class="result">2</span></pre>
           optional <code><var>timeout-val</var></code> argument.</p></li>
     </ul>
 
-    <p>A <dfn>timeout</dfn> is either represented by a time object
-      or by <code>#f</code>.  If it is <code>#f</code>,
-      an absolute time lying infinitely far in the future is
-      represented (meaning effectively no timeout).  A missing
-      optional timeout value defaults to <code>#f</code>.</p>
+    <p>A <dfn>timeout</dfn> is either represented by a time object or
+      by <code>#f</code>.  If it is <code>#f</code>, an absolute time
+      lying infinitely far in the future is represented (meaning
+      effectively no timeout).  A missing optional timeout value
+      defaults to <code>#f</code>.  A timeout that is in the past, is
+      automatically reached.</p>
 
     <h4>Conditions</h4>
 
