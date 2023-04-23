@@ -1365,6 +1365,14 @@
       :226 control shift-reset)</code>, described in the following
       section.</p>
 
+    <p>The syntax <code>reset-at</code> and <code>shift-at</code> is
+      as <code>reset</code> and <code>shift</code>, respectively,
+      except that the continuation prompt tag has to be given
+      explicitely:</p>
+
+    <pre class="example">(let ([tag (make-continuation-prompt-tag)])
+  (+ 1 (reset-at tag (* 2 (shift-at tag k 4)))))<span class=result>5<span></pre>
+
     <p>Another possible pair of control operators is made
     by <code>prompt</code> and <code>control</code>.  The difference
     with <code>reset</code>/<code>shift</code> is
