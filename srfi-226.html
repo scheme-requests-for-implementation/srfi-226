@@ -2078,6 +2078,19 @@
          (continuation-mark-set-first #f key)))
      tag)))<span class="result">mark2</span></pre>
 
+    <p>Using <code>continuation-marks</code>, the set of continuation
+      marks of a captured continuation can also be investigated:</p>
+
+    <pre class="example">(let ([tag (make-continuation-prompt-tag 'mytag)]
+      [key (make-continuation-mark-key)])
+  (define k
+    (with-continuation-mark key 'mark
+      (call-with-continuation-prompt
+        (lambda ()
+          (call/cc values))
+        tag)))
+  (continuation-mark-set-first (continuation-marks k) key))<span class="result">mark</span></pre>
+
     <h4 id="mark-keys">Mark Keys</h4>
 
     <p><dfn>Mark keys</dfn> can be used as opaque keys for

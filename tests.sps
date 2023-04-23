@@ -791,6 +791,17 @@
 	       (continuation-mark-set-first #f key)))
 	   tag))))
 
+(test 'mark
+      (let ([tag (make-continuation-prompt-tag 'mytag)]
+	    [key (make-continuation-mark-key)])
+        (define k
+	  (with-continuation-mark key 'mark
+	    (call-with-continuation-prompt
+	      (lambda ()
+                (call/cc values))
+	      tag)))
+        (continuation-mark-set-first (continuation-marks k) key)))
+
 (test #t (continuation-mark-key? (make-continuation-mark-key)))
 (test #f (equal? (make-continuation-mark-key) (make-continuation-mark-key)))
 
