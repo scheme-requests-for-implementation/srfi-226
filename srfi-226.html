@@ -275,7 +275,9 @@
     <dt>Exceptions</dt><dd> The exception mechanism
     of <a href="#sperber"><cite>R6RS</cite></a>
     and <a href="#shinn"><cite>R7RS</cite></a> is reinterpreted with
-    respect to the concepts introduced in this SRFI.  Moreover, the
+    respect to the concepts introduced in this SRFI.  (Here, and in what follows
+    we mean the so-called small language when we speak about <cite>R7RS</cite>.)
+    Moreover, the
     <code>with-exception-handler</code> procedure and the <code>guard</code>
     syntax gain additional tail-context guarantees.</dd>
 
@@ -2323,7 +2325,7 @@
     <p>The following examples show how the <code>temporarily</code> syntax
       differs from the <code>parameterize</code> syntax:</p>
 
-    <pre>(let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
+    <pre class=example>(let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
   (temporarily ([p 4]) (values))
   (p))<span class=result>5</span>
 
@@ -3196,7 +3198,7 @@ x<span class="result">2</span></pre>
         (assert (mythread? t))
         (assert (thread? t))
         (mythread-specific t))
-      'specific)))<span class="example">specific</span></pre>
+      'specific)))<span class="result">specific</span></pre>
 
     <p><i>Remark:</i> The above assumes an implementation that
       supports the <cite>R6RS</cite> record mechanism.  For
@@ -3408,7 +3410,7 @@ x<span class="result">2</span></pre>
       <dt class="entry"><code>(mutex-lock! <var>mutex</var> <var>timeout</var>)</code><span class="type">procedure</span></dt>
       <dt class="entry"><code>(mutex-lock! <var>mutex</var>)</code><span class="type">procedure</span></dt>
       <dd>
-	<p>If <code><var>owner-thread</var></code> is not given, it defaults to <code>#f</code>.</p>
+	<p>If <code><var>owner-thread</var></code> is not given, it defaults to the current thread.</p>
 	<p>If <code><var>mutex</var></code> is currently locked, the
 	  current thread waits until it is unlocked or until the timeout
 	  is reached.  If the timeout is reached, <code>#f</code> is
