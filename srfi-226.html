@@ -2042,6 +2042,13 @@
                             arg*)))
             (values (car ls) (f (cdr ls))))))))</pre>
 
+    <p>The iterator returned can be used to rebuild the list of continuation marks:</p>
+
+    <pre class=example>(let f ([iter (continuation-mark-set-&gt;iterator <var>mark-set</var> <var>list</var>)])
+  (let-values ([(head tail) (iter)])
+    (if head (cons head (f tail)) '())))
+&nbsp;<span class=result><i>value of (continuation-mark-set-&gt;list* <var>mark-set</var> <var>list</var>)</i></pre>
+
     <dl class="entries">
       <dt class="procedure"><code>(continuation-mark-set-first <var>mark-set</var> <var>key</var>)</code></dt>
       <dt class="procedure"><code>(continuation-mark-set-first <var>mark-set</var> <var>key</var> <var>obj</var>)</code></dt>
