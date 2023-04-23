@@ -1908,7 +1908,7 @@
 	<p>If not supplied, <code><var>prompt-tag</var></code>
 	defaults to the default prompt tag.</p>
 	<p>Operationally equivalent to <code>(continuation-marks
-	(call/cc
+	(call-with-non-composable-continuation
 	values <var>prompt-tag</var>) <var>prompt-tag</var>)</code>.</p>
       </dd>
 
