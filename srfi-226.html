@@ -1373,7 +1373,7 @@
       explicitly:</p>
 
     <pre class="example">(let ([tag (make-continuation-prompt-tag)])
-  (+ 1 (reset-at tag (* 2 (shift-at tag k 4)))))<span class=result>5<span></pre>
+  (+ 1 (reset-at tag (* 2 (shift-at tag k 4)))))<span class=result>5</span></pre>
 
     <p>Another possible pair of control operators is made
     by <code>prompt</code> and <code>control</code>.  The difference
@@ -2047,7 +2047,7 @@
     <pre class=example>(let f ([iter (continuation-mark-set-&gt;iterator <var>mark-set</var> <var>list</var>)])
   (let-values ([(head tail) (iter)])
     (if head (cons head (f tail)) '())))
-&nbsp;<span class=result><i>value of (continuation-mark-set-&gt;list* <var>mark-set</var> <var>list</var>)</i></pre>
+&nbsp;<span class=result><i>value of (continuation-mark-set-&gt;list* <var>mark-set</var> <var>list</var>)</i></span></pre>
 
     <dl class="entries">
       <dt class="procedure"><code>(continuation-mark-set-first <var>mark-set</var> <var>key</var>)</code></dt>
