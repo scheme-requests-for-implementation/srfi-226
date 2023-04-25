@@ -221,7 +221,7 @@
 	(*exit-continuation*))
       (%thread-terminated?-set! thread #t)
       (let ([t* (remq thread (current-threads))])
-       	(current-threads t*)
+	(current-threads t*)
 	(if (eq? (%current-thread) (car t*))
 	    (unlock!)
 	    (abort-to-thread (car t*))))))

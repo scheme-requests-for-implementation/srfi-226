@@ -899,8 +899,8 @@
 		   (make-thread
                     (lambda ()
 		      (let ([x (p)])
-		        (p 2)
-		        x)))))])
+			(p 2)
+			x)))))])
 	    (list y (p))))))
 
 (test 'default (tlref (make-thread-local 'default)))

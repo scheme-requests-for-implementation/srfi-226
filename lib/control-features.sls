@@ -417,11 +417,11 @@
               '()]
              [else
 	      (let ([frame (car mk)] [mk (cdr mk)])
-	        (let ([tag (metacontinuation-frame-tag frame)])
-	          (if (eq? tag prompt-tag)
+		(let ([tag (metacontinuation-frame-tag frame)])
+		  (if (eq? tag prompt-tag)
 		      '()
 		      (let ([marks (metacontinuation-frame-marks frame)])
-		        (if (and (not tag) (marks-empty? marks))
+			(if (and (not tag) (marks-empty? marks))
 			    (f mk)
 			    (cons (make-mark-set-frame tag marks) (f mk)))))))]))))]
       [(mk prompt-tag)
@@ -1499,7 +1499,7 @@
 	     (assertion-violation who "not a procedure" thunk))
            (let ([thread
                   (p
-	           (make-thread-impl #f #f #f name (thread-state new) '() #f (make-%mutex) (make-%condition-variable) (make-storage (current-thread-storage))))])
+		   (make-thread-impl #f #f #f name (thread-state new) '() #f (make-%mutex) (make-%condition-variable) (make-storage (current-thread-storage))))])
 	     (thread-thunk-set! thread (make-thread-thunk thread (current-parameterization) thunk))
 	     thread)]))
        make-thread)))
@@ -1663,19 +1663,19 @@
       (let ([helper-thread
              (%thread-start!
 	      (lambda ()
-	        (let ([mtx (thread-%mutex thread)]
+		(let ([mtx (thread-%mutex thread)]
 		      [cv (thread-%condition-variable thread)])
-	          (%mutex-lock! mtx)
-	          (let ([s (thread-current-state thread)])
-	            (unless (symbol=? s (thread-state terminated))
+		  (%mutex-lock! mtx)
+		  (let ([s (thread-current-state thread)])
+		    (unless (symbol=? s (thread-state terminated))
 		      (thread-current-state-set! thread (thread-state terminated))
 		      (thread-end-exception-set! thread (make-thread-already-terminated-condition))
 		      (if (symbol=? s (thread-state new))
-		          (%condition-variable-broadcast! cv)
-		          (%thread-terminate! (thread-%thread thread))))
-	            (%mutex-unlock! mtx)))))])
-        (when (eqv? thread (current-thread))
-          (%thread-join! thread (current-thread))))))
+			  (%condition-variable-broadcast! cv)
+			  (%thread-terminate! (thread-%thread thread))))
+		    (%mutex-unlock! mtx)))))])
+	(when (eqv? thread (current-thread))
+	  (%thread-join! thread (current-thread))))))
 
   (define/who thread-terminate!
     (lambda (thread)
@@ -1787,15 +1787,15 @@
 	     [thunk
 	      (%call-with-current-continuation
 	       (lambda (end-k)
-	         (thunkify
-	          (%call-with-current-continuation
-	           (lambda (k)
+		 (thunkify
+		  (%call-with-current-continuation
+		   (lambda (k)
 		     (%current-dynamic-environment
 		      (make-initial-dynamic-environment
 		       k (current-parameterization)
 		       (lambda (con)
-		         (end-k (lambda ()
-			          (raise-continuable (make-uncaught-exception-condition con)))))
+			 (end-k (lambda ()
+				  (raise-continuable (make-uncaught-exception-condition con)))))
 		       (current-thread)))
 		     (abort thunk))))))])
 	(%current-dynamic-environment saved-env)
