@@ -405,20 +405,27 @@
 	      (cons frame (f mk))]))))))
 
   (define take-mark-set-frames
-    (lambda (mk prompt-tag)
-      (%call-with-current-continuation
-       (lambda (k)
-	 (let f ([mk mk])
-	   (when (null? mk)
-	     (k #f))
-	   (let ([frame (car mk)] [mk (cdr mk)])
-	     (let ([tag (metacontinuation-frame-tag frame)])
-	       (if (eq? tag prompt-tag)
-		   '()
-		   (let ([marks (metacontinuation-frame-marks frame)])
-		     (if (and (not tag) (marks-empty? marks))
-			 (f mk)
-			 (cons (make-mark-set-frame tag marks) (f mk))))))))))))
+    (case-lambda
+      [(mk prompt-tag prompt-available?)
+       (%call-with-current-continuation
+        (lambda (k)
+	  (let f ([mk mk])
+	    (cond
+             [(null? mk)
+              (unless prompt-available?
+                (k #f))
+              '()]
+             [else
+	      (let ([frame (car mk)] [mk (cdr mk)])
+	        (let ([tag (metacontinuation-frame-tag frame)])
+	          (if (eq? tag prompt-tag)
+		      '()
+		      (let ([marks (metacontinuation-frame-marks frame)])
+		        (if (and (not tag) (marks-empty? marks))
+			    (f mk)
+			    (cons (make-mark-set-frame tag marks) (f mk)))))))]))))]
+      [(mk prompt-tag)
+       (take-mark-set-frames mk prompt-tag #f)]))
 
   ;; Trampoline
 
@@ -971,8 +978,9 @@
       (unless (continuation-prompt-tag? prompt-tag)
 	(assertion-violation
 	 who "not a continuation prompt tag" prompt-tag))
-      (let ([frames (take-mark-set-frames (continuation-metacontinuation who k) prompt-tag)])
-	(unless (or frames (eq? (continuation-prompt-tag who k) prompt-tag))
+      (let ([frames (take-mark-set-frames (continuation-metacontinuation who k) prompt-tag
+                                          (eq? (continuation-prompt-tag who k) prompt-tag))])
+	(unless frames
 	  (assertion-violation who "prompt tag not found in continuation" prompt-tag))
 	(make-continuation-mark-set (or frames '())))]))
 
