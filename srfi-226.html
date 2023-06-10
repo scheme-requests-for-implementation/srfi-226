@@ -133,7 +133,12 @@
         <li>2023-05-23 (Fixed typo in
         identifier <code>continuation-mark-set-first</code> as listed
         in <a href="#continuation-marks-library"><code>continuation-marks</code></a>
-        library.)</li></ul></li>
+        library.)</li>
+        <li>2023-06-10 (<a href="#conditions-3">Removed</a> incorrect
+          <var>obj</var> arguments to <code>make-thread-condition</code>,
+          <code>make-thread-already-terminated-condition</code>,
+          <code>make-thread-timeout-condition</code>,
+          and <code>make-thread-abandoned-mutex-condition</code>.)</li></ul></li>
     </ul>
 
     <h2>Table of contents</h2>
@@ -3074,7 +3079,7 @@ x<span class="result">2</span></pre>
 
     <dl class="entries">
       <dt class="entry"><code>&amp;thread</code><span class="type">condition-type</span></dt>
-      <dt class="procedure"><code>(make-thread-condition <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(make-thread-condition</code>)</dt>
       <dt class="procedure"><code>(thread-condition? <var>obj</var></code>)</dt>
       <dd>
 	<p>This condition type could be defined by</p>
@@ -3101,7 +3106,7 @@ x<span class="result">2</span></pre>
 	  in <cite>R<sup>6</sup>RS</cite>.</p>
       </dd>
       <dt class="entry"><code>&amp;thread-already-terminated</code><span class="type">condition-type</span></dt>
-      <dt class="procedure"><code>(make-thread-already-terminated-condition <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(make-thread-already-terminated-condition</code>)</dt>
       <dt class="procedure"><code>(thread-already-terminated-condition? <var>obj</var></code>)</dt>
       <dd>
 	<p>This condition type could be defined by</p>
@@ -3112,7 +3117,7 @@ x<span class="result">2</span></pre>
 	  in <cite>SRFI 18</cite>.</p>
       </dd>
       <dt class="entry"><code>&amp;thread-timeout</code><span class="type">condition-type</span></dt>
-      <dt class="procedure"><code>(make-thread-timeout-condition <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(make-thread-timeout-condition</code>)</dt>
       <dt class="procedure"><code>(thread-timeout-condition? <var>obj</var></code>)</dt>
       <dd>
 	<p>This condition type could be defined by</p>
@@ -3123,7 +3128,7 @@ x<span class="result">2</span></pre>
 	  in <cite>SRFI 18</cite>.</p>
       </dd>
       <dt class="entry"><code>&amp;thread-abandoned-mutex</code><span class="type">condition-type</span></dt>
-      <dt class="procedure"><code>(make-thread-abandoned-mutex-condition <var>obj</var></code>)</dt>
+      <dt class="procedure"><code>(make-thread-abandoned-mutex-condition</code>)</dt>
       <dt class="procedure"><code>(thread-abandoned-mutex-condition? <var>obj</var></code>)</dt>
       <dd>
 	<p>This condition type could be defined by</p>
