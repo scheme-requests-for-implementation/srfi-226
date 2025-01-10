@@ -22,6 +22,45 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
+#|
+This reference implementation is meant to show how to implement all the
+primitives on a small set of subforms (see control-fratures/*.sls)
+
+Since we need to manage our own delimited continuation, the forms
+provided in this implementation cannot run directly on ChezScheme.
+Instead, you need to use a runner, 'run' procedure.
+
+$ chezscheme --libdirs lib
+Chez Scheme Version 9.5
+Copyright 1984-2017 Cisco Systems, Inc.
+
+> (import (except (rnrs (6)) display) (control-features))
+> (run (lambda () (call-with-continuation-prompt (lambda () (display 'foo))))
+    )
+
+You can also use a small wrapper like this:
+
+;; by Daphne Preston-Kendal
+(import (only (chezscheme)
+              new-cafe
+              lambda
+              eval
+              interaction-environment)
+        (control-features))
+
+(new-cafe (lambda (x) (run (lambda () (eval x (interaction-environment))))))
+
+Suppose you have the above in a file run226.scm.  You can then try
+the primitives directly on REPL as follows:
+
+$ chezscheme --libdirs lib --program run226.scm
+> (import (except (rnrs (6)) display) (control-features))
+> (call-with-continuation-prompt (lambda () (display 'foo)))
+foo
+
+|#
+
+
 (library (control-features)
   (export call-with-continuation-prompt abort-current-continuation
 	  call-with-current-continuation call-with-composable-continuation
