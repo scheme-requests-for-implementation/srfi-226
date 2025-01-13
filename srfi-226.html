@@ -3669,7 +3669,7 @@ x<span class="result">2</span></pre>
 
     <h3 id="sample-implementation">Sample Implementation</h3>
 
-    <p><a href="https://github.com/scheme-requests-for-implementation/srfi-226/tree/master/lib">The sample implementation</a> accompanying this SRFI demonstrates
+    <p><a href="lib">The sample implementation</a> accompanying this SRFI demonstrates
       how the control operators can be implemented on top of a small
       set of primitives.  If in doubt, it favors simplicity and
       clarity over speed.</p>
@@ -3746,8 +3746,23 @@ x<span class="result">2</span></pre>
 	  the <code>%case-lambda-box-ref</code> procedure returns the value
 	  stored in this location, and <code>obj</code> otherwise.</p>
       </dd>
-
     </dl>
+
+    <p><i>Note:</i> The sample implementation is packaged in the form
+      of libraries for Chez Scheme so that the
+      extensive <a href="tests.sps">test suite</a> can be run.
+      However, the sample implementation cannot provide the libraries
+      as defined in this SRFI (neither for Chez Scheme, nor for any
+      other Scheme) because it is likely impossible to do this in a
+      portable way.  As Chez (and standard) Scheme does not support
+      delimited continuations natively, the sample implementation's
+      code must be run within the dynamic extent of
+      the <code>run</code> procedure defined
+      in <a href="lib/control-features.sls">lib/control-features.sls</a>.
+      See the <code>test</code> syntax
+      in <a href="lib/control-features/testing.sls">lib/control-features/testing.sls</a>
+      on how to use <code>run</code>.
+    </p>
 
     <h3 id="other-implementations">Other Implementations</h3>
 
