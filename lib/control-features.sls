@@ -1237,7 +1237,7 @@
   (define-syntax/who temporarily
     (lambda (x)
       (syntax-case x ()
-        [(_ () b1 b2 ...) #'(begin b1 b2 ...)]
+        [(_ () b1 b2 ...) #'(let () b1 b2 ...)]
         [(_ ([x e] ...) b1 b2 ...)
          (with-syntax ([(p ...) (generate-temporaries #'(x ...))]
                        [(y ...) (generate-temporaries #'(x ...))])
