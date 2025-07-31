@@ -2361,7 +2361,7 @@
 
     <pre class=example>(let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
   (temporarily ([p 4]) (values))
-  (p))<span class=result>5</span>
+  (p))<span class=result>3</span>
 
 (let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
   (parameterize ([p 4]) (values))
