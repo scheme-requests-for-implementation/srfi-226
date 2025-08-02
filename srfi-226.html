@@ -2025,7 +2025,7 @@
 	<p><i>Note:</i> Some recent SRFIs that have been included into
 	  early editions of <a href="#r7rs"><cite>R<sup>7</sup>RS
 	  Large</cite></a> or are to be included in its forthcoming
-	  editions feature the use of generators (see <a href="">SRFI
+	  editions feature the use of generators (see <a href="https://srfi.schemers.org/srfi-158/">SRFI
 	  158</a>) to process lists (or objects of other sequence
 	  types).  As generators are fundamentally non-pure, we
 	  believe that their use should be limited in otherwise
@@ -2513,7 +2513,7 @@ x<span class="result">2</span></pre>
     <p>This section describes the <code>(srfi :226 control
 	call-in-initial-continuation)</code> library.  The library, in
 	addition to the procedures and syntax described here, also
-	exports the <code>&uncaught-exception</code> condition type
+	exports the <code>&amp;uncaught-exception</code> condition type
 	and associated procedures from <code>(srfi :226 control
 	threads)</code>.</p>
 
@@ -2562,7 +2562,7 @@ x<span class="result">2</span></pre>
 	  exception is raised in the dynamic extent of the abort handler of
 	  the continuation prompt of the initial continuation, a
 	  continuable exception of
-	  type <code>&uncaught-exception</code> whose reason is the
+	  type <code>&amp;uncaught-exception</code> whose reason is the
 	  raised object is raised in the continuation of the call
 	  to <code>call-in-initial-continuation</code>.</p>
 	<p>This extends the semantics of <code>raise</code>.</p>
@@ -2588,7 +2588,7 @@ x<span class="result">2</span></pre>
     <p>This section describes the <code>(srfi :226 control
 	promises)</code> library. The library, in addition to the
       procedures and syntax described here, also exports
-      the <code>&uncaught-exception</code> condition type and
+      the <code>&amp;uncaught-exception</code> condition type and
       associated procedures from <code>(srfi :226 control threads)</code>.</p>
 
     <p><dfn>Promises</dfn> are objects that can be <dfn>forced</dfn>
@@ -2620,7 +2620,7 @@ x<span class="result">2</span></pre>
 	  the continuation prompt of the initial continuation and the
 	  promise still hasn't delivered values or has raised an
 	  exception, a continuable exception of
-	  type <code>&uncaught-exception-condition</code> whose reason
+	  type <code>&amp;uncaught-exception-condition</code> whose reason
 	  is the object is raised in the continuation <var>k</var>.
 	  Otherwise, the already delivered values are delivered again,
 	  or the already raised exception is raised again in the
@@ -2899,7 +2899,7 @@ x<span class="result">2</span></pre>
       the <code>assertion-violation</code>, <code>error</code>,
       and <code>syntax-violation</code> are extended so that they
       communicate this information of the exception situation.
-    <p>
+    </p>
 
     <dl class="entries">
       <dt class="entry"><code>&amp;parameterization</code><span class="type">condition-type</span></dt>
@@ -3439,7 +3439,6 @@ x<span class="result">2</span></pre>
 	  or a thread object, reflecting the state
 	  of <code><var>mutex</var></code>, where a thread object
 	  represents the <i>owned</i> state and the owner.</p>
-	<p>
       </dd>
       <dt class="entry"><code>(mutex-lock! <var>mutex</var> <var>timeout</var> <var>owner-thread</var>)</code><span class="type">procedure</span></dt>
       <dt class="entry"><code>(mutex-lock! <var>mutex</var> <var>timeout</var>)</code><span class="type">procedure</span></dt>
@@ -3455,7 +3454,7 @@ x<span class="result">2</span></pre>
 	  case <code><var>mutex</var></code> becomes
 	  unlocked/abandoned.</p>
 	<p>After changing the state of the mutex,
-	  an <code>&abandoned-mutex</code> condition object is raised if the
+	  an <code>&amp;abandoned-mutex</code> condition object is raised if the
 	  mutex was unlocked/abandoned before the state change,
 	  otherwise <code>mutex-lock!</code> returns <code>#t</code>.</p>
 	<p><i>Note:</i> It is not an error if the
