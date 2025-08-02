@@ -138,7 +138,8 @@
           <var>obj</var> arguments to <code>make-thread-condition</code>,
           <code>make-thread-already-terminated-condition</code>,
           <code>make-thread-timeout-condition</code>,
-          and <code>make-thread-abandoned-mutex-condition</code>.)</li></ul></li>
+          and <code>make-thread-abandoned-mutex-condition</code>.)</li>
+        <li>2025-08-01 Fix <a href="#errata-3">example</a>.</ul></li>
       <li>On 2023-06-29,
         SRFIs <a href="https://srfi.schemers.org/srfi-154/">154</a>,
         <a href="https://srfi.schemers.org/srfi-155/">155</a>,
@@ -2361,7 +2362,7 @@
 
     <pre class=example>(let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
   (temporarily ([p 4]) (values))
-  (p))<span class=result>3</span>
+  (p))<span id="errata-3" class=result>3</span>
 
 (let ([p (make-parameter 1 (lambda (x) (+ x 1)))])
   (parameterize ([p 4]) (values))
