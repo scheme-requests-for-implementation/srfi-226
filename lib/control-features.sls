@@ -297,8 +297,8 @@
 
   (define clear-marks!
     (lambda ()
-      (current-marks (make-marks (current-parameterization)
-				 (exception-handler-stack)))))
+      (current-marks (list (cons (handler-stack-continuation-mark-key)
+				 (exception-handler-stack))))))
 
   (define set-mark!
     (lambda (key val)
@@ -1142,7 +1142,13 @@
 
   (define current-parameterization
     (lambda ()
-      (marks-ref (current-marks) (parameterization-continuation-mark-key))))
+      (let loop ([marks (current-marks)]
+		 [mk (current-metacontinuation)])
+	(marks-ref marks (parameterization-continuation-mark-key)
+		   (lambda ()
+		     (assert (pair? mk))
+		     (loop (metacontinuation-frame-marks (car mk))
+			   (cdr mk)))))))
 
   (define/who call-with-parameterization
     (lambda (parameterization thunk)
