@@ -2572,10 +2572,13 @@ x<span class="result">2</span></pre>
 <pre class="example">(let ([tag (make-continuation-prompt-tag)]
       [p (make-parameter 0)])
   (parameterize ([p 1])
-    (call-in-initial-continuation
-      (lambda ()
-        (list (continuation-prompt-available? (call/cc values))
-              (p))))))<span class="result">(#f 1)</span>
+    (call-with-continuation-prompt
+     (lambda ()
+       (call-in-initial-continuation
+        (lambda ()
+          (list (continuation-prompt-available? tag (call/cc values))
+                (p)))))
+     tag)))<span class="result">(#f 1)</span>
 
 (guard (c
         [(uncaught-exception-condition? c) (uncaught-exception-condition-reason c)])
