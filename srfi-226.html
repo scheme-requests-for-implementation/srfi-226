@@ -139,7 +139,8 @@
           <code>make-thread-already-terminated-condition</code>,
           <code>make-thread-timeout-condition</code>,
           and <code>make-thread-abandoned-mutex-condition</code>.)</li>
-        <li>2025-08-01 Fix <a href="#errata-3">example</a>.</ul></li>
+        <li>2025-08-01 Fix <a href="#errata-3">example</a>.</li>
+        <li>2026-07-29 Fix <a href="#errata-4">example</a>.</li></ul></li>
       <li>On 2023-06-29,
         SRFIs <a href="https://srfi.schemers.org/srfi-154/">154</a>,
         <a href="https://srfi.schemers.org/srfi-155/">155</a>,
@@ -2569,7 +2570,7 @@ x<span class="result">2</span></pre>
       </dd>
     </dl>
 
-<pre class="example">(let ([tag (make-continuation-prompt-tag)]
+<pre id="#errata-4" class="example">(let ([tag (make-continuation-prompt-tag)]
       [p (make-parameter 0)])
   (parameterize ([p 1])
     (call-with-continuation-prompt
