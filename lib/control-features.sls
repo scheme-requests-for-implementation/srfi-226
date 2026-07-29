@@ -297,8 +297,7 @@
 
   (define clear-marks!
     (lambda ()
-      (current-marks (make-marks (current-parameterization)
-				 (exception-handler-stack)))))
+      (current-marks '())))
 
   (define set-mark!
     (lambda (key val)
@@ -315,6 +314,16 @@
   (define ref-mark
     (lambda (key default)
       (marks-ref (current-marks) key (lambda () default))))
+
+  (define current-continuation-mark-ref
+    (lambda (key)
+      (let loop ([marks (current-marks)]
+		 [mk (current-metacontinuation)])
+	(marks-ref marks key
+		   (lambda ()
+		     (assert (pair? mk))
+		     (loop (metacontinuation-frame-marks (car mk))
+			   (cdr mk)))))))
 
   ;; Winders
 
@@ -1142,7 +1151,8 @@
 
   (define current-parameterization
     (lambda ()
-      (marks-ref (current-marks) (parameterization-continuation-mark-key))))
+      (current-continuation-mark-ref
+       (parameterization-continuation-mark-key))))
 
   (define/who call-with-parameterization
     (lambda (parameterization thunk)
@@ -1354,7 +1364,8 @@
 
   (define exception-handler-stack
     (lambda ()
-      (marks-ref (current-marks) (handler-stack-continuation-mark-key))))
+      (current-continuation-mark-ref
+       (handler-stack-continuation-mark-key))))
 
   (define current-exception-handler
     (lambda ()

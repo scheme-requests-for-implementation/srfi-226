@@ -1244,6 +1244,45 @@
          (shift k (cons 2 (k 'void)))
          '())))
 
+;;; See <https://github.com/scheme-requests-for-implementation/srfi-226/pull/14>.
+;;;
+;;; Parameterizations and exception-handler stacks are continuation marks.  A
+;;; composable continuation excludes its delimiting prompt, so marks installed
+;;; outside that prompt are not captured.  Its first invocation below must use
+;;; the initial mark, and its second the caller's mark.  A naive implementation
+;;; that copies these marks into every fresh continuation frame puts them above
+;;; the prompt and incorrectly captures them.
+
+(test '(1 3)
+      (let ((p (make-parameter 1))
+	    (c #f))
+	(parameterize ((p 2))
+	  (call-with-continuation-prompt
+	   (lambda ()
+	     (call-with-composable-continuation
+	      (lambda (k) (set! c k)))
+	     (p))))
+	(list (c) (parameterize ((p 3)) (c)))))
+
+(test '(#t #t)
+      (let ((c #f)
+	    (handler (lambda (obj) obj))
+	    (other-handler (lambda (obj) obj)))
+	(let ((initial-handler (current-exception-handler)))
+	  (with-exception-handler
+	   handler
+	   (lambda ()
+	     (call-with-continuation-prompt
+	      (lambda ()
+		(call-with-composable-continuation
+		 (lambda (k) (set! c k)))
+		(current-exception-handler)))))
+	  (list (eq? (c) initial-handler)
+		(with-exception-handler
+		 other-handler
+		 (lambda ()
+		   (eq? (c) other-handler)))))))
+
 (test '(1 0)
       (let ((m (make-parameter 0))
 	    (n (make-parameter 0)))
